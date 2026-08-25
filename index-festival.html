@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boteco ACIA 2026 — Ariquemes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --marinho:#072658; --marinho-2:#04182F; --acia:#0065A4; --selo:#8CCAEE;
+  --ambar:#E8A020; --ambar-e:#B87708; --ouro:#D7BF75;
+  --branco:#F5EFE3; --claro:#FBF7EE; --creme:#EDE4D2; --risco:#E1D6C0;
+  --tinta:#1C1917; --tinta-3:#6B6259;
+  --display:'Montserrat',sans-serif; --corpo:'Archivo',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--corpo);background:var(--branco);color:var(--tinta);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1240px,90vw);margin-inline:auto;position:relative;z-index:2}
+h1,h2,h3,h4{font-family:var(--display);letter-spacing:-.022em;line-height:1.08}
+
+/* ── Topo ── */
+.faixa{background:var(--marinho-2);color:var(--ouro);font-size:12.5px;font-weight:600;padding:9px 0}
+.faixa .wrap{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;text-align:center}
+.faixa i{color:var(--selo);font-style:normal}
+.nav{position:sticky;top:0;z-index:60;background:var(--branco);box-shadow:0 1px 0 var(--risco)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 0}
+.brasao{display:flex;align-items:center;gap:11px}
+.brasao img{width:50px;height:50px;display:block;flex:none}
+.brasao b{font-family:var(--display);font-weight:800;font-size:18px;display:block}
+.brasao small{display:block;font-size:11.5px;color:var(--tinta-3);font-weight:500;margin-top:1px}
+.menu{display:flex;align-items:center;gap:3px;font-size:15px;font-weight:600}
+.menu a{padding:9px 15px;border-radius:999px;color:var(--tinta-3);transition:all .15s}
+.menu a:hover{background:var(--creme);color:var(--tinta)}
+.menu a.on{background:var(--marinho);color:var(--branco)}
+.menu a:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+
+.btn{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:16px;font-weight:700;padding:14px 28px;border-radius:999px;transition:all .15s;box-shadow:0 3px 0 var(--ambar-e)}
+.btn:hover{background:#F5B23C;transform:translateY(-2px);box-shadow:0 5px 0 var(--ambar-e)}
+.btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--ambar-e)}
+.btn:focus-visible{outline:3px solid var(--ouro);outline-offset:3px}
+.btn-v{background:none;color:var(--branco);box-shadow:inset 0 0 0 2px rgba(245,239,227,.55)}
+.btn-v:hover{background:rgba(245,239,227,.13);box-shadow:inset 0 0 0 2px var(--branco)}
+.btn-esc{background:var(--marinho);color:var(--branco);box-shadow:0 3px 0 var(--marinho-2)}
+.btn-esc:hover{background:#0B3A7E;box-shadow:0 5px 0 var(--marinho-2)}
+
+/* ── Hero ── */
+.hero{background:var(--marinho);color:var(--branco);padding:64px 0 72px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);gap:56px;align-items:center}
+.hero .edicao{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:12.5px;font-weight:800;padding:5px 15px;border-radius:999px;margin-bottom:18px}
+.hero h1{font-weight:800;font-size:clamp(34px,4.9vw,60px)}
+.hero h1 em{font-style:normal;color:var(--ambar)}
+.hero p{margin-top:18px;font-size:18px;color:#B9CBDD;max-width:42ch}
+.hero .cta{margin-top:30px;display:flex;gap:11px;flex-wrap:wrap}
+
+/* leque de fotos */
+.leque{position:relative;height:390px}
+.pc{position:absolute;width:212px;border-radius:16px;overflow:hidden;background:var(--claro);box-shadow:0 16px 34px rgba(0,0,0,.34)}
+.pc .im{aspect-ratio:1/1;background:var(--marinho-2);display:grid;place-content:center;color:#3F5A7E;font-size:12px}
+.pc .lb{padding:12px 14px 15px}
+.pc .lb b{display:block;font-family:var(--display);font-weight:800;font-size:15px;color:var(--tinta)}
+.pc .lb span{display:block;font-size:12.5px;color:var(--tinta-3);margin-top:2px}
+.pc:nth-child(1){left:2%;top:52px;transform:rotate(-8deg);z-index:1}
+.pc:nth-child(2){left:29%;top:8px;transform:rotate(-1deg);z-index:3}
+.pc:nth-child(3){left:56%;top:60px;transform:rotate(7deg);z-index:2}
+.tampa{position:absolute;top:10px;left:10px;z-index:4;width:44px;height:44px;transform:rotate(-9deg)}
+
+/* ── Números ── */
+.nums{background:var(--acia);color:#fff}
+.nums .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
+.num{padding:26px 18px;text-align:center;border-right:1px solid rgba(255,255,255,.2)}
+.num:last-child{border-right:none}
+.num b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1}
+.num span{display:block;font-size:12.5px;font-weight:600;color:#C9E3F5;margin-top:4px;letter-spacing:.04em}
+
+/* ── Cabeçalho de bloco ── */
+.rot{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:12.5px;font-weight:800;padding:5px 15px;border-radius:999px;margin-bottom:12px}
+h2.sec{font-weight:800;font-size:clamp(26px,3.5vw,43px)}
+.sub{margin-top:9px;color:var(--tinta-3);font-size:16.5px;max-width:54ch}
+
+/* ── Bairros ── */
+.bairros{padding:70px 0 8px}
+.bg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:32px}
+.bcard{border-radius:16px;padding:24px 22px 20px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-height:132px;transition:transform .17s ease,box-shadow .17s ease}
+.bcard:hover{transform:translateY(-4px);box-shadow:0 11px 24px rgba(7,38,88,.2)}
+.bcard b{font-family:var(--display);font-weight:800;font-size:21px}
+.bcard .q{font-size:13.5px;opacity:.82;margin-top:3px}
+.bcard .go{margin-top:16px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.bcard.c1{background:var(--marinho)}.bcard.c2{background:var(--acia)}
+.bcard.c3{background:var(--ambar-e)}.bcard.c4{background:#0B3A7E}
+.bcard.c5{background:#1E4E33}.bcard.c6{background:var(--marinho-2)}
+
+/* ── Lista ── */
+.lista-sec{padding:66px 0 76px}
+.ferramentas{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:26px;padding:14px;background:var(--creme);border-radius:16px}
+.busca{flex:1;min-width:210px;position:relative}
+.busca input{width:100%;border:none;background:var(--claro);border-radius:999px;padding:12px 18px;font-family:inherit;font-size:15px;color:var(--tinta)}
+.busca input:focus{outline:2px solid var(--ambar);outline-offset:1px}
+.pil{font-size:14px;font-weight:700;padding:10px 17px;border-radius:999px;border:none;background:var(--claro);color:var(--tinta-3);cursor:pointer;font-family:inherit;transition:all .14s}
+.pil:hover{background:#fff;color:var(--tinta)}
+.pil.on{background:var(--marinho);color:var(--branco)}
+.pil:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+.conta{font-size:13.5px;font-weight:600;color:var(--tinta-3);margin-left:auto;padding-right:6px}
+
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px;margin-top:22px}
+.casa{background:var(--claro);border-radius:18px;overflow:hidden;position:relative;transition:transform .17s ease,box-shadow .17s ease}
+.casa:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(7,38,88,.16)}
+.casa .foto{aspect-ratio:4/3;background:var(--marinho);position:relative;display:grid;place-content:center}
+.casa .foto span{font-size:12px;color:#3F5A7E;font-weight:600}
+.casa .tampa{position:absolute;left:12px;top:12px;width:52px;height:52px;transform:rotate(-8deg);display:grid;place-content:center}
+.casa .tampa svg{position:absolute;inset:0}
+.casa .tampa b{position:relative;font-family:var(--display);font-weight:800;font-size:16px;color:var(--marinho-2)}
+.casa .txt{padding:18px 20px 22px}
+.casa .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.tag{font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px;background:var(--creme);color:var(--ambar-e)}
+.casa h3{font-weight:800;font-size:20px}
+.casa .nome{font-size:14.5px;color:var(--tinta-3);margin-top:4px;font-weight:500}
+.casa .pe{display:flex;gap:8px;margin-top:15px;flex-wrap:wrap}
+.casa .pe a{font-size:13.5px;font-weight:700;padding:7px 15px;border-radius:999px;background:var(--creme);transition:background .14s}
+.casa .pe a:hover{background:var(--ambar)}
+.vazio{grid-column:1/-1;padding:56px 0;text-align:center;color:var(--tinta-3)}
+.vazio b{display:block;font-family:var(--display);font-weight:800;font-size:24px;color:var(--tinta);margin-bottom:6px}
+
+/* ── Roteiro ── */
+.rota{background:var(--creme);padding:72px 0}
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:34px}
+.passo{background:var(--claro);border-radius:18px;padding:26px 24px;position:relative;overflow:hidden}
+.passo .n{position:absolute;right:14px;top:6px;font-family:var(--display);font-weight:800;font-size:64px;color:var(--risco);line-height:1}
+.passo h4{font-weight:800;font-size:19px;margin-bottom:7px;position:relative}
+.passo p{font-size:14.5px;color:var(--tinta-3);position:relative}
+
+/* ── Voto resumido ── */
+.voto{background:var(--marinho);color:var(--branco);padding:72px 0}
+.voto .sub{color:#AFC4D6}
+.cri-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(206px,1fr));gap:12px;margin-top:32px}
+.cri{background:rgba(255,255,255,.06);border-radius:14px;padding:20px 19px}
+.cri .e{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:12px;font-weight:800;padding:2px 11px;border-radius:999px;margin-bottom:10px}
+.cri h4{font-weight:800;font-size:18px;margin-bottom:5px}
+.cri p{font-size:13.5px;color:#9FB6C9}
+.voto .fecho{margin-top:26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between;background:rgba(215,191,117,.12);border-radius:14px;padding:20px 24px}
+.voto .fecho b{font-family:var(--display);font-weight:800;font-size:26px;color:var(--ouro);line-height:1}
+.voto .fecho span{font-size:14.5px;color:#AFC4D6;flex:1;min-width:190px}
+
+/* ── Apoio ── */
+.apoio{padding:64px 0 70px;text-align:center}
+.apoio .marcas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+.apoio .marcas div{background:var(--claro);border-radius:14px;padding:20px 30px;font-family:var(--display);font-weight:800;font-size:17px;color:var(--tinta-3)}
+
+footer{background:var(--marinho-2);color:#8EA7BA;padding:54px 0 42px;font-size:14.5px}
+.foot{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+.foot .disco{width:96px;height:96px;border-radius:50%;background:var(--claro);display:grid;place-content:center;margin-bottom:14px}
+.foot .disco img{width:78px;height:78px;display:block}
+.foot .marca b{display:block;font-family:var(--display);font-weight:800;font-size:18px;color:var(--branco);line-height:1.25}
+.foot .tag2{display:inline-block;margin-top:14px;background:var(--ouro);color:var(--marinho);font-family:var(--display);font-weight:800;font-size:14px;padding:5px 16px;border-radius:999px}
+.foot ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.foot ul a:hover{color:var(--ouro)}
+.foot .r{font-size:13px;font-weight:700;color:#5D7A91;margin-bottom:13px}
+
+@media(max-width:900px){
+  .hero-grid,.foot{grid-template-columns:1fr;gap:34px}
+  .leque{height:330px;margin-top:8px}
+  .pc{width:178px}
+}
+@media(max-width:720px){
+  .nav .wrap{flex-direction:column;gap:10px}
+  .menu{width:100%;justify-content:center;flex-wrap:wrap}
+  .hero{padding:44px 0 54px}
+  .leque{height:300px}
+  .pc{width:156px}
+  .conta{margin-left:0;width:100%}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="faixa"><div class="wrap"><span>1ª edição</span><i>·</i><span>19 de setembro a 10 de outubro de 2026</span><i>·</i><span>Ariquemes, RO</span></div></div>
+
+<nav class="nav"><div class="wrap">
+  <a href="index.html" class="brasao">
+    <img src="Logo_Boteco_Acia.png" alt="Boteco ACIA">
+    <span><b>Boteco ACIA</b><small>Ariquemes · 2026</small></span>
+  </a>
+  <div class="menu">
+    <a href="index.html" class="on">Início</a>
+    <a href="#casas">As casas</a>
+    <a href="#rota">Monte seu rolê</a>
+    <a href="#voto">Como se vota</a>
+    <a href="acia.html">A ACIA</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-grid">
+  <div>
+    <span class="edicao">1ª EDIÇÃO · 2026</span>
+    <h1>O concurso que elege o <em>melhor prato de boteco</em> de Ariquemes.</h1>
+    <p>As casas da cidade puseram um prato na disputa. Você prova, aponta o celular pro QR da mesa e dá a sua nota. Quem decide é quem come.</p>
+    <div class="cta">
+      <a href="#casas" class="btn">Ver as casas</a>
+      <a href="#rota" class="btn btn-v">Monte seu rolê</a>
+    </div>
+  </div>
+  <div class="leque" aria-hidden="true">
+    <article class="pc"><div class="im">foto do prato</div><div class="lb"><b>Prato a definir</b><span>Casa Exemplo 03</span></div></article>
+    <article class="pc">
+      <svg class="tampa" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#E8A020"/><circle cx="50" cy="50" r="46" fill="none" stroke="#04182F" stroke-width="5" stroke-dasharray="9.6 9.6"/><circle cx="50" cy="50" r="33" fill="none" stroke="#04182F" stroke-width="2.5"/></svg>
+      <div class="im">foto do prato</div><div class="lb"><b>Prato a definir</b><span>Casa Exemplo 01</span></div>
+    </article>
+    <article class="pc"><div class="im">foto do prato</div><div class="lb"><b>Prato a definir</b><span>Casa Exemplo 07</span></div></article>
+  </div>
+</div></header>
+
+<section class="nums"><div class="wrap">
+  <div class="num"><b id="nCasas">—</b><span>CASAS NA DISPUTA</span></div>
+  <div class="num"><b>22</b><span>DIAS DE FESTIVAL</span></div>
+  <div class="num"><b>4</b><span>CRITÉRIOS DE NOTA</span></div>
+  <div class="num"><b>R$ 2.250</b><span>EM PREMIAÇÃO</span></div>
+</div></section>
+
+<section class="bairros"><div class="wrap">
+  <span class="rot">Por onde começar</span>
+  <h2 class="sec">Escolha um bairro e monte seu roteiro.</h2>
+  <p class="sub">Cada casa aceita uma avaliação por pessoa. Em vinte e dois dias dá tempo de visitar todas.</p>
+  <div class="bg-grid" id="bairrosGrid"></div>
+</div></section>
+
+<section class="lista-sec" id="casas"><div class="wrap">
+  <span class="rot">Os concorrentes</span>
+  <h2 class="sec">Quem está na disputa</h2>
+  <div class="ferramentas">
+    <div class="busca"><input type="search" id="q" placeholder="Buscar por casa ou prato" aria-label="Buscar casa ou prato"></div>
+    <div id="pilulas" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    <span class="conta" id="conta"></span>
+  </div>
+  <div class="grade" id="grade"></div>
+</div></section>
+
+<section class="rota" id="rota"><div class="wrap">
+  <span class="rot">Em três passos</span>
+  <h2 class="sec">Monte seu rolê</h2>
+  <p class="sub">Não precisa visitar tudo de uma vez. A graça é ir voltando.</p>
+  <div class="passos">
+    <div class="passo"><span class="n">01</span><h4>Escolha o bairro</h4><p>Comece pelo que é perto de você. Duas ou três casas numa noite já é um bom rolê.</p></div>
+    <div class="passo"><span class="n">02</span><h4>Peça o prato da disputa</h4><p>Cada casa tem um só, marcado no cardápio. O garçom sabe qual é.</p></div>
+    <div class="passo"><span class="n">03</span><h4>Vote e siga em frente</h4><p>Aponte pro QR da mesa, dê as notas e marque a próxima casa da lista.</p></div>
+  </div>
+</div></section>
+
+<section class="voto" id="voto"><div class="wrap">
+  <span class="rot">Menos de um minuto</span>
+  <h2 class="sec">Como se vota</h2>
+  <p class="sub">Sem baixar nada, sem cadastro. Quatro notas de 0 a 5 e pronto.</p>
+  <div class="cri-grid">
+    <div class="cri"><span class="e">0 a 5</span><h4>Apresentação</h4><p>Capricho no empratamento e apelo visual do prato.</p></div>
+    <div class="cri"><span class="e">0 a 5</span><h4>Sabor</h4><p>Gosto, tempero, equilíbrio, textura e temperatura.</p></div>
+    <div class="cri"><span class="e">0 a 5</span><h4>Criatividade</h4><p>Originalidade da receita e ingredientes regionais.</p></div>
+    <div class="cri"><span class="e">0 a 5</span><h4>Atendimento</h4><p>Simpatia, agilidade e conhecimento sobre o prato.</p></div>
+  </div>
+  <div class="fecho">
+    <b>20 pontos</b>
+    <span>Total máximo por avaliação. A nota final da casa é a média de todas as avaliações válidas.</span>
+    <a href="como-se-vota.html" class="btn">Regras completas</a>
+  </div>
+</div></section>
+
+<section class="apoio"><div class="wrap">
+  <span class="rot">Realização e apoio</span>
+  <h2 class="sec">Quem faz o Boteco ACIA acontecer</h2>
+  <div class="marcas"><div>ACIA Ariquemes</div><div>CDL Ariquemes</div><div>Rosalin Mesas</div><div>Motopam</div></div>
+  <p style="margin-top:26px"><a href="acia.html" class="btn btn-esc">Sobre a ACIA</a></p>
+</div></section>
+
+<footer><div class="wrap foot">
+  <div class="marca">
+    <span class="disco"><img src="Logo_Boteco_Acia.png" alt="Boteco ACIA"></span>
+    <b>Boteco ACIA<br>Ariquemes 2026</b>
+    <div class="tag2">#BotecoACIA</div>
+  </div>
+  <div><div class="r">Navegar</div><ul>
+    <li><a href="index.html">Início</a></li><li><a href="#casas">As casas</a></li>
+    <li><a href="#rota">Monte seu rolê</a></li><li><a href="como-se-vota.html">Como se vota</a></li><li><a href="acia.html">A ACIA</a></li>
+  </ul></div>
+  <div><div class="r">Documentos</div><ul>
+    <li><a href="#">Regulamento oficial</a></li><li><a href="#">Aviso de privacidade</a></li><li><a href="#">Contato</a></li>
+  </ul></div>
+</div></footer>
+
+<script>
+const casas=[
+ ["Casa Exemplo 01","Prato a definir","Centro","Bar"],
+ ["Casa Exemplo 02","Prato a definir","Setor 01","Petiscaria"],
+ ["Casa Exemplo 03","Prato a definir","Setor 03","Choperia"],
+ ["Casa Exemplo 04","Prato a definir","Jardim Paulista","Restaurante"],
+ ["Casa Exemplo 05","Prato a definir","Setor 05","Espetaria"],
+ ["Casa Exemplo 06","Prato a definir","Centro","Hamburgueria"],
+ ["Casa Exemplo 07","Prato a definir","Setor 01","Bar"],
+ ["Casa Exemplo 08","Prato a definir","Centro","Lanchonete"],
+ ["Casa Exemplo 09","Prato a definir","Setor 03","Restaurante"],
+ ["Casa Exemplo 10","Prato a definir","Colonial","Bar"],
+ ["Casa Exemplo 11","Prato a definir","Setor 05","Petiscaria"],
+ ["Casa Exemplo 12","Prato a definir","Jardim Paulista","Casa noturna"]
+];
+const TAMPA='<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#E8A020"/><circle cx="50" cy="50" r="46" fill="none" stroke="#04182F" stroke-width="5" stroke-dasharray="9.6 9.6"/><circle cx="50" cy="50" r="33" fill="none" stroke="#04182F" stroke-width="2.5"/></svg>';
+let bairro="Todos", termo="";
+
+const bairros=[...new Set(casas.map(c=>c[2]))];
+document.getElementById("nCasas").textContent=casas.length;
+
+document.getElementById("bairrosGrid").innerHTML=bairros.map((b,i)=>{
+  const n=casas.filter(c=>c[2]===b).length;
+  return `<a href="#casas" class="bcard c${(i%6)+1}" data-b="${b}">
+    <div><b>${b}</b><div class="q">${n} ${n===1?"casa":"casas"}</div></div>
+    <div class="go">Ver as casas →</div></a>`;
+}).join("");
+document.querySelectorAll(".bcard").forEach(el=>el.addEventListener("click",()=>{bairro=el.dataset.b;render()}));
+
+function render(){
+  document.getElementById("pilulas").innerHTML=["Todos",...bairros]
+    .map(b=>`<button class="pil${b===bairro?" on":""}" data-b="${b}">${b}</button>`).join("");
+  document.querySelectorAll(".pil").forEach(el=>el.addEventListener("click",()=>{bairro=el.dataset.b;render()}));
+
+  const t=termo.trim().toLowerCase();
+  const vis=casas.map((c,i)=>({c,i}))
+    .filter(({c})=>(bairro==="Todos"||c[2]===bairro) && (!t||c[0].toLowerCase().includes(t)||c[1].toLowerCase().includes(t)));
+
+  document.getElementById("conta").textContent=vis.length+" de "+casas.length+" casas";
+  document.getElementById("grade").innerHTML = vis.length ? vis.map(({c,i})=>`
+    <article class="casa">
+      <div class="foto"><span>foto do prato</span><div class="tampa">${TAMPA}<b>${String(i+1).padStart(2,"0")}</b></div></div>
+      <div class="txt">
+        <div class="tags"><span class="tag">${c[3]}</span><span class="tag">${c[2]}</span></div>
+        <h3>${c[1]}</h3>
+        <p class="nome">${c[0]}</p>
+        <div class="pe"><a href="#">Ver a casa</a><a href="#">Como chegar</a></div>
+      </div>
+    </article>`).join("")
+  : '<div class="vazio"><b>Nenhuma casa aqui</b>Tente outro bairro ou limpe a busca.</div>';
+}
+document.getElementById("q").addEventListener("input",e=>{termo=e.target.value;render()});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A ACIA — Boteco ACIA 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --marinho:#072658; --marinho-2:#04182F; --acia:#0065A4; --selo:#8CCAEE;
+  --ambar:#E8A020; --ambar-e:#B87708; --ouro:#D7BF75;
+  --branco:#F5EFE3; --claro:#FBF7EE; --creme:#EDE4D2; --risco:#E1D6C0;
+  --tinta:#1C1917; --tinta-3:#6B6259;
+  --display:'Montserrat',sans-serif; --corpo:'Archivo',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--corpo);background:var(--branco);color:var(--tinta);line-height:1.68;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1180px,90vw);margin-inline:auto}
+h1,h2,h3,h4{font-family:var(--display);letter-spacing:-.022em;line-height:1.1}
+
+.faixa{background:var(--marinho-2);color:var(--ouro);font-size:12.5px;font-weight:600;padding:9px 0}
+.faixa .wrap{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;text-align:center}
+.faixa i{color:var(--selo);font-style:normal}
+.nav{position:sticky;top:0;z-index:60;background:var(--branco);box-shadow:0 1px 0 var(--risco)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 0}
+.brasao{display:flex;align-items:center;gap:11px}
+.brasao img{width:50px;height:50px;display:block;flex:none}
+.brasao b{font-family:var(--display);font-weight:800;font-size:18px;display:block}
+.brasao small{display:block;font-size:11.5px;color:var(--tinta-3);font-weight:500;margin-top:1px}
+.menu{display:flex;align-items:center;gap:3px;font-size:15px;font-weight:600}
+.menu a{padding:9px 15px;border-radius:999px;color:var(--tinta-3);transition:all .15s}
+.menu a:hover{background:var(--creme);color:var(--tinta)}
+.menu a.on{background:var(--marinho);color:var(--branco)}
+.menu a:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+
+.btn{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:16px;font-weight:700;padding:14px 28px;border-radius:999px;box-shadow:0 3px 0 var(--ambar-e);transition:all .15s}
+.btn:hover{background:#F5B23C;transform:translateY(-2px);box-shadow:0 5px 0 var(--ambar-e)}
+.btn:focus-visible{outline:3px solid var(--marinho);outline-offset:3px}
+.btn-esc{background:var(--marinho);color:var(--branco);box-shadow:0 3px 0 var(--marinho-2)}
+.btn-esc:hover{background:#0B3A7E;box-shadow:0 5px 0 var(--marinho-2)}
+
+/* capa padrao das internas */
+.capa{background:var(--marinho);color:var(--branco);padding:44px 0 56px}
+.migalha{font-size:12.5px;font-weight:700;color:var(--selo);margin-bottom:18px}
+.migalha a:hover{color:#fff}
+.migalha span{color:var(--ambar)}
+.capa .selo{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:12.5px;font-weight:800;padding:5px 15px;border-radius:999px;margin-bottom:14px}
+.capa h1{font-weight:800;font-size:clamp(32px,4.7vw,58px)}
+.capa p{margin-top:16px;font-size:17.5px;color:#B9CBDD;max-width:56ch}
+.capa .val{margin-top:16px;font-size:13px;font-weight:700;color:var(--ouro)}
+
+.bloco{padding:58px 0}
+.rot{display:inline-block;background:var(--ambar);color:var(--marinho);font-size:12.5px;font-weight:800;padding:5px 15px;border-radius:999px;margin-bottom:12px}
+h2.sec{font-weight:800;font-size:clamp(24px,3.1vw,37px)}
+.sub{margin-top:9px;color:var(--tinta-3);font-size:16.5px;max-width:56ch}
+
+footer{background:var(--marinho-2);color:#8EA7BA;padding:54px 0 42px;font-size:14.5px}
+.foot{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+.foot .disco{width:96px;height:96px;border-radius:50%;background:var(--claro);display:grid;place-content:center;margin-bottom:14px}
+.foot .disco img{width:78px;height:78px;display:block}
+.foot .marca b{display:block;font-family:var(--display);font-weight:800;font-size:18px;color:var(--branco);line-height:1.25}
+.foot .tag2{display:inline-block;margin-top:14px;background:var(--ouro);color:var(--marinho);font-family:var(--display);font-weight:800;font-size:14px;padding:5px 16px;border-radius:999px}
+.foot ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.foot ul a:hover{color:var(--ouro)}
+.foot .r{font-size:13px;font-weight:700;color:#5D7A91;margin-bottom:13px}
+
+@media(max-width:900px){.foot{grid-template-columns:1fr;gap:34px}}
+@media(max-width:720px){
+  .nav .wrap{flex-direction:column;gap:10px}
+  .menu{width:100%;justify-content:center;flex-wrap:wrap}
+  .capa{padding:32px 0 42px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+
+.nivel{font-size:12.5px;font-weight:800;color:var(--ambar-e);text-align:center;margin:36px 0 14px}
+.parc{background:var(--claro);border-radius:18px;padding:26px 30px;display:grid;grid-template-columns:170px minmax(0,1fr);gap:30px;align-items:center;margin-bottom:11px}
+.parc .logo{background:var(--creme);border-radius:14px;min-height:96px;display:grid;place-content:center;text-align:center;font-family:var(--display);font-weight:800;font-size:15px;color:var(--tinta-3);padding:16px}
+.parc h4{font-weight:800;font-size:20px;margin-bottom:7px}
+.parc p{font-size:15px;color:var(--tinta-3)}
+.parc.destaque{background:var(--marinho);color:var(--branco)}
+.parc.destaque .logo{background:rgba(255,255,255,.09);color:var(--ouro)}
+.parc.destaque p{color:#AFC4D6}
+
+.manifesto{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:52px;align-items:center;margin-top:30px}
+.manifesto .forte{font-family:var(--display);font-weight:800;font-size:clamp(22px,2.7vw,32px);line-height:1.22;margin-bottom:16px}
+.manifesto p{color:var(--tinta-3);font-size:16.5px;margin-bottom:12px}
+.selo-box{background:var(--marinho);border-radius:20px;padding:36px 28px;text-align:center}
+.selo-box .disco{width:132px;height:132px;border-radius:50%;background:var(--claro);display:grid;place-content:center;margin:0 auto 18px}
+.selo-box .disco img{width:108px;height:108px;display:block}
+.selo-box b{display:block;font-family:var(--display);font-weight:800;font-size:17px;color:var(--branco);line-height:1.3}
+.selo-box span{display:block;font-size:13px;color:var(--ouro);margin-top:8px;font-weight:600}
+
+.objs{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:30px}
+.obj{background:var(--claro);border-radius:16px;padding:24px 22px;position:relative;overflow:hidden}
+.obj .n{position:absolute;right:12px;top:2px;font-family:var(--display);font-weight:800;font-size:54px;color:var(--risco);line-height:1}
+.obj p{font-size:15.5px;position:relative}
+
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:30px}
+.nm{background:var(--acia);color:#fff;border-radius:16px;padding:26px 22px;text-align:center}
+.nm b{display:block;font-family:var(--display);font-weight:800;font-size:38px;line-height:1}
+.nm span{display:block;font-size:13px;font-weight:600;color:#C9E3F5;margin-top:5px}
+.aviso{margin-top:20px;font-size:15.5px;color:var(--tinta-3);max-width:62ch}
+.volta{padding:8px 0 66px;text-align:center}
+@media(max-width:900px){.manifesto{grid-template-columns:1fr;gap:34px}}
+@media(max-width:720px){.parc{grid-template-columns:1fr;gap:18px}}
+</style></head><body>
+
+<div class="faixa"><div class="wrap"><span>1ª edição</span><i>·</i><span>19 de setembro a 10 de outubro de 2026</span><i>·</i><span>Ariquemes, RO</span></div></div>
+<nav class="nav"><div class="wrap">
+  <a href="index-festival.html" class="brasao"><img src="Logo_Boteco_Acia.png" alt="Boteco ACIA"><span><b>Boteco ACIA</b><small>Ariquemes · 2026</small></span></a>
+  <div class="menu">
+    <a href="index-festival.html">Início</a>
+    <a href="#casas">As casas</a>
+    <a href="#rota">Monte seu rolê</a>
+    <a href="como-se-vota.html">Como se vota</a>
+    <a href="acia.html" class="on">A ACIA</a>
+  </div>
+</div></nav>
+<header class="capa"><div class="wrap">
+  <div class="migalha"><a href="index-festival.html">Início</a> › <span>A ACIA</span></div>
+  <span class="selo">Quem realiza</span>
+  <h1>A ACIA e quem faz o<br>Boteco acontecer</h1>
+  <p>Um festival gastronômico competitivo e descentralizado, realizado pela Associação Comercial e Industrial de Ariquemes.</p>
+</div></header>
+
+<section class="bloco"><div class="wrap">
+  <span class="rot">Por que existe</span>
+  <h2 class="sec">Comércio local girando</h2>
+  <div class="manifesto">
+    <div>
+      <p class="forte">Cada prato provado é comércio local girando.</p>
+      <p>O Boteco ACIA nasceu para colocar a cozinha da nossa cidade na mesa de todo mundo — e para levar cliente novo à porta de quem trabalha duro o ano inteiro. Bar, restaurante, lanchonete, espetaria, hamburgueria, petiscaria: casa de todo tipo entrou na disputa, associada ou não à ACIA.</p>
+      <p>A competição é descentralizada. Ninguém monta praça de alimentação, ninguém sai do seu espaço. Cada casa serve o seu prato onde sempre serviu, e o público faz o roteiro pela cidade.</p>
+      <p>Esta é a 1ª edição. A ideia é que ela não seja a única.</p>
+    </div>
+    <div class="selo-box">
+      <span class="disco"><img src="Logo_Boteco_Acia.png" alt="Boteco ACIA"></span>
+      <b>Associação Comercial<br>e Industrial de Ariquemes</b>
+      <span>Honra e trabalho · Rondônia</span>
+    </div>
+  </div>
+</div></section>
+
+<section class="bloco" style="background:var(--creme)"><div class="wrap">
+  <span class="rot">Cinco metas</span>
+  <h2 class="sec">Os objetivos</h2>
+  <div class="objs">
+    <div class="obj"><span class="n">01</span><p>Fomentar o comércio local, especialmente o setor de bares e restaurantes.</p></div>
+    <div class="obj"><span class="n">02</span><p>Valorizar a gastronomia regional e promover a cultura de boteco em Ariquemes.</p></div>
+    <div class="obj"><span class="n">03</span><p>Fortalecer a marca e a relevância da ACIA como agente de fomento econômico.</p></div>
+    <div class="obj"><span class="n">04</span><p>Atrair público e visitantes de municípios vizinhos.</p></div>
+    <div class="obj"><span class="n">05</span><p>Promover a captação de novos associados para a ACIA.</p></div>
+  </div>
+</div></section>
+
+<section class="bloco"><div class="wrap">
+  <span class="rot">Apoio e parceria</span>
+  <h2 class="sec">As marcas que apoiam esta edição</h2>
+  <p class="sub">Empresas de Ariquemes que entraram junto para colocar a cozinha da cidade em evidência.</p>
+
+  <div class="nivel">REALIZAÇÃO</div>
+  <div class="parc destaque">
+    <div class="logo">ACIA<br>ARIQUEMES</div>
+    <div><h4>ACIA — quem organiza e responde pelo festival</h4>
+    <p>Associação Comercial e Industrial de Ariquemes. Concebeu o Boteco ACIA, selecionou as casas participantes, produz os kits e os QR codes, e conduz a apuração dos resultados.</p></div>
+  </div>
+
+  <div class="nivel">PARCERIA INSTITUCIONAL</div>
+  <div class="parc">
+    <div class="logo">CDL<br>ARIQUEMES</div>
+    <div><h4>CDL Ariquemes — a mobilização do comércio da cidade</h4>
+    <p>Câmara de Dirigentes Lojistas de Ariquemes, parceira na articulação com o comércio local e na divulgação do festival junto aos associados.</p></div>
+  </div>
+
+  <div class="nivel">PRÊMIOS AO 1º LUGAR</div>
+  <div class="parc">
+    <div class="logo">ROSALIN<br>MESAS</div>
+    <div><h4>Rosalin Mesas — a mesa que fica no bar campeão</h4>
+    <p>Cortesia da mesa personalizada entregue à casa vencedora. Não é troféu de prateleira: é móvel de uso, que segue servindo cliente com a marca do título.</p></div>
+  </div>
+  <div class="parc">
+    <div class="logo">MOTOPAM</div>
+    <div><h4>Motopam — o detalhe que também é prêmio</h4>
+    <p>Cortesia da lixeira personalizada entregue à casa vencedora, somando ao kit que marca a conquista da 1ª edição.</p></div>
+  </div>
+</div></section>
+
+<section class="bloco" style="background:var(--creme)"><div class="wrap">
+  <span class="rot">1ª edição · 2026</span>
+  <h2 class="sec">Os números</h2>
+  <div class="nums">
+    <div class="nm"><b id="nCasas">12</b><span>CASAS NA DISPUTA</span></div>
+    <div class="nm"><b>22</b><span>DIAS DE FESTIVAL</span></div>
+    <div class="nm"><b>4</b><span>CRITÉRIOS DE NOTA</span></div>
+    <div class="nm"><b>R$ 2.250</b><span>EM PREMIAÇÃO</span></div>
+  </div>
+  <p class="aviso">O número de avaliações, o público alcançado e o impacto no comércio serão publicados aqui após a apuração, em outubro de 2026. A partir da 2ª edição, esta página passa a comparar os resultados ano a ano.</p>
+</div></section>
+
+<div class="volta"><a href="index-festival.html" class="btn btn-esc">Voltar pro início</a></div>
+<footer><div class="wrap foot">
+  <div class="marca"><span class="disco"><img src="Logo_Boteco_Acia.png" alt="Boteco ACIA"></span><b>Boteco ACIA<br>Ariquemes 2026</b><div class="tag2">#BotecoACIA</div></div>
+  <div><div class="r">Navegar</div><ul>
+    <li><a href="index-festival.html">Início</a></li><li><a href="index-festival.html#casas">As casas</a></li>
+    <li><a href="index-festival.html#rota">Monte seu rolê</a></li><li><a href="como-se-vota.html">Como se vota</a></li><li><a href="acia.html">A ACIA</a></li>
+  </ul></div>
+  <div><div class="r">Documentos</div><ul>
+    <li><a href="#">Regulamento oficial</a></li><li><a href="#">Aviso de privacidade</a></li><li><a href="#">Contato</a></li>
+  </ul></div>
+</div></footer>
+
+</body></html>

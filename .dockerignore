@@ -1,0 +1,31 @@
+# Segredos NUNCA entram na imagem. O runtime recebe tudo por variável de
+# ambiente, vinda do painel do Coolify. Sem exceção nem para o .env.example:
+# ele não serve para nada dentro do container.
+.env
+.env.*
+
+# Refeitos dentro da imagem, na arquitetura certa do servidor.
+node_modules
+.next
+out
+
+# Histórico e ferramentas de desenvolvimento
+.git
+.gitignore
+.claude
+
+# Testes não rodam no container, e falam com o banco de produção.
+tests
+vitest.config.mts
+
+# Material de origem: protótipos, arte e documentação não vão para o servidor.
+*.html
+*.md
+*.xlsx
+logos
+docs
+
+# Lixo de sistema
+.DS_Store
+Thumbs.db
+npm-debug.log*

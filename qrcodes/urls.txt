@@ -1,0 +1,12 @@
+garapeira-gastronomia	http://192.168.1.26:3311/votar/garapeira-gastronomia
+consolinis-bistro-bar	http://192.168.1.26:3311/votar/consolinis-bistro-bar
+grelhadus-burger-bar	http://192.168.1.26:3311/votar/grelhadus-burger-bar
+braseiro-trevisan	http://192.168.1.26:3311/votar/braseiro-trevisan
+haus-bier	http://192.168.1.26:3311/votar/haus-bier
+restaurante-caravellas	http://192.168.1.26:3311/votar/restaurante-caravellas
+buck-burger	http://192.168.1.26:3311/votar/buck-burger
+to-de-boa	http://192.168.1.26:3311/votar/to-de-boa
+cia-petiscaria	http://192.168.1.26:3311/votar/cia-petiscaria
+imperio-petiscaria	http://192.168.1.26:3311/votar/imperio-petiscaria
+bar-do-fuba	http://192.168.1.26:3311/votar/bar-do-fuba
+buteco-fnm	http://192.168.1.26:3311/votar/buteco-fnm

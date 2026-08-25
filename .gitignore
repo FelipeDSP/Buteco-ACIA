@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Respostas da Ficha de Inscrição: tem CPF do responsável, CNPJ, WhatsApp e
+# e-mail dos donos das casas. Dado pessoal de terceiro não vai para repositório
+# — e este é público. Histórico de Git não se apaga: uma vez enviado, fica.
+Ficha de Inscri*.xlsx
+*.xlsx

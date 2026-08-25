@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boteco ACIA 2026 — Ariquemes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --branco:#F5EFE3; --claro:#FBF7EE; --creme:#EDE4D2; --amarelo:#E8A020; --amarelo-e:#B87708; --ouro:#D7BF75; --acia:#0065A4; --selo:#8CCAEE;
+  --verde:#072658; --verde-e:#04182F; --azul:#072658; --azul-e:#04182F;
+  --tinta:#1C1917; --tinta-3:#6B6259; --risco:#E1D6C0;
+  --display:'Montserrat',sans-serif; --corpo:'Archivo',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--corpo);background:var(--branco);color:var(--tinta);line-height:1.62;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1240px,90vw);margin-inline:auto;position:relative;z-index:2}
+section,header{position:relative;overflow:hidden}
+.deco{position:absolute;pointer-events:none;z-index:1}
+
+.faixa{background:var(--verde);color:var(--ouro);font-size:13px;font-weight:600;padding:10px 0;overflow:visible}
+.faixa .wrap{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;text-align:center}
+.faixa .pt{color:var(--selo)}
+
+.nav{position:sticky;top:0;z-index:60;background:var(--branco);box-shadow:0 1px 0 var(--risco);overflow:visible}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 0}
+.brasao{display:flex;align-items:center;gap:12px}
+.brasao img{width:52px;height:52px;display:block;flex:none}
+.brasao b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em;line-height:1.1;display:block}
+.brasao small{display:block;font-size:11.5px;color:var(--tinta-3);margin-top:2px;font-weight:500}
+.menu{display:flex;align-items:center;gap:3px;font-size:15.5px;font-weight:600}
+.menu a{padding:9px 16px;border-radius:999px;color:var(--tinta-3);transition:all .16s}
+.menu a:hover{background:var(--creme);color:var(--tinta)}
+.menu a.on{background:var(--verde);color:#F1EAE0}
+.menu a:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
+
+.btn{display:inline-block;background:var(--verde);color:#F1EAE0;font-size:16.5px;font-weight:700;padding:14px 30px;border-radius:999px;transition:all .15s;box-shadow:0 3px 0 var(--verde-e)}
+.btn:hover{background:#0B3A7E;transform:translateY(-2px);box-shadow:0 5px 0 var(--verde-e)}
+.btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--verde-e)}
+.btn:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
+.btn-am{background:var(--amarelo);color:var(--azul);box-shadow:0 3px 0 var(--amarelo-e)}
+.btn-am:hover{background:#FFD84D;box-shadow:0 5px 0 var(--amarelo-e)}
+.btn-2{background:none;color:var(--azul);box-shadow:inset 0 0 0 2.5px var(--azul)}
+.btn-2:hover{background:var(--azul);color:var(--branco);box-shadow:inset 0 0 0 2.5px var(--azul)}
+
+.rotulo{display:inline-block;background:var(--amarelo);color:var(--azul);font-size:13px;font-weight:700;padding:5px 15px;border-radius:999px;margin-bottom:13px}
+h2.sec{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.4vw,42px);line-height:1.1;letter-spacing:-.02em}
+.sec-sub{margin-top:9px;color:var(--tinta-3);font-size:16.5px;max-width:52ch}
+
+/* Hero */
+.hero{padding:56px 0 66px;background:var(--branco)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:52px;align-items:center}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(33px,5.1vw,64px);line-height:1.08;letter-spacing:-.025em}
+.hero h1 mark{background:var(--amarelo);color:var(--azul);padding:0 .14em;border-radius:8px;display:inline-block;transform:rotate(-1.2deg)}
+.hero .lede{margin-top:20px;font-size:18.5px;max-width:40ch;color:var(--tinta-3)}
+.hero .lede b{color:var(--tinta);font-weight:600}
+.hero .cta{margin-top:26px;display:flex;gap:11px;flex-wrap:wrap}
+.vitrine{position:relative;z-index:3}
+.vitrine .foto{aspect-ratio:4/5;background:var(--creme);border:2px dashed #CFC0A2;border-radius:18px;display:grid;place-content:center;text-align:center;padding:22px}
+.vitrine .foto span{font-size:13px;color:#9A8C74;font-weight:600;line-height:1.6}
+.vitrine .selo{position:absolute;left:-18px;bottom:26px;background:var(--amarelo);border-radius:14px;padding:14px 20px;transform:rotate(-3deg);box-shadow:0 4px 0 var(--amarelo-e);text-align:center}
+.vitrine .selo b{display:block;font-family:var(--display);font-weight:800;font-size:38px;line-height:1;color:var(--verde)}
+.vitrine .selo span{display:block;font-size:12.5px;font-weight:700;color:#7A5209;margin-top:2px}
+.vitrine .prazo{margin-top:14px;text-align:center;font-size:14.5px;font-weight:600;color:var(--tinta-3)}
+.vitrine .prazo b{color:var(--amarelo-e)}
+
+/* Faixa amarela fina */
+.tira{height:46px;background:var(--amarelo);border-block:3px solid var(--amarelo-e)}
+
+/* Casas */
+.roster{padding:60px 0 34px;background:var(--branco)}
+.linhas{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+.linha{background:var(--claro);border-radius:16px;overflow:hidden;display:grid;grid-template-columns:minmax(0,262px) minmax(0,1fr);transition:transform .18s ease,box-shadow .18s ease;position:relative;z-index:2}
+.linha:hover{transform:translateY(-3px);box-shadow:0 9px 22px rgba(31,24,16,.13)}
+.ret{position:relative;background:var(--azul);min-height:186px;overflow:hidden}
+.carimbo{position:absolute;left:12px;top:12px;z-index:2;width:66px;height:66px;display:grid;place-content:center;transform:rotate(-8deg)}
+.carimbo svg{position:absolute;inset:0;width:66px;height:66px}
+.carimbo b{position:relative;font-family:var(--display);font-weight:800;font-size:19px;color:#04182F}
+.info{padding:24px 28px;display:flex;flex-direction:column;justify-content:center}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tag{background:var(--branco);color:var(--amarelo-e);font-size:12.5px;font-weight:700;padding:3px 12px;border-radius:999px}
+.tag.v{background:#DCE6F0;color:var(--verde-e)}
+.linha h3{font-family:var(--display);font-weight:800;font-size:clamp(19px,2.1vw,26px);line-height:1.2;letter-spacing:-.015em}
+.linha .casa{font-size:15px;color:var(--tinta-3);margin-top:6px;font-weight:500}
+.acoes{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.acoes a{font-size:14px;font-weight:700;padding:8px 16px;border-radius:999px;background:var(--amarelo);color:var(--azul);transition:all .15s}
+.acoes a:hover{background:#FFD84D}
+.mais{padding:32px 0 4px;text-align:center}
+
+/* Como se vota */
+.voto{background:var(--creme);padding:66px 0}
+.voto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:13px;margin-top:34px}
+.cri{background:var(--claro);border-radius:14px;padding:22px 20px}
+.cri .e{display:inline-block;background:var(--amarelo);color:var(--azul);font-size:12.5px;font-weight:700;padding:3px 11px;border-radius:999px;margin-bottom:12px}
+.cri h4{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.15;margin-bottom:6px}
+.cri p{font-size:14px;color:var(--tinta-3)}
+.total{margin-top:26px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:space-between;background:var(--azul);color:#EFE9DE;border-radius:16px;padding:22px 26px}
+.total b{font-family:var(--display);font-weight:800;font-size:28px;color:var(--ouro);line-height:1}
+.total span{font-size:15px;color:#A5BACD;flex:1;min-width:200px}
+
+/* ACIA */
+.acia{padding:70px 0;background:var(--branco)}
+.acia-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:52px;align-items:center;margin-top:28px}
+.acia .forte{font-family:var(--display);font-weight:800;font-size:clamp(20px,2.3vw,28px);line-height:1.3;margin-bottom:16px;letter-spacing:-.015em}
+.acia p{color:var(--tinta-3);font-size:16.5px}
+.apoio{background:var(--creme);border-radius:18px;padding:26px 26px 30px}
+.apoio .r{font-size:13px;font-weight:700;color:var(--amarelo-e);margin-bottom:15px}
+.apoio .lista{display:flex;flex-direction:column;gap:9px}
+.apoio .lista div{background:var(--claro);border-radius:11px;padding:14px 18px;font-family:var(--display);font-weight:700;font-size:16.5px}
+
+footer{background:var(--azul-e);color:#8EA7BA;padding:54px 0 40px;font-size:14.5px}
+.foot{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+.foot .disco{width:104px;height:104px;border-radius:50%;background:var(--claro);display:grid;place-content:center;margin-bottom:16px}
+.foot .disco img{width:84px;height:84px;display:block}
+.foot .marca b{display:block;font-family:var(--display);font-weight:800;font-size:19px;color:var(--branco);line-height:1.2}
+.foot .tag2{display:inline-block;margin-top:16px;background:var(--amarelo);color:var(--azul);font-family:var(--display);font-weight:800;font-size:15px;padding:6px 18px;border-radius:999px}
+.foot ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.foot ul a:hover{color:var(--ouro)}
+.foot .r{font-size:13px;font-weight:700;color:#5D7A91;margin-bottom:14px}
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.rv.on{opacity:1;transform:none}
+
+@media(max-width:980px){
+  .hero-grid,.acia-grid,.foot{grid-template-columns:1fr;gap:32px}
+  .vitrine .selo{position:static;transform:none;display:inline-block;margin-top:14px}
+  .deco{display:none}
+}
+@media(max-width:720px){
+  .linha{grid-template-columns:1fr}
+  .ret{min-height:180px}
+  .info{padding:22px 22px 26px}
+  .nav .wrap{flex-direction:column;gap:10px}
+  .menu{width:100%;justify-content:center;flex-wrap:wrap}
+  .hero{padding:38px 0 46px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="faixa"><div class="wrap"><span>Festival rolando de 19 de setembro a 10 de outubro</span><span class="pt">·</span><span>Ariquemes, RO</span></div></div>
+
+<nav class="nav"><div class="wrap">
+  <a href="index.html" class="brasao">
+    <img src="Logo_Boteco_Acia.png" alt="Boteco ACIA">
+    <span><b>Boteco ACIA</b><small>Ariquemes · 1ª edição</small></span>
+  </a>
+  <div class="menu">
+    <a href="index.html" class="on">Início</a>
+    <a href="disputa.html">A disputa</a>
+    <a href="como-se-vota.html">Como se vota</a>
+    <a href="acia.html">A ACIA</a>
+  </div>
+</div></nav>
+
+<header class="hero">
+  <svg class="deco" style="left:-70px;top:20px;width:230px" viewBox="0 0 200 320" fill="none" aria-hidden="true">
+    <path d="M100 320V40" stroke="#E8A020" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#E8A020">
+      <ellipse cx="70" cy="90" rx="26" ry="12" transform="rotate(-38 70 90)"/><ellipse cx="130" cy="90" rx="26" ry="12" transform="rotate(38 130 90)"/>
+      <ellipse cx="70" cy="140" rx="26" ry="12" transform="rotate(-38 70 140)"/><ellipse cx="130" cy="140" rx="26" ry="12" transform="rotate(38 130 140)"/>
+      <ellipse cx="70" cy="190" rx="26" ry="12" transform="rotate(-38 70 190)"/><ellipse cx="130" cy="190" rx="26" ry="12" transform="rotate(38 130 190)"/>
+      <ellipse cx="70" cy="240" rx="26" ry="12" transform="rotate(-38 70 240)"/><ellipse cx="130" cy="240" rx="26" ry="12" transform="rotate(38 130 240)"/>
+      <ellipse cx="100" cy="46" rx="13" ry="30"/>
+    </g>
+  </svg>
+  <svg class="deco" style="right:-46px;bottom:-40px;width:190px" viewBox="0 0 160 160" fill="none" aria-hidden="true">
+    <circle cx="80" cy="80" r="60" fill="#072658"/>
+    <circle cx="80" cy="80" r="44" fill="none" stroke="#F1EAE0" stroke-width="5" stroke-dasharray="9 9"/>
+    <circle cx="80" cy="80" r="26" fill="#E8A020"/>
+  </svg>
+  <svg class="deco" style="right:210px;top:-34px;width:120px" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    <circle cx="60" cy="60" r="46" fill="#E8A020"/><circle cx="60" cy="60" r="34" fill="#EDE4D2"/><g stroke="#E8A020" stroke-width="4"><path d="M60 26v68M26 60h68M36 36l48 48M84 36l-48 48"/></g>
+  </svg>
+  <div class="wrap hero-grid">
+    <div class="rv">
+      <h1>Coma bem, vote e <mark>eleja o melhor</mark> de Ariquemes.</h1>
+      <p class="lede">Os bares e restaurantes da cidade puseram um prato na disputa. Você prova, aponta o celular pro QR da mesa e <b>dá a sua nota</b>. Quem decide é quem come.</p>
+      <div class="cta">
+        <a href="disputa.html" class="btn">Ver as casas</a>
+        <a href="como-se-vota.html" class="btn btn-2">Como se vota</a>
+      </div>
+    </div>
+    <div class="vitrine rv">
+      <div class="foto"><span>foto do prato</span></div>
+      <div class="selo"><b id="contador">—</b><span>CASAS NA DISPUTA</span></div>
+      <p class="prazo">Faltam <b id="prazo">—</b> para o fim do festival</p>
+    </div>
+  </div>
+</header>
+
+<div class="tira"></div>
+
+<section class="roster">
+  <svg class="deco" style="right:-60px;top:60px;width:200px;opacity:.5" viewBox="0 0 200 320" fill="none" aria-hidden="true">
+    <path d="M100 320V40" stroke="#E8A020" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#E8A020">
+      <ellipse cx="70" cy="110" rx="26" ry="12" transform="rotate(-38 70 110)"/><ellipse cx="130" cy="110" rx="26" ry="12" transform="rotate(38 130 110)"/>
+      <ellipse cx="70" cy="165" rx="26" ry="12" transform="rotate(-38 70 165)"/><ellipse cx="130" cy="165" rx="26" ry="12" transform="rotate(38 130 165)"/>
+      <ellipse cx="70" cy="220" rx="26" ry="12" transform="rotate(-38 70 220)"/><ellipse cx="130" cy="220" rx="26" ry="12" transform="rotate(38 130 220)"/>
+      <ellipse cx="100" cy="46" rx="13" ry="30"/>
+    </g>
+  </svg>
+  <div class="wrap">
+    <div class="rv"><span class="rotulo">Os concorrentes</span><h2 class="sec">Quem está na disputa</h2><p class="sec-sub" id="subDisputa"></p></div>
+    <div class="linhas" id="lista"></div>
+    <div class="mais rv"><a href="disputa.html" class="btn btn-am" id="btnTodas">Ver todas as casas</a></div>
+  </div>
+</section>
+
+<section class="voto">
+  <svg class="deco" style="left:-52px;bottom:-46px;width:170px;opacity:.75" viewBox="0 0 160 160" fill="none" aria-hidden="true">
+    <circle cx="80" cy="80" r="60" fill="#E8A020"/>
+    <circle cx="80" cy="80" r="44" fill="none" stroke="#FFF6E0" stroke-width="5" stroke-dasharray="9 9"/>
+    <circle cx="80" cy="80" r="26" fill="#072658"/>
+  </svg>
+  <div class="wrap">
+    <div class="rv"><span class="rotulo">Menos de um minuto</span><h2 class="sec">Como se vota</h2>
+      <p class="sec-sub">Peça o prato da disputa, aponte a câmera pro QR code da mesa e dê nota de 0 a 5 em cada critério. Sem baixar nada, sem cadastro. Uma avaliação por pessoa em cada casa.</p></div>
+    <div class="voto-grid">
+      <div class="cri rv"><span class="e">0 a 5</span><h4>Apresentação</h4><p>Capricho no empratamento e apelo visual do prato.</p></div>
+      <div class="cri rv"><span class="e">0 a 5</span><h4>Sabor</h4><p>Gosto, tempero, equilíbrio, textura e temperatura.</p></div>
+      <div class="cri rv"><span class="e">0 a 5</span><h4>Criatividade</h4><p>Originalidade da receita e ingredientes regionais.</p></div>
+      <div class="cri rv"><span class="e">0 a 5</span><h4>Atendimento</h4><p>Simpatia, agilidade e conhecimento sobre o prato.</p></div>
+    </div>
+    <div class="total rv">
+      <b>20 pontos</b>
+      <span>Total máximo por avaliação. A nota final da casa é a média de todas as avaliações válidas.</span>
+      <a href="como-se-vota.html" class="btn btn-am">Regras completas</a>
+    </div>
+  </div>
+</section>
+
+<section class="acia">
+  <svg class="deco" style="right:-30px;top:40px;width:130px;opacity:.6" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    <circle cx="60" cy="60" r="46" fill="#E8A020"/><circle cx="60" cy="60" r="34" fill="#F5EFE3"/><g stroke="#E8A020" stroke-width="4"><path d="M60 26v68M26 60h68M36 36l48 48M84 36l-48 48"/></g>
+  </svg>
+  <div class="wrap">
+    <div class="rv"><span class="rotulo">Quem realiza</span><h2 class="sec">A ACIA</h2></div>
+    <div class="acia-grid">
+      <div class="rv">
+        <p class="forte">Cada prato provado é comércio local girando.</p>
+        <p>Realização da Associação Comercial e Industrial de Ariquemes. Um festival descentralizado: cada casa serve o seu prato onde sempre serviu, e o público faz o roteiro pela cidade.</p>
+        <p style="margin-top:22px"><a href="acia.html" class="btn btn-2">Sobre a ACIA</a></p>
+      </div>
+      <div class="apoio rv">
+        <div class="r">Apoio e parceria</div>
+        <div class="lista"><div>CDL Ariquemes</div><div>Rosalin Mesas</div><div>Motopam</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap foot">
+  <div class="marca">
+    <span class="disco"><img src="Logo_Boteco_Acia.png" alt="Boteco ACIA"></span>
+    <b>Boteco ACIA<br>Ariquemes 2026</b>
+    <div class="tag2">#BotecoACIA</div>
+  </div>
+  <div><div class="r">Navegar</div><ul>
+    <li><a href="index.html">Início</a></li><li><a href="disputa.html">A disputa</a></li>
+    <li><a href="como-se-vota.html">Como se vota</a></li><li><a href="acia.html">A ACIA</a></li>
+  </ul></div>
+  <div><div class="r">Documentos</div><ul>
+    <li><a href="#">Regulamento oficial</a></li><li><a href="#">Aviso de privacidade</a></li><li><a href="#">Contato</a></li>
+  </ul></div>
+</div></footer>
+
+<script>
+const casas=[
+ ["Casa Exemplo 01","Nome do prato a definir","Centro","Bar"],
+ ["Casa Exemplo 02","Nome do prato a definir","Setor 01","Petiscaria"],
+ ["Casa Exemplo 03","Nome do prato a definir","Setor 03","Choperia"],
+ ["Casa Exemplo 04","Nome do prato a definir","Jardim Paulista","Restaurante"],
+ ["Casa Exemplo 05","Nome do prato a definir","Setor 05","Espetaria"],
+ ["Casa Exemplo 06","Nome do prato a definir","Nova União","Hamburgueria"],
+ ["Casa Exemplo 07","Nome do prato a definir","Setor 02","Bar"],
+ ["Casa Exemplo 08","Nome do prato a definir","Centro","Lanchonete"],
+ ["Casa Exemplo 09","Nome do prato a definir","Setor 04","Restaurante"],
+ ["Casa Exemplo 10","Nome do prato a definir","Colonial","Bar"],
+ ["Casa Exemplo 11","Nome do prato a definir","Setor 06","Petiscaria"],
+ ["Casa Exemplo 12","Nome do prato a definir","Apoio Social","Casa noturna"]
+];
+const fundos=["#072658","#0B3568","#04182F","#0065A4"];
+const amostra=casas.slice(0,6);
+document.getElementById("lista").innerHTML=amostra.map((c,i)=>`
+<article class="linha rv">
+  <div class="ret" style="background:${fundos[i%4]}"><div class="carimbo"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#E8A020"/><circle cx="50" cy="50" r="46" fill="none" stroke="#04182F" stroke-width="5" stroke-dasharray="9.6 9.6"/><circle cx="50" cy="50" r="33" fill="none" stroke="#04182F" stroke-width="2.5"/></svg><b>${String(i+1).padStart(2,"0")}</b></div></div>
+  <div class="info">
+    <div class="tags"><span class="tag v">${c[3]}</span><span class="tag">${c[2]}</span></div>
+    <h3>${c[1]}</h3>
+    <p class="casa">${c[0]}</p>
+    <div class="acoes"><a href="#">Ver a casa</a><a href="#">Como chegar</a></div>
+  </div>
+</article>`).join("");
+document.getElementById("contador").textContent=casas.length;
+const fim=new Date(2026,9,10), hoje=new Date();
+const dias=Math.max(0,Math.ceil((fim-hoje)/86400000));
+document.getElementById("prazo").textContent = dias===1 ? "1 dia" : dias+" dias";
+document.getElementById("subDisputa").textContent="Mostrando 6 das "+casas.length+" casas. Monte seu roteiro por bairro — dá tempo de visitar todas em vinte e dois dias.";
+document.getElementById("btnTodas").textContent="Ver todas as "+casas.length+" casas";
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("on");io.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
