@@ -11,7 +11,13 @@ import SairDoPainel from '@/components/painel/SairDoPainel'
  * sua própria checagem, porque quem chama a API direto não passa por este
  * layout.
  *
- * `/painel/entrar` não fica abaixo deste layout, por motivo óbvio.
+ * O grupo `(protegido)` existe por causa de um laço que já aconteceu: com este
+ * layout na raiz de `/painel`, a própria tela de login o herdava, era barrada
+ * por não ter sessão, e redirecionava para si mesma — cinquenta saltos e
+ * painel inacessível. Grupo de rota não entra na URL, então `/painel` continua
+ * `/painel`, mas `/painel/entrar` fica de fora da trava.
+ *
+ * Não mover este arquivo para `app/painel/layout.tsx`.
  */
 
 export const dynamic = 'force-dynamic'

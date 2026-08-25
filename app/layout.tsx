@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Montserrat, Archivo } from 'next/font/google'
-import Cabecalho from '@/components/Cabecalho'
-import Rodape from '@/components/Rodape'
 import { EDICAO } from '@/lib/dados'
 import './globals.css'
 
@@ -40,20 +38,19 @@ export const viewport: Viewport = {
   themeColor: '#072658',
 }
 
+/**
+ * Layout raiz: só html, body e as fontes.
+ *
+ * Cabeçalho e rodapé do site vivem em `app/(publico)/layout.tsx`, não aqui.
+ * Quando estavam neste arquivo, o painel e a tela de voto herdavam a navegação
+ * inteira do site — na tela de voto isso significava carregar menu, faixa de
+ * fase e rodapé com doze patrocinadores numa página que precisa abrir rápido
+ * em 4G ruim, e ainda dava saída no meio do voto.
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${montserrat.variable} ${archivo.variable}`}>
-      <body className="overflow-x-hidden">
-        <a
-          href="#conteudo"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-100 focus:rounded-full focus:bg-marinho focus:px-5 focus:py-3 focus:font-bold focus:text-branco"
-        >
-          Pular para o conteúdo
-        </a>
-        <Cabecalho />
-        <main id="conteudo">{children}</main>
-        <Rodape />
-      </body>
+      <body className="overflow-x-hidden">{children}</body>
     </html>
   )
 }
