@@ -324,7 +324,16 @@ O cookie não guarda a senha nem id de sessão: guarda `validade.assinatura`, co
 
 **Anular avaliação não apaga.** Preenche `anulada_em` e `anulada_motivo`; a linha continua no banco como lastro e sai de toda média. O motivo é obrigatório — a decisão pode ser questionada pela casa afetada, e "achei estranho" não se sustenta numa reunião.
 
-**Sinal de anomalia é pista, não prova.** IP repetido (mais de 3), rajada (4+ em 5 minutos) e voto fora do horário cadastrado. O wi-fi do próprio bar faz clientes honestos dividirem IP, e mesa cheia gera rajada legítima. O alerta de horário só dispara em casa com horário cadastrado — com `{}` todo voto seria "fora de horário" e o painel viraria ruído.
+**Sinal de anomalia é pista, não prova.** Quatro marcadores, todos com limiar ajustável por variável de ambiente (`PAINEL_LIMIAR_*`) — o número certo só aparece com o festival rodando, e trocar não pode exigir deploy no meio do evento.
+
+O risco aqui **não é deixar fraude passar: é marcar cliente honesto.** Alerta que dispara em quase tudo não é sensível, é inútil — e convida a anular voto legítimo, que é pior do que deixar passar voto duvidoso, porque tira da casa uma nota que ela ganhou.
+
+- **IP repetido** — 15+ avaliações do mesmo IP **na mesma casa**. O limiar já foi 3, e contava pelo festival inteiro: um cliente que visitasse quatro casas era marcado. O wi-fi do bar e o CGNAT das operadoras fazem dezenas de pessoas honestas saírem pelo mesmo endereço.
+- **IP em várias casas** — 5+ casas diferentes no mesmo endereço. Mais específico que volume: quem está no wi-fi de um bar avalia aquele bar. **Ressalva:** IP de operadora móvel cobre a cidade, então CGNAT também produz este sinal.
+- **Rajada** — 8+ na mesma casa em 5 minutos. Casa o Art. 21 ("volume atípico de notas máximas em curto período").
+- **Fora de horário** — só dispara em casa com horário cadastrado. Com `{}` todo voto seria marcado e o painel viraria ruído.
+
+A conta está em `calcularAuditoria`, separada do banco e travada em `tests/auditoria.test.ts` com cenários reais: wi-fi de bar cheio, cliente fazendo rolê, mesa pedindo a conta junto.
 
 **O CPF não aparece no painel** porque nunca foi gravado. Só existe como HMAC, e nem o hash é mostrado.
 

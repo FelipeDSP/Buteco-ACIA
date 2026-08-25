@@ -12,19 +12,11 @@ import type { Anomalia } from '@/lib/painel'
  * se sustenta numa reunião; o campo existe para obrigar a escrever o porquê.
  */
 
-const ETIQUETA: Record<Anomalia, { texto: string; ajuda: string }> = {
-  'ip-repetido': {
-    texto: 'IP repetido',
-    ajuda: 'Mais de 3 avaliações do mesmo endereço. O wi-fi do próprio bar faz isso com gente honesta — é pista, não prova.',
-  },
-  'fora-de-horario': {
-    texto: 'Fora de horário',
-    ajuda: 'Voto registrado quando a casa estava fechada, segundo o horário cadastrado.',
-  },
-  rajada: {
-    texto: 'Rajada',
-    ajuda: '4 ou mais avaliações na mesma casa em menos de 5 minutos.',
-  },
+const ETIQUETA: Record<Anomalia, string> = {
+  'ip-repetido': 'IP repetido',
+  'ip-em-varias-casas': 'IP em várias casas',
+  rajada: 'Rajada',
+  'fora-de-horario': 'Fora de horário',
 }
 
 export type Props = {
@@ -36,6 +28,8 @@ export type Props = {
   anulada: boolean
   motivo: string | null
   anomalias: Anomalia[]
+  doIpNaCasa: number
+  casasDoIp: number
 }
 
 export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
@@ -83,15 +77,26 @@ export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
       </td>
       <td className="py-3 pr-3">
         <span className="flex flex-wrap gap-1">
-          {linha.anomalias.map((a) => (
-            <span
-              key={a}
-              title={ETIQUETA[a].ajuda}
-              className="cursor-help rounded-full bg-ambar/25 px-2.5 py-0.5 text-[11.5px] font-bold text-ambar-e"
-            >
-              {ETIQUETA[a].texto}
-            </span>
-          ))}
+          {linha.anomalias.map((a) => {
+            // O número que disparou o sinal fica no selo: sem ele, quem lê não
+            // sabe se foram 15 avaliações ou 300, e o selo diz a mesma coisa.
+            const quantos =
+              a === 'ip-repetido'
+                ? linha.doIpNaCasa
+                : a === 'ip-em-varias-casas'
+                  ? linha.casasDoIp
+                  : null
+            return (
+              <span
+                key={a}
+                title="Ver a legenda acima da tabela: sinal é pista, não prova."
+                className="cursor-help rounded-full bg-ambar/25 px-2.5 py-0.5 text-[11.5px] font-bold text-ambar-e"
+              >
+                {ETIQUETA[a]}
+                {quantos !== null ? ` · ${quantos}` : ''}
+              </span>
+            )
+          })}
         </span>
       </td>
       <td className="py-3 text-right">

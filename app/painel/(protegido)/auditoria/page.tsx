@@ -1,16 +1,26 @@
 import LinhaDaAuditoria from '@/components/painel/LinhaDaAuditoria'
 import { Bloco, Filtros, Numero, Numeros, TopoDaTela, Vazio } from '@/components/painel/Peças'
-import { auditar, type Anomalia } from '@/lib/painel'
+import LegendaDeSinais from '@/components/painel/LegendaDeSinais'
+import { auditar, limiares, type Anomalia } from '@/lib/painel'
 
 export const dynamic = 'force-dynamic'
 
-const FILTROS = ['todas', 'anomalias', 'ip-repetido', 'rajada', 'fora-de-horario', 'anuladas'] as const
+const FILTROS = [
+  'todas',
+  'anomalias',
+  'ip-em-varias-casas',
+  'ip-repetido',
+  'rajada',
+  'fora-de-horario',
+  'anuladas',
+] as const
 type Filtro = (typeof FILTROS)[number]
 
 const ROTULO: Record<Filtro, string> = {
   todas: 'Todas',
   anomalias: 'Com sinal',
   'ip-repetido': 'IP repetido',
+  'ip-em-varias-casas': 'IP em várias casas',
   rajada: 'Rajada',
   'fora-de-horario': 'Fora de horário',
   anuladas: 'Anuladas',
@@ -23,6 +33,7 @@ export default async function Auditoria({
 }) {
   const { ver } = await searchParams
   const linhas = await auditar()
+  const limites = limiares()
 
   const combina = (linha: (typeof linhas)[number], filtro: Filtro) => {
     if (filtro === 'todas') return true
@@ -43,7 +54,7 @@ export default async function Auditoria({
     <div className="wrap">
       <TopoDaTela
         titulo="Auditoria"
-        sub="O CPF não aparece aqui nem em lugar nenhum: ele nunca foi gravado, só o HMAC. Sinal de anomalia é pista, não prova — o wi-fi do próprio bar faz clientes honestos dividirem IP, e mesa cheia gera rajada legítima."
+        sub="O CPF não aparece aqui nem em lugar nenhum: ele nunca foi gravado, só o HMAC. Os marcadores dirigem o olhar; a decisão de anular é da comissão, olhando o conjunto."
       />
 
       <Numeros>
@@ -58,7 +69,9 @@ export default async function Auditoria({
         <Numero valor={quantos('anuladas')} rotulo="Anuladas" />
       </Numeros>
 
-      <div className="mt-7 mb-4">
+      <LegendaDeSinais limites={limites} />
+
+      <div className="mt-6 mb-4">
         <Filtros
           base="/painel/auditoria"
           atual={atual}

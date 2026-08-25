@@ -198,7 +198,7 @@ export function calcularApuracao(
   }
 }
 
-export type Anomalia = 'ip-repetido' | 'fora-de-horario' | 'rajada'
+export type Anomalia = 'ip-repetido' | 'ip-em-varias-casas' | 'fora-de-horario' | 'rajada'
 
 export type LinhaDaAuditoria = {
   id: string
@@ -211,25 +211,95 @@ export type LinhaDaAuditoria = {
   anulada: boolean
   motivo: string | null
   anomalias: Anomalia[]
+  /** Quantas avaliações este IP fez nesta casa. */
+  doIpNaCasa: number
+  /** Em quantas casas diferentes este IP votou. */
+  casasDoIp: number
 }
 
-/** Acima disto, o mesmo IP deixa de ser coincidência de wi-fi compartilhado. */
-const LIMITE_POR_IP = 3
-/** Avaliações na mesma casa dentro desta janela contam como rajada. */
-const JANELA_DE_RAJADA_MS = 5 * 60 * 1000
-const RAJADA_MINIMA = 4
+export type Limiares = {
+  ipPorCasa: number
+  ipEmCasas: number
+  rajadaMinima: number
+  janelaDeRajadaMin: number
+}
 
-export async function auditar(): Promise<LinhaDaAuditoria[]> {
-  const { casas, avaliacoes } = await lerTudo()
+/**
+ * Limiares de anomalia, ajustáveis por variável de ambiente.
+ *
+ * Ficam configuráveis porque o número certo só aparece com o festival rodando:
+ * um sábado de casa cheia produz números que uma terça não produz, e trocar
+ * limiar não pode exigir deploy no meio do evento.
+ */
+const numeroDoAmbiente = (nome: string, padrao: number): number => {
+  const bruto = Number(process.env[nome])
+  return Number.isFinite(bruto) && bruto > 0 ? bruto : padrao
+}
+
+export function limiares(): Limiares {
+  return {
+    /**
+     * Avaliações do mesmo IP **na mesma casa**.
+     *
+     * 15 e não 3: o wi-fi do próprio bar faz dezenas de clientes honestos
+     * saírem pelo mesmo endereço, e o 4G também — as operadoras usam CGNAT e
+     * compartilham um IP entre milhares de assinantes. Numa sexta cheia, três
+     * avaliações do mesmo IP é o normal, não a exceção.
+     */
+    ipPorCasa: numeroDoAmbiente('PAINEL_LIMIAR_IP_POR_CASA', 15),
+    /**
+     * Casas diferentes avaliadas pelo mesmo IP.
+     *
+     * Sinal mais específico que volume: quem está no wi-fi de um bar avalia
+     * aquele bar. Um IP que aparece em muitas casas não esteve fisicamente em
+     * todas — **mas veja a ressalva do CGNAT na tela de auditoria**, porque um
+     * IP de operadora móvel cobre a cidade inteira.
+     */
+    ipEmCasas: numeroDoAmbiente('PAINEL_LIMIAR_IP_EM_CASAS', 5),
+    rajadaMinima: numeroDoAmbiente('PAINEL_LIMIAR_RAJADA', 8),
+    janelaDeRajadaMin: numeroDoAmbiente('PAINEL_JANELA_RAJADA_MIN', 5),
+  }
+}
+
+type AvaliacaoDaAuditoria = Pick<
+  AvaliacaoBruta,
+  | 'id'
+  | 'casa_id'
+  | 'criada_em'
+  | 'ip'
+  | 'user_agent'
+  | 'nota_apresentacao'
+  | 'nota_sabor'
+  | 'nota_criatividade'
+  | 'nota_atendimento'
+  | 'anulada_em'
+  | 'anulada_motivo'
+>
+
+/**
+ * A detecção, separada do banco para poder ser testada com cenários montados —
+ * wi-fi de bar cheio, CGNAT de operadora, dono do bar votando sozinho.
+ */
+export function calcularAuditoria(
+  casas: Pick<CasaBruta, 'id' | 'slug' | 'nome' | 'horarios'>[],
+  avaliacoes: AvaliacaoDaAuditoria[],
+  limites: Limiares = limiares(),
+): LinhaDaAuditoria[] {
   const porId = new Map(casas.map((c) => [c.id, c]))
 
-  const contagemPorIp = new Map<string, number>()
+  // Quantas avaliações cada IP fez em cada casa, e em quantas casas apareceu.
+  const porIpECasa = new Map<string, number>()
+  const casasPorIp = new Map<string, Set<string>>()
   for (const a of avaliacoes) {
     if (!a.ip) continue
-    contagemPorIp.set(a.ip, (contagemPorIp.get(a.ip) ?? 0) + 1)
+    const chave = `${a.ip}|${a.casa_id}`
+    porIpECasa.set(chave, (porIpECasa.get(chave) ?? 0) + 1)
+    if (!casasPorIp.has(a.ip)) casasPorIp.set(a.ip, new Set())
+    casasPorIp.get(a.ip)!.add(a.casa_id)
   }
 
   // Rajada: para cada avaliação, quantas outras da mesma casa caíram na janela.
+  const janela = limites.janelaDeRajadaMin * 60 * 1000
   const emRajada = new Set<string>()
   for (const casa of casas) {
     const daCasa = avaliacoes
@@ -239,8 +309,8 @@ export async function auditar(): Promise<LinhaDaAuditoria[]> {
 
     let inicio = 0
     for (let fim = 0; fim < daCasa.length; fim++) {
-      while (daCasa[fim].t - daCasa[inicio].t > JANELA_DE_RAJADA_MS) inicio++
-      if (fim - inicio + 1 >= RAJADA_MINIMA) {
+      while (daCasa[fim].t - daCasa[inicio].t > janela) inicio++
+      if (fim - inicio + 1 >= limites.rajadaMinima) {
         for (let k = inicio; k <= fim; k++) emRajada.add(daCasa[k].id)
       }
     }
@@ -250,13 +320,16 @@ export async function auditar(): Promise<LinhaDaAuditoria[]> {
     const casa = porId.get(a.casa_id)
     const anomalias: Anomalia[] = []
 
-    if (a.ip && (contagemPorIp.get(a.ip) ?? 0) > LIMITE_POR_IP) anomalias.push('ip-repetido')
+    const doIpNaCasa = a.ip ? (porIpECasa.get(`${a.ip}|${a.casa_id}`) ?? 0) : 0
+    const casasDoIp = a.ip ? (casasPorIp.get(a.ip)?.size ?? 0) : 0
+
+    if (doIpNaCasa >= limites.ipPorCasa) anomalias.push('ip-repetido')
+    if (casasDoIp >= limites.ipEmCasas) anomalias.push('ip-em-varias-casas')
     if (emRajada.has(a.id)) anomalias.push('rajada')
 
     // Só acusa horário quando a casa tem horário cadastrado: com `{}` todo
     // voto seria "fora de horário", e o alerta viraria ruído.
-    const horarios = casa?.horarios ?? {}
-    const situacao = situacaoDaCasa(horarios, new Date(a.criada_em))
+    const situacao = situacaoDaCasa(casa?.horarios ?? {}, new Date(a.criada_em))
     if (!situacao.semCadastro && !situacao.aberta) anomalias.push('fora-de-horario')
 
     return {
@@ -275,8 +348,15 @@ export async function auditar(): Promise<LinhaDaAuditoria[]> {
       anulada: a.anulada_em !== null,
       motivo: a.anulada_motivo,
       anomalias,
+      doIpNaCasa,
+      casasDoIp,
     }
   })
+}
+
+export async function auditar(): Promise<LinhaDaAuditoria[]> {
+  const { casas, avaliacoes } = await lerTudo()
+  return calcularAuditoria(casas, avaliacoes)
 }
 
 export type CasaDoPainel = {
