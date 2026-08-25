@@ -1,5 +1,7 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import DesativarCasa from '@/components/painel/DesativarCasa'
+import { Bloco, Numero, Numeros, Selo, TopoDaTela } from '@/components/painel/Peças'
 import { listarCasasDoPainel } from '@/lib/painel'
 import { situacaoDaCasa } from '@/lib/horarios'
 
@@ -7,88 +9,133 @@ export const dynamic = 'force-dynamic'
 
 export default async function Casas() {
   const casas = await listarCasasDoPainel()
-  const semHorario = casas.filter(
-    (c) => c.ativa && situacaoDaCasa(c.horarios ?? {}).semCadastro,
-  ).length
+  const ativas = casas.filter((c) => c.ativa)
+  const semHorario = ativas.filter((c) => situacaoDaCasa(c.horarios ?? {}).semCadastro)
+  const semFoto = ativas.filter((c) => !c.foto_url)
+  const semPrato = ativas.filter((c) => !c.prato_confirmado)
 
   return (
     <div className="wrap">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="display text-[clamp(24px,3vw,34px)]">Casas</h1>
-          <p className="mt-2 text-[15px] text-tinta-3">
-            {casas.filter((c) => c.ativa).length} ativas de {casas.length}.
-          </p>
-        </div>
-        <Link href="/painel/casas/nova" className="btn btn-pequeno">
-          Adicionar casa
-        </Link>
-      </div>
+      <TopoDaTela
+        titulo="Casas"
+        sub="Tudo que aparece no site e o que liga a janela de votação de cada QR."
+        acao={
+          <Link href="/painel/casas/nova" className="btn btn-pequeno">
+            Adicionar casa
+          </Link>
+        }
+      />
 
-      {semHorario > 0 ? (
-        <p className="mt-5 rounded-xl bg-ambar/20 px-4 py-3 text-[14px] font-semibold text-ambar-e">
-          {semHorario} {semHorario === 1 ? 'casa ativa está' : 'casas ativas estão'} sem
-          horário cadastrado. Enquanto estiverem, o QR aceita voto a qualquer hora —
-          inclusive com a casa fechada.
+      <Numeros>
+        <Numero valor={`${ativas.length}/${casas.length}`} rotulo="Ativas" tom="destaque" />
+        <Numero
+          valor={semHorario.length}
+          rotulo="Sem horário"
+          tom={semHorario.length > 0 ? 'alerta' : 'neutro'}
+          detalhe={semHorario.length > 0 ? 'aceitam voto a qualquer hora' : 'todas cadastradas'}
+        />
+        <Numero valor={semFoto.length} rotulo="Sem foto do prato" />
+        <Numero valor={semPrato.length} rotulo="Prato a confirmar" />
+      </Numeros>
+
+      {semHorario.length > 0 ? (
+        <p className="mt-5 rounded-2xl bg-ambar/20 px-5 py-4 text-[14px] font-semibold text-ambar-e">
+          {semHorario.length} {semHorario.length === 1 ? 'casa ativa está' : 'casas ativas estão'} sem
+          horário cadastrado. Enquanto estiverem, o QR aceita voto a qualquer hora — inclusive
+          de madrugada, com a casa fechada. Precisa estar resolvido antes de 19 de setembro.
         </p>
       ) : null}
 
-      <div className="mt-7 overflow-x-auto">
-        <table className="w-full min-w-[760px] border-collapse text-[14.5px]">
-          <thead>
-            <tr className="border-b-2 border-risco text-left">
-              <th className="py-2.5 pr-3 font-semibold">Casa</th>
-              <th className="py-2.5 pr-3 font-semibold">Prato</th>
-              <th className="py-2.5 pr-3 font-semibold">Bairro</th>
-              <th className="py-2.5 pr-3 font-semibold">Horário</th>
-              <th className="py-2.5 pr-3 text-right font-semibold">Avaliações</th>
-              <th className="py-2.5 text-right font-semibold">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {casas.map((casa) => {
-              const situacao = situacaoDaCasa(casa.horarios ?? {})
-              return (
-                <tr key={casa.id} className={`border-b border-risco ${casa.ativa ? '' : 'opacity-55'}`}>
-                  <td className="py-3 pr-3">
-                    <Link href={`/painel/casas/${casa.id}`} className="font-semibold hover:underline">
-                      {casa.nome}
-                    </Link>
-                    <span className="block font-mono text-[12px] text-tinta-3">/{casa.slug}</span>
-                  </td>
-                  <td className="py-3 pr-3">
-                    {casa.prato ?? '—'}
-                    {!casa.prato_confirmado ? (
-                      <span className="ml-1.5 rounded-full bg-creme px-2 py-0.5 text-[11px] font-bold text-tinta-3">
-                        a confirmar
+      <Bloco className="mt-7">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[880px] border-collapse text-[14.5px]">
+            <thead>
+              <tr className="border-b border-risco bg-creme text-left">
+                <th className="px-5 py-2.5 font-semibold">Casa</th>
+                <th className="py-2.5 pr-3 font-semibold">Prato</th>
+                <th className="py-2.5 pr-3 font-semibold">Bairro</th>
+                <th className="py-2.5 pr-3 font-semibold">Horário</th>
+                <th className="py-2.5 pr-3 text-right font-semibold">Avaliações</th>
+                <th className="px-5 py-2.5 text-right font-semibold">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {casas.map((casa, i) => {
+                const situacao = situacaoDaCasa(casa.horarios ?? {})
+                return (
+                  <tr
+                    key={casa.id}
+                    className={`border-b border-risco last:border-0 ${i % 2 === 1 ? 'bg-creme/40' : ''} ${
+                      casa.ativa ? '' : 'opacity-60'
+                    }`}
+                  >
+                    <td className="px-5 py-3">
+                      <span className="flex items-center gap-3">
+                        {casa.foto_url ? (
+                          <Image
+                            src={casa.foto_url}
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="size-11 shrink-0 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <span
+                            title="Sem foto do prato"
+                            className="grid size-11 shrink-0 place-content-center rounded-lg bg-creme text-[10px] font-bold text-tinta-3"
+                          >
+                            foto
+                          </span>
+                        )}
+                        <span className="min-w-0">
+                          <Link
+                            href={`/painel/casas/${casa.id}`}
+                            className="block font-semibold hover:underline"
+                          >
+                            {casa.nome}
+                          </Link>
+                          <span className="block font-mono text-[11.5px] text-tinta-3">
+                            /{casa.slug}
+                          </span>
+                        </span>
                       </span>
-                    ) : null}
-                  </td>
-                  <td className="py-3 pr-3 text-tinta-3">{casa.bairro || '—'}</td>
-                  <td className="py-3 pr-3">
-                    {situacao.semCadastro ? (
-                      <span className="rounded-full bg-ambar/25 px-2.5 py-0.5 text-[11.5px] font-bold text-ambar-e">
-                        sem cadastro
-                      </span>
-                    ) : (
-                      <span className="text-[13px] text-tinta-3">cadastrado</span>
-                    )}
-                  </td>
-                  <td className="py-3 pr-3 text-right">{casa.avaliacoes}</td>
-                  <td className="py-3 text-right">
-                    <DesativarCasa
-                      id={casa.id}
-                      nome={casa.nome}
-                      ativa={casa.ativa}
-                      avaliacoes={casa.avaliacoes}
-                    />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    <td className="py-3 pr-3">
+                      {casa.prato ?? <span className="text-tinta-3">—</span>}
+                      {!casa.prato_confirmado ? (
+                        <span className="ml-1.5">
+                          <Selo tom="alerta">a confirmar</Selo>
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="py-3 pr-3 text-tinta-3">
+                      {casa.bairro || <Selo tom="alerta">em branco</Selo>}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {situacao.semCadastro ? (
+                        <Selo tom="alerta" titulo="Sem horário, o QR aceita voto a qualquer hora">
+                          sem cadastro
+                        </Selo>
+                      ) : (
+                        <Selo>cadastrado</Selo>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3 text-right">{casa.avaliacoes}</td>
+                    <td className="px-5 py-3 text-right">
+                      <DesativarCasa
+                        id={casa.id}
+                        nome={casa.nome}
+                        ativa={casa.ativa}
+                        avaliacoes={casa.avaliacoes}
+                      />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Bloco>
     </div>
   )
 }
