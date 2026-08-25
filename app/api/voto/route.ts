@@ -3,6 +3,7 @@ import { obterCasa } from '@/lib/dados'
 import { cpfValido } from '@/lib/cpf'
 import { hashDoCpf } from '@/lib/cpf-hash'
 import { lerSessao, RECUSA } from '@/lib/sessao'
+import { periodoDeVotacao } from '@/lib/fase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { NOME_DO_COOKIE, agenteDoPedido, ipDoPedido } from '@/lib/pedido'
 import { ACEITE_VERSAO, colunasDasNotas, validarNotas } from '@/lib/voto'
@@ -33,6 +34,14 @@ export async function POST(pedido: NextRequest) {
     aceite?: boolean
     notas?: unknown
   }
+
+  /**
+   * Art. 16 de novo, aqui e não só na rota do QR: a sessão dura 20 minutos e
+   * pode atravessar a meia-noite do dia 10. Sem esta checagem, quem abrisse o
+   * QR às 23h55 do último dia gravaria voto depois do encerramento.
+   */
+  const fechado = periodoDeVotacao()
+  if (fechado) return recusa(fechado.texto, 409)
 
   if (typeof slug !== 'string') return recusa('Casa não informada.')
 

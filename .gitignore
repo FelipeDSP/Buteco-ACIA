@@ -11,3 +11,18 @@ next-env.d.ts
 # — e este é público. Histórico de Git não se apaga: uma vez enviado, fica.
 Ficha de Inscri*.xlsx
 *.xlsx
+
+# QR codes gerados. Ficam de fora porque carregam o endereco de quem gerou:
+# os atuais apontam para a maquina de desenvolvimento na rede local, e alguem
+# poderia imprimir por engano. Regere com gerar-qrcodes.py e o dominio real.
+qrcodes/
+
+# Material de origem, ja superado pelo que esta no codigo e no banco.
+# Continua em disco, so nao vai para o repositorio.
+restaurantes.ts
+index-festival.html
+acia.html
+como-se-vota.html
+logos/
+reg-tmp.txt
+

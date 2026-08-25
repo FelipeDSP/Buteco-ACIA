@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { exigirBancoSemVotosReais } from './guarda'
+import { AVISO_FORA_DO_PERIODO, exigirBancoSemVotosReais, servidorAceitaVoto } from './guarda'
 
 /**
  * O QR da mesa é lido por um celular na rede local, e o redirect precisa
@@ -64,11 +64,15 @@ async function locationDe(caminho: string): Promise<string | null> {
 
 describe('o formulário de voto nunca manda o CPF pela URL', () => {
   let noAr = false
+  let noPeriodo = false
 
   beforeAll(async () => {
     await exigirBancoSemVotosReais(banco, cpfHash)
     noAr = await servidorNoAr()
-    if (noAr) await limpar()
+    if (noAr) {
+      noPeriodo = await servidorAceitaVoto(BASE)
+      await limpar()
+    }
   })
   afterAll(async () => {
     if (noAr) await limpar()
@@ -78,6 +82,7 @@ describe('o formulário de voto nunca manda o CPF pela URL', () => {
     'o form é method="post", então um submit nativo não vira query string',
     async (ctx) => {
       if (!noAr) ctx.skip(`servidor fora do ar em ${BASE}`)
+      if (!noPeriodo) ctx.skip(AVISO_FORA_DO_PERIODO)
 
       // Abre a sessão e busca o HTML da tela de voto do jeito que o navegador
       // buscaria, seguindo o redirect e levando o cookie.
@@ -104,11 +109,15 @@ describe('o formulário de voto nunca manda o CPF pela URL', () => {
 
 describe('redirect do QR respeita o host que o visitante pediu', () => {
   let noAr = false
+  let noPeriodo = false
 
   beforeAll(async () => {
     await exigirBancoSemVotosReais(banco, cpfHash)
     noAr = await servidorNoAr()
-    if (noAr) await limpar()
+    if (noAr) {
+      noPeriodo = await servidorAceitaVoto(BASE)
+      await limpar()
+    }
   })
   afterAll(async () => {
     if (noAr) await limpar()
@@ -118,6 +127,7 @@ describe('redirect do QR respeita o host que o visitante pediu', () => {
     'não devolve endereço de bind no Location',
     async (ctx) => {
       if (!noAr) ctx.skip(`servidor fora do ar em ${BASE} — suba com npm run dev`)
+      if (!noPeriodo) ctx.skip(AVISO_FORA_DO_PERIODO)
 
       const location = await locationDe(`/votar/${CASA}`)
       expect(location, 'o redirect precisa trazer Location').toBeTruthy()
@@ -136,6 +146,7 @@ describe('redirect do QR respeita o host que o visitante pediu', () => {
     'usa caminho relativo, que o navegador resolve contra o host original',
     async (ctx) => {
       if (!noAr) ctx.skip('servidor fora do ar')
+      if (!noPeriodo) ctx.skip(AVISO_FORA_DO_PERIODO)
 
       const location = await locationDe(`/votar/${CASA}`)
       expect(location?.startsWith('/'), `Location deveria ser relativo, veio "${location}"`).toBe(
@@ -150,6 +161,7 @@ describe('redirect do QR respeita o host que o visitante pediu', () => {
     'o mesmo vale para o redirect de erro, não só o do caminho feliz',
     async (ctx) => {
       if (!noAr) ctx.skip('servidor fora do ar')
+      if (!noPeriodo) ctx.skip(AVISO_FORA_DO_PERIODO)
 
       // Slug inexistente cai no ramo de erro, que também redireciona.
       const location = await locationDe('/votar/casa-que-nao-existe')

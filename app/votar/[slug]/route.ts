@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { obterCasa } from '@/lib/dados'
 import { situacaoDaCasa } from '@/lib/horarios'
+import { periodoDeVotacao } from '@/lib/fase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { NOME_DO_COOKIE, agenteDoPedido, ipDoPedido } from '@/lib/pedido'
 
@@ -46,6 +47,11 @@ export async function GET(pedido: NextRequest, { params }: Props) {
   const { slug } = await params
   const paraOFormulario = (erro?: string) =>
     redirecionarPara(`/votar/${slug}/avaliar${erro ? `?erro=${erro}` : ''}`)
+
+  // Art. 16: fora do período do festival não há votação, seja qual for a casa.
+  // Vem antes de tudo porque nem faz sentido criar sessão.
+  const fechado = periodoDeVotacao()
+  if (fechado) return paraOFormulario(fechado.motivo)
 
   // `obterCasa` usa a chave anônima, e o RLS já esconde casa inativa.
   const casa = await obterCasa(slug)

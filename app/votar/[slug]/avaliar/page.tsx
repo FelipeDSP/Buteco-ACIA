@@ -3,6 +3,7 @@ import Link from 'next/link'
 import FormularioVoto from '@/components/FormularioVoto'
 import { CRITERIOS, obterCasa, nomeDoPrato } from '@/lib/dados'
 import { situacaoDaCasa, descreverFaixas } from '@/lib/horarios'
+import { periodoDeVotacao } from '@/lib/fase'
 import { RECUSA, lerSessao } from '@/lib/sessao'
 import { ACEITE_VERSAO } from '@/lib/voto'
 
@@ -51,6 +52,10 @@ function Aviso({
 export default async function Avaliar({ params, searchParams }: Props) {
   const { slug } = await params
   const { erro } = await searchParams
+
+  // Antes da casa: fora do período não importa qual QR foi lido.
+  const fechado = periodoDeVotacao()
+  if (fechado) return <Aviso titulo={fechado.titulo} texto={fechado.texto} />
 
   const casa = await obterCasa(slug)
 

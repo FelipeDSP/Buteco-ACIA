@@ -102,3 +102,42 @@ export function contagem(dia = hoje()): Contagem {
     detalhe: 'Premiação na 2ª quinzena de outubro',
   }
 }
+
+/**
+ * A votação só existe dentro do festival (Art. 16º: 19/09 a 10/10/2026).
+ *
+ * Fora da janela o QR precisa recusar, e recusar dizendo qual é o caso — quem
+ * lê o QR antes da abertura precisa saber que é cedo, não que está quebrado.
+ *
+ * Respeita `BOTECO_FASE_HOJE`, então dá para conferir as três situações sem
+ * mexer no relógio da máquina.
+ */
+export type PeriodoFechado = {
+  motivo: 'ainda-nao-comecou' | 'ja-encerrou'
+  titulo: string
+  texto: string
+}
+
+export function periodoDeVotacao(dia = hoje()): PeriodoFechado | null {
+  const fase = faseAtual(dia)
+  if (fase === 'festival') return null
+
+  if (fase === 'pre-festival') {
+    const dias = diasEntre(dia, CALENDARIO.inicioFestival)
+    return {
+      motivo: 'ainda-nao-comecou',
+      titulo: 'A votação ainda não começou',
+      texto:
+        dias === 1
+          ? 'O Boteco ACIA abre amanhã, 19 de setembro. Volte a partir de lá e leia o QR de novo.'
+          : `O Boteco ACIA começa em 19 de setembro — faltam ${dias} dias. Volte a partir de lá e leia o QR de novo.`,
+    }
+  }
+
+  return {
+    motivo: 'ja-encerrou',
+    titulo: 'A votação foi encerrada em 10 de outubro',
+    texto:
+      'O período de avaliação do Boteco ACIA terminou. As notas estão sendo apuradas e o resultado sai na premiação, na segunda quinzena de outubro.',
+  }
+}

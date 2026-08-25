@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { exigirBancoSemVotosReais } from './guarda'
+import { AVISO_FORA_DO_PERIODO, exigirBancoSemVotosReais, servidorAceitaVoto } from './guarda'
 
 /**
  * Teste de ponta a ponta do que importa para a auditoria: o IP que chega no
@@ -65,6 +65,7 @@ describe('x-forwarded-for chega gravado na coluna ip', () => {
   // A checagem vive no beforeAll, e não no corpo do describe: I/O na hora da
   // coleta é frágil e faz o teste se pular sozinho sem dizer por que.
   let noAr = false
+  let noPeriodo = false
 
   beforeAll(async () => {
     // A trava vem antes de qualquer coisa: se houver voto real na tabela, nem
@@ -72,7 +73,10 @@ describe('x-forwarded-for chega gravado na coluna ip', () => {
     await exigirBancoSemVotosReais(banco, cpfHash)
 
     noAr = await servidorNoAr()
-    if (noAr) await limpar()
+    if (noAr) {
+      noPeriodo = await servidorAceitaVoto(BASE)
+      await limpar()
+    }
   })
   afterAll(async () => {
     if (noAr) await limpar()
@@ -82,6 +86,7 @@ describe('x-forwarded-for chega gravado na coluna ip', () => {
     'o IP do visitante, e não o do proxy, vai para o banco',
     async (ctx) => {
       if (!noAr) ctx.skip(`servidor fora do ar em ${BASE} — suba com npm run dev`)
+      if (!noPeriodo) ctx.skip(AVISO_FORA_DO_PERIODO)
 
       const cabecalhos = { 'x-forwarded-for': CABECALHO, 'user-agent': AGENTE }
 

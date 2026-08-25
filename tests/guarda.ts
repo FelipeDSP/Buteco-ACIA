@@ -53,3 +53,27 @@ export async function exigirBancoSemVotosReais(
     )
   }
 }
+
+/**
+ * Os testes que votam só fazem sentido dentro do período do festival (Art. 16).
+ * Fora dele o servidor recusa — corretamente — e o teste falharia por um motivo
+ * que não é o dele.
+ *
+ * Sobe o servidor com uma data de dentro do festival para rodá-los:
+ *   BOTECO_FASE_HOJE=2026-09-25 npm run dev
+ */
+export async function servidorAceitaVoto(base: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${base}/votar/bar-do-fuba`, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(4000),
+    })
+    const destino = r.headers.get('location') ?? ''
+    return !destino.includes('ainda-nao-comecou') && !destino.includes('ja-encerrou')
+  } catch {
+    return false
+  }
+}
+
+export const AVISO_FORA_DO_PERIODO =
+  'servidor fora do período do festival — suba com BOTECO_FASE_HOJE=2026-09-25 npm run dev'
