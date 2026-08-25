@@ -24,7 +24,7 @@ O site não existe para explicar o festival. Existe para ajudar a escolher uma c
 
 Não inventar, não arredondar, não "melhorar".
 
-- Festival ativo: **19 de setembro a 10 de outubro de 2026**
+- Festival ativo: **19 de setembro a 10 de outubro de 2026**. **Art. 30: a ACIA pode remarcar com 15 dias de aviso.** Todas as datas do `CALENDARIO` aceitam sobrescrita por variável de ambiente (`BOTECO_INICIO_FESTIVAL` e afins) — remarcação não pode depender de deploy. Mensagem que cita data **deriva do `CALENDARIO`**, nunca escreve "10 de outubro" à mão: senão a remarcação muda o comportamento e deixa o texto mentindo
 - Kits distribuídos: 01 a 18 de setembro · Apuração: 11 a 13 de outubro · Premiação: 2ª quinzena de outubro
 - **4 critérios, peso igual, nota 0 a 5 cada, total 20 pontos**: apresentação visual, sabor, criatividade, atendimento
 - **Nota final = soma das notas recebidas ÷ número de avaliações (Art. 17º).** Escala de **0 a 20 pontos**, não de 0 a 5: cada avaliação vale a soma dos quatro critérios. Dividir por quatro dá o mesmo ranking e o número errado — e é este número que vai no certificado. Nenhum voto é descartado nem tem peso reduzido
@@ -181,6 +181,20 @@ O cookie de sessão sai com `Secure` quando `NODE_ENV=production`. Isso signific
 
 ---
 
+## O que do regulamento NÃO está no software
+
+Varredura completa feita contra `regulamento_boteco_acia.pdf`. Estes artigos ficaram de fora **por decisão de escopo**, não por esquecimento. Se alguém for implementar, que seja por decisão nova — não por achar que faltou.
+
+**Art. 11 — desclassificação por não servir o prato 3 dias seguidos.** Exigiria registro diário de quem serviu o prato, casa por casa, durante 22 dias. Isso é controle operacional da comissão, não software: quem sabe se o prato foi servido é quem visitou o bar, e nenhuma tela resolve isso. Quando a comissão apurar o caso, o desfecho existe no painel — desativar ou desclassificar.
+
+**Art. 20 — apuração restrita a 11 a 13 de outubro.** O painel é ferramenta interna da ACIA e mostra a parcial a qualquer momento; travar por data atrapalharia a própria organização durante o festival. O que o regulamento protege é a **divulgação**, e essa já é fechada: nota, média e posição não aparecem em nenhuma tela pública, e `/vencedores` só entra no menu em 14/10.
+
+**Art. 4 — requisitos de participação (CNPJ ativo, alvará vigente).** É registro histórico da inscrição, que já está na Ficha de Inscrição. As inscrições encerraram em julho; guardar CNPJ e alvará no banco agora seria dado pessoal de terceiro sem nenhum uso no site.
+
+**Art. 12 e 21.3 — ficha física com dupla conferência.** **Pendente de decisão da ACIA, não descartado.** O regulamento prevê o canal e exige dupla conferência na digitação. Enquanto não houver decisão, não implementar — e ter consciência de que, se a ACIA usar ficha física sem isso existir, ou os votos se perdem, ou alguém digita direto no banco sem a conferência que o artigo manda.
+
+---
+
 ## A matemática da apuração
 
 Está em `calcularApuracao` (`lib/painel.ts`), separada do banco de propósito, e travada em `tests/apuracao.test.ts` — inclusive com o exemplo numérico do Art. 18º reproduzido.
@@ -311,6 +325,22 @@ As quatro notas são gravadas em colunas separadas, nunca a soma: guardar só o 
 ---
 
 ## Painel administrativo — /painel
+
+### Inativa e desclassificada são estados diferentes
+
+**Inativa** (`ativa = false`) é visibilidade: some do site, o QR para, e reativar não tem consequência. Serve para casa em cadastro ou que pediu para sair.
+
+**Desclassificada** (`desclassificada_em`) é o **Art. 22**: ato da Comissão Organizadora por fraude comprovada. Sai do ranking e do site, fica registrada com data e **motivo obrigatório** — a casa pode contestar, e aí é preciso mostrar o que motivou. As avaliações dela **permanecem no banco**, porque são o lastro da decisão.
+
+Misturar as duas apagaria a diferença entre "não quis participar" e "foi desclassificada por fraude". Sobre um negócio da cidade, essa diferença é séria.
+
+Duas consequências na apuração, ambas testadas:
+- Desclassificada nunca recebe posição, tenha a nota que tiver.
+- **As avaliações dela saem da base do piso do Art. 18.** Se ficassem, o volume que motivou a desclassificação inflaria a média do festival e subiria o piso para todo mundo — a fraude puniria quem não a cometeu.
+
+Quem esconde a casa do site é o **RLS**, não o código: a policy exige `ativa = true and desclassificada_em is null`. Filtro esquecido numa consulta nova não traz a casa de volta.
+
+
 
 Senha única em `PAINEL_SENHA`, sem contas. Usam duas ou três pessoas da ACIA; cadastro e recuperação de senha seriam semanas de trabalho para um problema que não existe.
 

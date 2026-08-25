@@ -9,6 +9,7 @@
  */
 
 import { CALENDARIO } from '@/data/edicao'
+import { dataLonga } from '@/lib/formato'
 
 const FUSO = 'America/Porto_Velho'
 const DIA_MS = 86_400_000
@@ -68,7 +69,7 @@ export function contagem(dia = hoje()): Contagem {
         dias === 0
           ? 'O festival começa hoje'
           : `Faltam ${dias} ${plural(dias, 'dia', 'dias')} para começar`,
-      detalhe: 'De 19 de setembro a 10 de outubro',
+      detalhe: `De ${dataLonga(CALENDARIO.inicioFestival)} a ${dataLonga(CALENDARIO.fimFestival)}`,
     }
   }
 
@@ -81,7 +82,7 @@ export function contagem(dia = hoje()): Contagem {
         dias === 0
           ? 'Último dia para votar'
           : `Faltam ${dias} ${plural(dias, 'dia', 'dias')} para o fim`,
-      detalhe: 'Festival rolando até 10 de outubro',
+      detalhe: `Festival rolando até ${dataLonga(CALENDARIO.fimFestival)}`,
     }
   }
 
@@ -91,7 +92,7 @@ export function contagem(dia = hoje()): Contagem {
       fase,
       dias,
       chamada: 'Votação encerrada',
-      detalhe: 'Apuração de 11 a 13 de outubro',
+      detalhe: `Apuração de ${dataLonga(CALENDARIO.inicioApuracao)} a ${dataLonga(CALENDARIO.fimApuracao)}`,
     }
   }
 
@@ -129,15 +130,15 @@ export function periodoDeVotacao(dia = hoje()): PeriodoFechado | null {
       titulo: 'A votação ainda não começou',
       texto:
         dias === 1
-          ? 'O Boteco ACIA abre amanhã, 19 de setembro. Volte a partir de lá e leia o QR de novo.'
-          : `O Boteco ACIA começa em 19 de setembro — faltam ${dias} dias. Volte a partir de lá e leia o QR de novo.`,
+          ? `O Boteco ACIA abre amanhã, ${dataLonga(CALENDARIO.inicioFestival)}. Volte a partir de lá e leia o QR de novo.`
+          : `O Boteco ACIA começa em ${dataLonga(CALENDARIO.inicioFestival)} — faltam ${dias} dias. Volte a partir de lá e leia o QR de novo.`,
     }
   }
 
   return {
     motivo: 'ja-encerrou',
-    titulo: 'A votação foi encerrada em 10 de outubro',
+    titulo: `A votação foi encerrada em ${dataLonga(CALENDARIO.fimFestival)}`,
     texto:
-      'O período de avaliação do Boteco ACIA terminou. As notas estão sendo apuradas e o resultado sai na premiação, na segunda quinzena de outubro.',
+      `O período de avaliação do Boteco ACIA terminou em ${dataLonga(CALENDARIO.fimFestival)}. As notas estão sendo apuradas e o resultado sai na premiação.`,
   }
 }

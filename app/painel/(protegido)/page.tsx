@@ -176,12 +176,18 @@ export default async function Apuracao() {
                     <Link href="/painel/casas" className="font-semibold hover:underline">
                       {linha.nome}
                     </Link>
-                    {!linha.ativa ? (
+                    {linha.desclassificada ? (
+                      <span className="ml-2">
+                        <Selo tom="alerta" titulo={linha.desclassificadaMotivo ?? undefined}>
+                          desclassificada (Art. 22)
+                        </Selo>
+                      </span>
+                    ) : !linha.ativa ? (
                       <span className="ml-2">
                         <Selo>inativa</Selo>
                       </span>
                     ) : null}
-                    {linha.avaliacoes > 0 && !linha.elegivel ? (
+                    {linha.avaliacoes > 0 && !linha.elegivel && !linha.desclassificada ? (
                       <span className="ml-2">
                         <Selo
                           tom="alerta"

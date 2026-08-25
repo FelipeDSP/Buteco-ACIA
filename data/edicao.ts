@@ -13,15 +13,48 @@ export const EDICAO = {
   hashtag: '#BotecoACIA',
 } as const
 
-/** Datas em fuso de Ariquemes (UTC−4). Mês é 1-indexado aqui de propósito. */
+/**
+ * Datas do festival, em fuso de Ariquemes (UTC-4).
+ *
+ * **Art. 30: a ACIA pode alterar datas com 15 dias de aviso.** Remarcacao e
+ * previsao do regulamento, nao excecao — e nao pode depender de deploy, ainda
+ * mais se o motivo for algo urgente. Cada data aceita sobrescrita por variavel
+ * de ambiente; sem ela vale a data aprovada em assembleia.
+ *
+ * Valor mal formatado e ignorado com aviso no log, e o padrao prevalece:
+ * data torta aqui desliga a votacao inteira, entao errar de leve nao pode
+ * derrubar o festival.
+ */
+const DATA = /^\d{4}-\d{2}-\d{2}$/
+
+function data(variavel: string, padrao: string): string {
+  const bruto = process.env[variavel]?.trim()
+  if (!bruto) return padrao
+  if (!DATA.test(bruto) || Number.isNaN(Date.parse(`${bruto}T00:00:00Z`))) {
+    console.warn(`[calendario] ${variavel}="${bruto}" nao e uma data AAAA-MM-DD. Usando ${padrao}.`)
+    return padrao
+  }
+  return bruto
+}
+
 export const CALENDARIO = {
-  inicioFestival: '2026-09-19',
-  fimFestival: '2026-10-10',
-  inicioApuracao: '2026-10-11',
-  fimApuracao: '2026-10-13',
+  inicioFestival: data('BOTECO_INICIO_FESTIVAL', '2026-09-19'),
+  fimFestival: data('BOTECO_FIM_FESTIVAL', '2026-10-10'),
+  inicioApuracao: data('BOTECO_INICIO_APURACAO', '2026-10-11'),
+  fimApuracao: data('BOTECO_FIM_APURACAO', '2026-10-13'),
   /** Data em que a aba "Vencedores" passa a existir no menu. */
-  divulgacao: '2026-10-14',
+  divulgacao: data('BOTECO_DIVULGACAO', '2026-10-14'),
 } as const
+
+/**
+ * Ordem cronologica quebrada nao lanca: avisa e segue. O objetivo e nao deixar
+ * uma remarcacao pela metade passar despercebida no log de deploy.
+ */
+if (CALENDARIO.fimFestival < CALENDARIO.inicioFestival) {
+  console.warn(
+    `[calendario] fim do festival (${CALENDARIO.fimFestival}) e anterior ao inicio (${CALENDARIO.inicioFestival}). A votacao ficara sempre fechada.`,
+  )
+}
 
 export type Criterio = {
   chave: string

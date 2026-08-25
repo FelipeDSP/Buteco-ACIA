@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import DesativarCasa from '@/components/painel/DesativarCasa'
+import EstadoDaCasa from '@/components/painel/EstadoDaCasa'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela } from '@/components/painel/Peças'
 import { listarCasasDoPainel } from '@/lib/painel'
 import { situacaoDaCasa } from '@/lib/horarios'
@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function Casas() {
   const casas = await listarCasasDoPainel()
-  const ativas = casas.filter((c) => c.ativa)
+  const desclassificadas = casas.filter((c) => c.desclassificada_em !== null)
+  const ativas = casas.filter((c) => c.ativa && c.desclassificada_em === null)
   const semHorario = ativas.filter((c) => situacaoDaCasa(c.horarios ?? {}).semCadastro)
   const semFoto = ativas.filter((c) => !c.foto_url)
   const semPrato = ativas.filter((c) => !c.prato_confirmado)
@@ -35,7 +36,12 @@ export default async function Casas() {
           detalhe={semHorario.length > 0 ? 'aceitam voto a qualquer hora' : 'todas cadastradas'}
         />
         <Numero valor={semFoto.length} rotulo="Sem foto do prato" />
-        <Numero valor={semPrato.length} rotulo="Prato a confirmar" />
+        <Numero
+          valor={desclassificadas.length}
+          rotulo="Desclassificadas"
+          tom={desclassificadas.length > 0 ? 'alerta' : 'neutro'}
+          detalhe={desclassificadas.length > 0 ? 'Art. 22, fora do ranking' : undefined}
+        />
       </Numeros>
 
       {semHorario.length > 0 ? (
@@ -66,7 +72,7 @@ export default async function Casas() {
                   <tr
                     key={casa.id}
                     className={`border-b border-risco last:border-0 ${i % 2 === 1 ? 'bg-creme/40' : ''} ${
-                      casa.ativa ? '' : 'opacity-60'
+                      casa.ativa && casa.desclassificada_em === null ? '' : 'opacity-60'
                     }`}
                   >
                     <td className="px-5 py-3">
@@ -94,6 +100,17 @@ export default async function Casas() {
                           >
                             {casa.nome}
                           </Link>
+                          {casa.desclassificada_em !== null ? (
+                            <span className="mt-0.5 block">
+                              <Selo tom="alerta" titulo={casa.desclassificada_motivo ?? undefined}>
+                                desclassificada
+                              </Selo>
+                            </span>
+                          ) : !casa.ativa ? (
+                            <span className="mt-0.5 block">
+                              <Selo>inativa</Selo>
+                            </span>
+                          ) : null}
                           <span className="block font-mono text-[11.5px] text-tinta-3">
                             /{casa.slug}
                           </span>
@@ -122,10 +139,12 @@ export default async function Casas() {
                     </td>
                     <td className="py-3 pr-3 text-right">{casa.avaliacoes}</td>
                     <td className="px-5 py-3 text-right">
-                      <DesativarCasa
+                      <EstadoDaCasa
                         id={casa.id}
                         nome={casa.nome}
                         ativa={casa.ativa}
+                        desclassificada={casa.desclassificada_em !== null}
+                        desclassificadaMotivo={casa.desclassificada_motivo}
                         avaliacoes={casa.avaliacoes}
                       />
                     </td>

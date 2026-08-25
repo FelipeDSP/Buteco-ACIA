@@ -35,6 +35,9 @@ export type LinhaDaApuracao = {
   medias: Record<string, number | null>
   /** Alcançou o piso mínimo de avaliações para concorrer. */
   elegivel: boolean
+  /** Art. 22: desclassificada por fraude comprovada. Fora do ranking. */
+  desclassificada: boolean
+  desclassificadaMotivo: string | null
 }
 
 export type Apuracao = {
@@ -67,6 +70,8 @@ type CasaBruta = {
   nome: string
   ativa: boolean
   horarios: Horarios | null
+  desclassificada_em: string | null
+  desclassificada_motivo: string | null
 }
 
 const media = (valores: number[]): number | null =>
@@ -75,7 +80,10 @@ const media = (valores: number[]): number | null =>
 async function lerTudo() {
   const banco = supabaseAdmin()
   const [casas, avaliacoes] = await Promise.all([
-    banco.from('casas').select('id, slug, nome, ativa, horarios').order('nome'),
+    banco
+      .from('casas')
+      .select('id, slug, nome, ativa, horarios, desclassificada_em, desclassificada_motivo')
+      .order('nome'),
     banco
       .from('avaliacoes')
       .select(
@@ -105,7 +113,10 @@ export async function apurar(): Promise<Apuracao> {
  * dela — ver `tests/apuracao.test.ts`.
  */
 export function calcularApuracao(
-  casas: Pick<CasaBruta, 'id' | 'slug' | 'nome' | 'ativa'>[],
+  casas: Pick<
+    CasaBruta,
+    'id' | 'slug' | 'nome' | 'ativa' | 'desclassificada_em' | 'desclassificada_motivo'
+  >[],
   avaliacoes: Pick<
     AvaliacaoBruta,
     | 'casa_id'
@@ -116,8 +127,25 @@ export function calcularApuracao(
     | 'anulada_em'
   >[],
 ): Apuracao {
-  const validasDoFestival = avaliacoes.filter((a) => a.anulada_em === null)
-  const casasDoFestival = casas.filter((c) => c.ativa).length || casas.length
+  const desclassificadas = new Set(
+    casas.filter((c) => c.desclassificada_em !== null).map((c) => c.id),
+  )
+
+  /**
+   * Avaliação de casa desclassificada sai da base do piso.
+   *
+   * Se ficasse, o volume que motivou a desclassificação — possivelmente
+   * fraudulento — inflaria a média do festival e subiria o piso do Art. 18
+   * para todo mundo, podendo derrubar casa pequena e honesta. A fraude puniria
+   * quem não a cometeu.
+   */
+  const validasDoFestival = avaliacoes.filter(
+    (a) => a.anulada_em === null && !desclassificadas.has(a.casa_id),
+  )
+  const casasDoFestival =
+    casas.filter((c) => c.ativa && !desclassificadas.has(c.id)).length ||
+    casas.filter((c) => !desclassificadas.has(c.id)).length ||
+    casas.length
 
   /**
    * Piso mínimo de elegibilidade do regulamento: a casa precisa alcançar 10%
@@ -165,7 +193,11 @@ export function calcularApuracao(
       anuladas: daCasa.length - validas.length,
       mediaGeral,
       medias,
-      elegivel: validas.length > 0 && validas.length >= piso,
+      // Art. 22: desclassificada nunca concorre, tenha a nota que tiver.
+      elegivel:
+        casa.desclassificada_em === null && validas.length > 0 && validas.length >= piso,
+      desclassificada: casa.desclassificada_em !== null,
+      desclassificadaMotivo: casa.desclassificada_motivo,
     }
   })
 
@@ -377,6 +409,8 @@ export type CasaDoPainel = {
   lng: string | number | null
   horarios: Horarios | null
   ativa: boolean
+  desclassificada_em: string | null
+  desclassificada_motivo: string | null
   ordem: number | null
   /** Quantas avaliações apontam para esta casa. Zero permite desativar sem susto. */
   avaliacoes: number

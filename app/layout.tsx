@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Montserrat, Archivo } from 'next/font/google'
-import { EDICAO } from '@/lib/dados'
+import { CALENDARIO, EDICAO } from '@/lib/dados'
+import { dataLonga } from '@/lib/formato'
 import './globals.css'
 
 /* Montserrat é a família da própria logo. Archivo carrega o texto corrido.
@@ -24,8 +25,7 @@ export const metadata: Metadata = {
     default: `${EDICAO.nome} — festival gastronômico de ${EDICAO.cidade}`,
     template: `%s · ${EDICAO.nome}`,
   },
-  description:
-    'Os bares e restaurantes de Ariquemes puseram um prato na disputa. Você prova, aponta o celular para o QR da mesa e dá a sua nota. De 19 de setembro a 10 de outubro de 2026.',
+  description: `Os bares e restaurantes de Ariquemes puseram um prato na disputa. Você prova, aponta o celular para o QR da mesa e dá a sua nota. De ${dataLonga(CALENDARIO.inicioFestival)} a ${dataLonga(CALENDARIO.fimFestival)} de ${EDICAO.ano}.`,
   applicationName: EDICAO.nome,
   openGraph: {
     type: 'website',

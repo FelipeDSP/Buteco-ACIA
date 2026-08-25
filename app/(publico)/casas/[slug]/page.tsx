@@ -15,6 +15,8 @@ import {
   outrasCasas,
 } from '@/lib/dados'
 import { faseAtual } from '@/lib/fase'
+import { dataLonga } from '@/lib/formato'
+import { CALENDARIO } from '@/lib/dados'
 
 /* URL estável entre edições: /casas/[slug] não muda de ano para ano. */
 export const revalidate = 3600
@@ -51,11 +53,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function comoVotarAqui(fase: ReturnType<typeof faseAtual>) {
   switch (fase) {
     case 'pre-festival':
-      return 'A votação abre em 19 de setembro. A partir daí, o QR code fica na mesa desta casa.'
+      return `A votação abre em ${dataLonga(CALENDARIO.inicioFestival)}. A partir daí, o QR code fica na mesa desta casa.`
     case 'festival':
       return 'Peça o prato da disputa e aponte a câmera para o QR code da mesa. A avaliação leva menos de um minuto.'
     case 'apuracao':
-      return 'A votação encerrou em 10 de outubro. As notas estão sendo apuradas.'
+      return `A votação encerrou em ${dataLonga(CALENDARIO.fimFestival)}. As notas estão sendo apuradas.`
     default:
       return 'A votação desta edição está encerrada.'
   }

@@ -17,7 +17,21 @@ import { calcularApuracao } from '@/lib/painel'
 
 type Nota = [number, number, number, number]
 
-const casa = (id: string, nome = id) => ({ id, slug: id, nome, ativa: true })
+const casa = (id: string, nome = id) => ({
+  id,
+  slug: id,
+  nome,
+  ativa: true,
+  desclassificada_em: null as string | null,
+  desclassificada_motivo: null as string | null,
+})
+
+/** Art. 22: casa desclassificada por fraude comprovada. */
+const desclassificada = (id: string, motivo = 'Fraude comprovada em auditoria.') => ({
+  ...casa(id),
+  desclassificada_em: '2026-10-11T12:00:00Z',
+  desclassificada_motivo: motivo,
+})
 
 const avaliacao = (casaId: string, [a, s, c, at]: Nota, anulada = false) => ({
   casa_id: casaId,
@@ -161,5 +175,48 @@ describe('Art. 19 — desempate', () => {
     )
     expect(linhas[0].slug).toBe('muitas')
     expect(linhas[0].avaliacoes).toBe(60)
+  })
+})
+
+describe('Art. 22 — desclassificação', () => {
+  it('desclassificada não recebe posição, mesmo com a melhor nota', () => {
+    const { linhas } = calcularApuracao(
+      [desclassificada('fraudou'), casa('honesta')],
+      [...varias('fraudou', [5, 5, 5, 5], 300), ...varias('honesta', [4, 4, 4, 4], 200)],
+    )
+    const fora = linhas.find((l) => l.slug === 'fraudou')!
+    expect(fora.desclassificada).toBe(true)
+    expect(fora.elegivel).toBe(false)
+    expect(fora.posicao).toBe(0)
+    expect(linhas[0].slug).toBe('honesta')
+    expect(linhas[0].posicao).toBe(1)
+  })
+
+  it('a nota e as avaliações continuam calculadas, para o registro da decisão', () => {
+    const { linhas } = calcularApuracao(
+      [desclassificada('fraudou')],
+      varias('fraudou', [5, 5, 5, 5], 300),
+    )
+    // Some do ranking, não do histórico: o número que motivou a decisão
+    // precisa continuar visível para quem for questionar depois.
+    expect(linhas[0].mediaGeral).toBe(20)
+    expect(linhas[0].avaliacoes).toBe(300)
+    expect(linhas[0].desclassificadaMotivo).toBe('Fraude comprovada em auditoria.')
+  })
+
+  it('os votos da desclassificada não inflam o piso dos outros', () => {
+    // Sem esta regra, 3.000 votos fraudulentos subiriam a média do festival e
+    // o piso do Art. 18 junto — derrubando casa pequena e honesta.
+    const casas = [desclassificada('fraudou'), ...Array.from({ length: 9 }, (_, i) => casa(`c${i}`))]
+    const avaliacoes = [
+      ...varias('fraudou', [5, 5, 5, 5], 3000),
+      ...casas.slice(1).flatMap((c) => varias(c.id, [4, 4, 4, 4], 100)),
+    ]
+
+    const { piso, votos, mediaDeAvaliacoes } = calcularApuracao(casas, avaliacoes)
+    // 900 votos legítimos em 9 casas = média 100, piso 10.
+    expect(votos).toBe(900)
+    expect(mediaDeAvaliacoes).toBe(100)
+    expect(piso).toBe(10)
   })
 })
