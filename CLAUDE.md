@@ -298,6 +298,32 @@ As quatro notas são gravadas em colunas separadas, nunca a soma: guardar só o 
 
 ---
 
+## Painel administrativo — /painel
+
+Senha única em `PAINEL_SENHA`, sem contas. Usam duas ou três pessoas da ACIA; cadastro e recuperação de senha seriam semanas de trabalho para um problema que não existe.
+
+O cookie não guarda a senha nem id de sessão: guarda `validade.assinatura`, com a assinatura sendo HMAC da validade usando a própria senha como chave. **Ter o cookie prova ter sabido a senha**, sem tabela de sessão — e trocar `PAINEL_SENHA` derruba todos os acessos na hora.
+
+**Proteção no servidor, em duas camadas.** `exigirSessaoDoPainel()` no layout tranca as páginas antes de qualquer dado ser lido; `recusarSemSessao()` devolve 401 em cada route handler, porque quem chama a API direto não passa pelo layout. Esconder no cliente não seria proteção nenhuma.
+
+### Regras que o painel não pode quebrar
+
+**"Remover" casa é `ativa = false`. Nunca `DELETE`.** `avaliacoes.casa_id` aponta para a casa: apagar levaria os votos junto. A confirmação mostra quantas avaliações estão penduradas antes de desativar.
+
+**Anular avaliação não apaga.** Preenche `anulada_em` e `anulada_motivo`; a linha continua no banco como lastro e sai de toda média. O motivo é obrigatório — a decisão pode ser questionada pela casa afetada, e "achei estranho" não se sustenta numa reunião.
+
+**Sinal de anomalia é pista, não prova.** IP repetido (mais de 3), rajada (4+ em 5 minutos) e voto fora do horário cadastrado. O wi-fi do próprio bar faz clientes honestos dividirem IP, e mesa cheia gera rajada legítima. O alerta de horário só dispara em casa com horário cadastrado — com `{}` todo voto seria "fora de horário" e o painel viraria ruído.
+
+**O CPF não aparece no painel** porque nunca foi gravado. Só existe como HMAC, e nem o hash é mostrado.
+
+### O editor de horários é a peça com prazo
+
+É ele que liga a janela de votação. Hoje as doze casas estão com `{}`, e **enquanto estiverem o QR aceita voto a qualquer hora — inclusive às 4h com a casa fechada.** Precisa estar preenchido antes de 19 de setembro.
+
+Formato `{"seg":[["18:00","23:30"]]}`. Dia sem faixa = fechado nesse dia. Faixa que termina antes de começar atravessa a meia-noite, e isso é proposital para casa que fecha às 2h. O route handler valida tudo antes de gravar: jsonb torto aqui vira casa que não recebe voto no dia do festival.
+
+---
+
 ## Na fila, não agora
 
 **"Adicionar ao rolê"** — deixar a pessoa marcar casas e montar um roteiro próprio. É a funcionalidade mais valiosa que ainda não existe, mas muda o modelo de dados. Não implementar sem decisão explícita.

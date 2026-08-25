@@ -31,6 +31,22 @@ const nextConfig: NextConfig = {
   // Sem isto o Turbopack sobe a árvore procurando lockfile e acha o do usuário.
   turbopack: { root: path.resolve(process.cwd()) },
   allowedDevOrigins: origensDeDesenvolvimento,
+  /**
+   * As fotos dos pratos ficam no bucket `casas` do Supabase. Sem liberar o
+   * host aqui, o next/image recusa a URL e a foto some — o painel deixa
+   * enviar, grava a URL, e a imagem nunca aparece.
+   */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: new URL(
+          process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://exemplo.supabase.co',
+        ).hostname,
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
 }
 
 export default nextConfig
