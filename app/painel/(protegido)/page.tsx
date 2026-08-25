@@ -1,31 +1,36 @@
 import Link from 'next/link'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela, Vazio } from '@/components/painel/Peças'
 import { CRITERIOS_DA_APURACAO, apurar } from '@/lib/painel'
+import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 
 export const dynamic = 'force-dynamic'
 
 const nota = (v: number | null) => (v === null ? '—' : v.toFixed(2).replace('.', ','))
+const decimal = (v: number) => v.toFixed(1).replace('.', ',')
 
-/** Proporção da média sobre o máximo, para comparar de relance. */
-const proporcao = (v: number | null) => (v === null ? 0 : Math.max(0, Math.min(1, v / 5)))
+/** Proporção sobre o máximo do regulamento (20 pontos), para comparar de relance. */
+const proporcao = (v: number | null) =>
+  v === null ? 0 : Math.max(0, Math.min(1, v / NOTA_MAXIMA_TOTAL))
 
 export default async function Apuracao() {
-  const linhas = await apurar()
-  const votos = linhas.reduce((s, l) => s + l.avaliacoes, 0)
+  const { linhas, votos, mediaDeAvaliacoes, piso } = await apurar()
+
   const anuladas = linhas.reduce((s, l) => s + l.anuladas, 0)
   const comVoto = linhas.filter((l) => l.avaliacoes > 0)
+  const foraDoPiso = comVoto.filter((l) => !l.elegivel)
   const mediaDoFestival =
-    comVoto.length === 0
+    votos === 0
       ? null
       : comVoto.reduce((s, l) => s + (l.mediaGeral ?? 0) * l.avaliacoes, 0) / votos
 
-  const podio = linhas.filter((l) => l.mediaGeral !== null).slice(0, 3)
+  // Só entra na parcial quem concorre de fato.
+  const podio = linhas.filter((l) => l.elegivel).slice(0, 3)
 
   return (
     <div className="wrap">
       <TopoDaTela
         titulo="Apuração"
-        sub="Média das quatro notas, por avaliação. Avaliação anulada não entra em conta nenhuma. Empate resolve na ordem do regulamento: sabor, criatividade, número de avaliações."
+        sub={`Art. 17: nota final é a média aritmética simples de todas as avaliações válidas, na escala de 0 a ${NOTA_MAXIMA_TOTAL} pontos (soma dos quatro critérios por avaliação). Empate resolve por sabor, depois criatividade, depois número de avaliações.`}
         acao={
           <a href="/api/painel/csv" className="btn btn-pequeno">
             Exportar CSV
@@ -38,16 +43,35 @@ export default async function Apuracao() {
         <Numero
           valor={`${comVoto.length}/${linhas.length}`}
           rotulo="Casas com voto"
-          detalhe={comVoto.length < linhas.length ? `${linhas.length - comVoto.length} ainda sem` : undefined}
+          detalhe={
+            comVoto.length < linhas.length ? `${linhas.length - comVoto.length} ainda sem` : undefined
+          }
         />
-        <Numero valor={nota(mediaDoFestival)} rotulo="Média do festival" />
         <Numero
-          valor={anuladas}
-          rotulo="Anuladas"
-          tom={anuladas > 0 ? 'alerta' : 'neutro'}
-          detalhe={anuladas > 0 ? 'fora da conta' : undefined}
+          valor={nota(mediaDoFestival)}
+          rotulo={`Média do festival (0–${NOTA_MAXIMA_TOTAL})`}
+          detalhe={anuladas > 0 ? `${anuladas} anulada(s) fora da conta` : undefined}
+        />
+        <Numero
+          valor={piso === 0 ? '—' : decimal(piso)}
+          rotulo="Piso para concorrer"
+          tom={foraDoPiso.length > 0 ? 'alerta' : 'neutro'}
+          detalhe={
+            piso === 0
+              ? 'sem votos ainda'
+              : `${PISO_MINIMO_PERCENTUAL}% de ${decimal(mediaDeAvaliacoes)} por casa`
+          }
         />
       </Numeros>
+
+      {foraDoPiso.length > 0 ? (
+        <p className="mt-5 rounded-2xl bg-ambar/20 px-5 py-4 text-[14px] font-semibold text-ambar-e">
+          {foraDoPiso.length === 1 ? 'Uma casa está' : `${foraDoPiso.length} casas estão`} abaixo do
+          piso e ficam fora do ranking (Art. 18):{' '}
+          {foraDoPiso.map((l) => `${l.nome} (${l.avaliacoes})`).join(', ')}. Continuam recebendo
+          placa de parede e certificado de participação.
+        </p>
+      ) : null}
 
       {podio.length > 0 ? (
         <div className="mt-8">
@@ -83,15 +107,16 @@ export default async function Apuracao() {
                     {nota(linha.mediaGeral)}
                   </b>
                   <span className="text-[13px]">
-                    em {linha.avaliacoes} {linha.avaliacoes === 1 ? 'avaliação' : 'avaliações'}
+                    de {NOTA_MAXIMA_TOTAL}, em {linha.avaliacoes}{' '}
+                    {linha.avaliacoes === 1 ? 'avaliação' : 'avaliações'}
                   </span>
                 </span>
               </div>
             ))}
           </div>
           <p className="mt-3 text-[12.5px] text-tinta-3">
-            Parcial interna. O resultado só é público na premiação — nem as casas veem
-            nota ou posição antes disso.
+            Parcial interna. O resultado só é público na premiação — nem as casas veem nota ou
+            posição antes disso.
           </p>
         </div>
       ) : null}
@@ -105,14 +130,23 @@ export default async function Apuracao() {
         ) : null}
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] border-collapse text-[14.5px]">
+          <table className="w-full min-w-[860px] border-collapse text-[14.5px]">
             <thead>
               <tr className="border-b border-risco bg-creme text-left">
                 <th className="px-5 py-2.5 font-semibold">#</th>
                 <th className="py-2.5 pr-3 font-semibold">Casa</th>
-                <th className="py-2.5 pr-3 font-semibold">Média</th>
+                <th
+                  className="py-2.5 pr-3 font-semibold"
+                  title={`Média das avaliações, de 0 a ${NOTA_MAXIMA_TOTAL}`}
+                >
+                  Nota final
+                </th>
                 {CRITERIOS_DA_APURACAO.map((c) => (
-                  <th key={c.chave} className="py-2.5 pr-3 text-right font-semibold text-tinta-3">
+                  <th
+                    key={c.chave}
+                    title={`Média do critério, de 0 a ${NOTA_MAXIMA_POR_CRITERIO}`}
+                    className="py-2.5 pr-3 text-right font-semibold text-tinta-3"
+                  >
                     {c.nome}
                   </th>
                 ))}
@@ -126,7 +160,7 @@ export default async function Apuracao() {
                   className={`border-b border-risco last:border-0 ${i % 2 === 1 ? 'bg-creme/40' : ''}`}
                 >
                   <td className="px-5 py-3">
-                    {linha.mediaGeral === null ? (
+                    {linha.posicao === 0 ? (
                       <span className="text-tinta-3">—</span>
                     ) : (
                       <span
@@ -139,7 +173,7 @@ export default async function Apuracao() {
                     )}
                   </td>
                   <td className="py-3 pr-3">
-                    <Link href={`/painel/casas`} className="font-semibold hover:underline">
+                    <Link href="/painel/casas" className="font-semibold hover:underline">
                       {linha.nome}
                     </Link>
                     {!linha.ativa ? (
@@ -147,10 +181,20 @@ export default async function Apuracao() {
                         <Selo>inativa</Selo>
                       </span>
                     ) : null}
+                    {linha.avaliacoes > 0 && !linha.elegivel ? (
+                      <span className="ml-2">
+                        <Selo
+                          tom="alerta"
+                          titulo={`Abaixo do piso de ${decimal(piso)} avaliações (Art. 18)`}
+                        >
+                          fora do ranking
+                        </Selo>
+                      </span>
+                    ) : null}
                   </td>
                   <td className="py-3 pr-3">
                     <span className="flex items-center gap-2.5">
-                      <b className="w-[42px] font-display text-[16px] font-extrabold">
+                      <b className="w-[48px] font-display text-[16px] font-extrabold">
                         {nota(linha.mediaGeral)}
                       </b>
                       {/* Barra para comparar de relance, sem ler número por número. */}

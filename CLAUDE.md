@@ -20,15 +20,17 @@ O site não existe para explicar o festival. Existe para ajudar a escolher uma c
 
 ## Fatos do regulamento
 
+**A fonte é `regulamento_boteco_acia.pdf`, na raiz do projeto.** Em dúvida sobre número, prazo ou regra de apuração, abrir o PDF — não confiar neste resumo nem na memória.
+
 Não inventar, não arredondar, não "melhorar".
 
 - Festival ativo: **19 de setembro a 10 de outubro de 2026**
 - Kits distribuídos: 01 a 18 de setembro · Apuração: 11 a 13 de outubro · Premiação: 2ª quinzena de outubro
 - **4 critérios, peso igual, nota 0 a 5 cada, total 20 pontos**: apresentação visual, sabor, criatividade, atendimento
-- Nota final = média aritmética simples de todas as avaliações válidas. Nenhum voto é descartado nem tem peso reduzido
+- **Nota final = soma das notas recebidas ÷ número de avaliações (Art. 17º).** Escala de **0 a 20 pontos**, não de 0 a 5: cada avaliação vale a soma dos quatro critérios. Dividir por quatro dá o mesmo ranking e o número errado — e é este número que vai no certificado. Nenhum voto é descartado nem tem peso reduzido
 - Uma avaliação por pessoa em cada casa; pode avaliar quantas casas quiser
 - Desempate: maior média em sabor → criatividade → número de avaliações
-- Piso mínimo de elegibilidade: 10% da média de avaliações do festival
+- **Piso mínimo de elegibilidade (Art. 18º): 10% da média de avaliações por estabelecimento**, calculado sobre TODAS as casas do festival, inclusive as que receberam pouco. Exemplo do próprio regulamento: 4.000 avaliações entre 20 estabelecimentos → média 200 → piso 20. Quem fica abaixo **não entra no ranking**, mas recebe placa e certificado. Com volume baixo o piso quase não morde — isso é a regra funcionando, não defeito
 - Premiação: 1º R$ 1.000 + mesa (Rosalin Mesas) + lixeira (Motopam) + placa + certificado · 2º R$ 750 · 3º R$ 500 · todas recebem placa e certificado
 - **Número de casas indefinido no código.** Qualquer layout funciona com qualquer N
 - Hashtag: `#BotecoACIA`
@@ -176,6 +178,16 @@ O cookie de sessão sai com `Secure` quando `NODE_ENV=production`. Isso signific
 ### O build lê o banco
 
 `generateStaticParams` das páginas de casa consulta o Supabase. Ele cai para lista vazia se o banco não responder, para indisponibilidade momentânea não derrubar o deploy — as páginas passam a ser geradas sob demanda.
+
+---
+
+## A matemática da apuração
+
+Está em `calcularApuracao` (`lib/painel.ts`), separada do banco de propósito, e travada em `tests/apuracao.test.ts` — inclusive com o exemplo numérico do Art. 18º reproduzido.
+
+**Errar aqui não gera erro em lugar nenhum: gera o campeão errado, e só se descobre na premiação.** Por isso a conta é testada com números escolhidos, sem tocar no Supabase, e os testes rodam sempre.
+
+Se mexer na apuração, rode `npm test` e confira que os testes de `Art. 13`, `Art. 17`, `Art. 18` e `Art. 19` continuam passando. Se algum falhar, é a conta que está errada — não o teste.
 
 ---
 

@@ -1,6 +1,7 @@
 import 'server-only'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { situacaoDaCasa } from '@/lib/horarios'
+import { PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 import type { Horarios } from '@/lib/tipos'
 
 /**
@@ -21,14 +22,29 @@ export const CRITERIOS_DA_APURACAO = [
 ] as const
 
 export type LinhaDaApuracao = {
+  /** Posição no ranking. `0` para quem não é elegível ou não tem voto. */
   posicao: number
   slug: string
   nome: string
   ativa: boolean
   avaliacoes: number
   anuladas: number
+  /** Nota final na escala do regulamento: 0 a 20 pontos. */
   mediaGeral: number | null
+  /** Média por critério, 0 a 5 cada — é assim que o regulamento os define. */
   medias: Record<string, number | null>
+  /** Alcançou o piso mínimo de avaliações para concorrer. */
+  elegivel: boolean
+}
+
+export type Apuracao = {
+  linhas: LinhaDaApuracao[]
+  /** Total de avaliações válidas do festival. */
+  votos: number
+  /** Média de avaliações por casa — base do piso mínimo. */
+  mediaDeAvaliacoes: number
+  /** Mínimo de avaliações para concorrer: 10% da média do festival. */
+  piso: number
 }
 
 type AvaliacaoBruta = {
@@ -77,10 +93,44 @@ async function lerTudo() {
   }
 }
 
-export async function apurar(): Promise<LinhaDaApuracao[]> {
+export async function apurar(): Promise<Apuracao> {
   const { casas, avaliacoes } = await lerTudo()
+  return calcularApuracao(casas, avaliacoes)
+}
 
-  const linhas = casas.map((casa) => {
+/**
+ * A conta do regulamento, separada do banco de propósito: assim ela pode ser
+ * testada com números escolhidos, inclusive o exemplo do Art. 18, sem escrever
+ * uma linha no Supabase. Regra de apuração não pode depender de alguém lembrar
+ * dela — ver `tests/apuracao.test.ts`.
+ */
+export function calcularApuracao(
+  casas: Pick<CasaBruta, 'id' | 'slug' | 'nome' | 'ativa'>[],
+  avaliacoes: Pick<
+    AvaliacaoBruta,
+    | 'casa_id'
+    | 'nota_apresentacao'
+    | 'nota_sabor'
+    | 'nota_criatividade'
+    | 'nota_atendimento'
+    | 'anulada_em'
+  >[],
+): Apuracao {
+  const validasDoFestival = avaliacoes.filter((a) => a.anulada_em === null)
+  const casasDoFestival = casas.filter((c) => c.ativa).length || casas.length
+
+  /**
+   * Piso mínimo de elegibilidade do regulamento: a casa precisa alcançar 10%
+   * da média de avaliações do festival para concorrer.
+   *
+   * Existe para impedir que uma casa com três votos altos passe na frente de
+   * quem recebeu duzentos. Sem ele, quanto MENOS avaliações a casa tiver, mais
+   * fácil fica cravar média alta.
+   */
+  const mediaDeAvaliacoes = casasDoFestival === 0 ? 0 : validasDoFestival.length / casasDoFestival
+  const piso = (mediaDeAvaliacoes * PISO_MINIMO_PERCENTUAL) / 100
+
+  const linhas: LinhaDaApuracao[] = casas.map((casa) => {
     const daCasa = avaliacoes.filter((a) => a.casa_id === casa.id)
     // Anulada continua no banco como lastro, mas não entra em conta nenhuma.
     const validas = daCasa.filter((a) => a.anulada_em === null)
@@ -88,17 +138,21 @@ export async function apurar(): Promise<LinhaDaApuracao[]> {
     const medias: Record<string, number | null> = {}
     for (const criterio of CRITERIOS_DA_APURACAO) {
       medias[criterio.chave] = media(
-        validas.map((a) => a[criterio.coluna as keyof AvaliacaoBruta] as number),
+        validas.map((a) => a[criterio.coluna as keyof typeof a] as number),
       )
     }
 
-    // Média geral = média das quatro notas de cada avaliação, e não média das
-    // médias: com quantidades iguais dá no mesmo, mas assim continua certo se
-    // um dia um critério puder ficar em branco.
+    /**
+     * Nota final na escala do regulamento: **0 a 20 pontos**, não 0 a 5.
+     *
+     * Cada avaliação vale a soma dos quatro critérios (4 × 5 = 20), e a nota
+     * final é a média aritmética simples dessas somas. Dividir por quatro daria
+     * o mesmo ranking, mas o número publicado seria outro — e é este número que
+     * a ACIA lê, divulga e coloca no certificado.
+     */
     const mediaGeral = media(
       validas.map(
-        (a) =>
-          (a.nota_apresentacao + a.nota_sabor + a.nota_criatividade + a.nota_atendimento) / 4,
+        (a) => a.nota_apresentacao + a.nota_sabor + a.nota_criatividade + a.nota_atendimento,
       ),
     )
 
@@ -111,11 +165,13 @@ export async function apurar(): Promise<LinhaDaApuracao[]> {
       anuladas: daCasa.length - validas.length,
       mediaGeral,
       medias,
+      elegivel: validas.length > 0 && validas.length >= piso,
     }
   })
 
-  // Casa sem avaliação vai para o fim; entre elas, ordem alfabética.
+  // Não elegível vai para o fim, junto de quem não tem voto nenhum.
   linhas.sort((a, b) => {
+    if (a.elegivel !== b.elegivel) return a.elegivel ? -1 : 1
     if (a.mediaGeral === null && b.mediaGeral === null) return a.nome.localeCompare(b.nome, 'pt-BR')
     if (a.mediaGeral === null) return 1
     if (b.mediaGeral === null) return -1
@@ -128,7 +184,18 @@ export async function apurar(): Promise<LinhaDaApuracao[]> {
     return b.avaliacoes - a.avaliacoes
   })
 
-  return linhas.map((linha, i) => ({ ...linha, posicao: i + 1 }))
+  // Só quem é elegível recebe posição — quem está abaixo do piso não entra
+  // no ranking, e não pode ocupar o lugar de quem entrou.
+  let posicao = 0
+  return {
+    linhas: linhas.map((linha) => ({
+      ...linha,
+      posicao: linha.elegivel ? ++posicao : 0,
+    })),
+    votos: validasDoFestival.length,
+    mediaDeAvaliacoes,
+    piso,
+  }
 }
 
 export type Anomalia = 'ip-repetido' | 'fora-de-horario' | 'rajada'
