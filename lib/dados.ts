@@ -31,6 +31,7 @@ import {
   NOTA_MAXIMA_TOTAL,
   PISO_MINIMO_PERCENTUAL,
   PREMIACAO,
+  PREMIO_DE_PARTICIPACAO,
 } from '@/data/edicao'
 
 export type { Casa, TipoCasa, Horarios }
@@ -44,6 +45,7 @@ export {
   NOTA_MAXIMA_TOTAL,
   PISO_MINIMO_PERCENTUAL,
   PREMIACAO,
+  PREMIO_DE_PARTICIPACAO,
 }
 
 /** Colunas pedidas ao PostgREST. Explícitas para não trazer lixo novo sozinho. */

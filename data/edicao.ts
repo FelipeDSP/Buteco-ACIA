@@ -72,9 +72,31 @@ export type Premio = {
   extra: string
 }
 
+/**
+ * Art. 23º, na letra. O termo oficial é "prato personalizado de parede", que o
+ * próprio regulamento glosa como "placa decorativa comemorativa" — o site usava
+ * só "placa" e omitia a mesa, a lixeira e o destaque na mídia do 1º lugar.
+ */
 export const PREMIACAO: readonly Premio[] = [
-  { posicao: '1º lugar', valor: 1000, extra: 'Placa e certificado' },
-  { posicao: '2º lugar', valor: 750, extra: 'Placa e certificado' },
-  { posicao: '3º lugar', valor: 500, extra: 'Placa e certificado' },
+  {
+    posicao: '1º lugar',
+    valor: 1000,
+    extra:
+      'Mesa personalizada (Rosalin Mesas), lixeira personalizada (Motopam), prato personalizado de parede, certificado de vencedor e destaque nas redes da ACIA.',
+  },
+  {
+    posicao: '2º lugar',
+    valor: 750,
+    extra: 'Prato personalizado de parede e certificado.',
+  },
+  {
+    posicao: '3º lugar',
+    valor: 500,
+    extra: 'Prato personalizado de parede e certificado.',
+  },
 ]
+
+/** Art. 23º: toda casa participante recebe, independentemente da colocação. */
+export const PREMIO_DE_PARTICIPACAO =
+  'Prato personalizado de parede (placa decorativa comemorativa) e certificado de participação.'
 
