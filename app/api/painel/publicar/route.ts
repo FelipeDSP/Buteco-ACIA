@@ -3,12 +3,11 @@ import { recusarSemSessao } from '@/lib/painel-auth'
 import { apurar } from '@/lib/painel'
 import {
   EDICAO_ATUAL,
+  lerPodio,
   publicarPodio,
   republicarEhDelicado,
   type LugarParaPublicar,
 } from '@/lib/resultado'
-import { CALENDARIO } from '@/data/edicao'
-import { dataLonga } from '@/lib/formato'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,14 +36,17 @@ export async function POST(pedido: NextRequest) {
   }
 
   /**
-   * Depois da divulgação o público já viu o pódio. Republicar aí não é
-   * corrigir um rascunho: é mudar o que foi anunciado na premiação, e pode
-   * chegar a tirar o título de quem já comemorou. Exige um segundo aceite.
+   * Se o pódio está **no ar**, o público já o viu. Republicar aí não é
+   * corrigir um rascunho: é mudar o que foi anunciado, e pode chegar a tirar o
+   * título de quem já comemorou. Exige um segundo aceite.
+   *
+   * A pergunta é sobre o interruptor, não sobre o calendário: com o pódio
+   * oculto ninguém viu nada, tenha passado a data que tiver.
    */
-  if (republicarEhDelicado() && confirmarRepublicacao !== true) {
+  if (republicarEhDelicado(await lerPodio()) && confirmarRepublicacao !== true) {
     return NextResponse.json(
       {
-        erro: `O resultado já é público desde ${dataLonga(CALENDARIO.divulgacao)}. Republicar altera o que as casas e a imprensa já viram — marque a confirmação extra se for mesmo isso.`,
+        erro: 'O pódio está no ar e o público já viu este resultado. Republicar altera o que as casas e a imprensa já viram — marque a confirmação extra se for mesmo isso.',
       },
       { status: 409 },
     )

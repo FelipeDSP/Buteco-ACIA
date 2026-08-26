@@ -27,7 +27,7 @@ const nota = (v: number) => v.toFixed(2).replace('.', ',')
 
 export default async function Vencedores() {
   const publicado = await lerPodio()
-  // Aparece se a Comissão liberou, ou se chegou a data de divulgação.
+  // Aparece só se a Comissão liberou. A data não manda mais aqui.
   const mostrar = podioVisivel(publicado)
   const estado = contagem()
 

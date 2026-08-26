@@ -38,22 +38,36 @@ export const EDICAO_ATUAL = String(EDICAO.ano)
 /**
  * Quando o pódio aparece no site.
  *
- * Duas portas, e basta uma: **a Comissão liberou** (`visivel`), ou **chegou a
- * data de divulgação**. Publicar não implica mostrar — dá para congelar o
- * resultado antes da cerimônia e só abrir na hora, que era a razão da trava
- * de data original.
+ * **Só a Comissão decide, e a decisão vale nos dois sentidos.** Enquanto
+ * `visivel` for falso o pódio não aparece, mesmo depois da data de
+ * divulgação; assim que for verdadeiro, aparece, mesmo muito antes dela.
  *
- * A data continua valendo como automatismo: se ninguém marcar nada, o pódio
- * aparece sozinho no dia previsto, sem depender de alguém lembrar.
+ * A data já mandou aqui, e o efeito era perverso: a partir de 14/10 o pódio
+ * era forçado no ar e **não havia mais como ocultá-lo** — nem para corrigir
+ * um número errado, nem enquanto uma casa contestava. Quem opera o painel é
+ * a própria Comissão, atrás de senha; tirar dela o controle da própria
+ * divulgação não protegia ninguém.
+ *
+ * A data não sumiu: virou aviso. `divulgacaoAtrasada` acende no painel se o
+ * dia previsto chegou e o pódio ainda está oculto. Avisa, não decide — é a
+ * mesma escolha que o painel já fazia com a publicação parcial.
  */
-export function podioVisivel(
-  publicado: { visivel?: boolean }[] | number,
+export function podioVisivel(publicado: { visivel?: boolean }[]): boolean {
+  return publicado.some((l) => l.visivel === true)
+}
+
+/**
+ * A data de divulgação passou e o pódio continua oculto.
+ *
+ * Não bloqueia nada — existe para o painel avisar em vez de deixar o silêncio
+ * acontecer. Sem isto, trocar a data por um interruptor manual criaria um novo
+ * jeito de errar: esquecer de clicar no dia da premiação.
+ */
+export function divulgacaoAtrasada(
+  publicado: { visivel?: boolean }[],
   dia = hoje(),
 ): boolean {
-  // Aceita o número antigo para não quebrar quem só quer saber se há registro.
-  if (typeof publicado === 'number') return publicado > 0 && mostrarVencedores(dia)
-  if (publicado.length === 0) return false
-  return publicado.some((l) => l.visivel === true) || mostrarVencedores(dia)
+  return publicado.length > 0 && !podioVisivel(publicado) && mostrarVencedores(dia)
 }
 
 /**
@@ -66,18 +80,6 @@ export function contarInelegiveis(lugares: { elegivel: boolean }[]): number {
 }
 
 /**
- * Publicar é livre, a qualquer momento.
- *
- * A trava por data saiu: a Comissão pode remarcar o festival (Art. 30), pode
- * querer ensaiar o resultado antes, e o Art. 20 fala do prazo da **apuração**,
- * não de uma proibição de gravar. O que o regulamento protege é a divulgação,
- * e isso agora é controlado por `visivel`, não pela data de gravação.
- */
-export function podePublicar(): boolean {
-  return true
-}
-
-/**
  * Publicar antes do fim do festival congela um número parcial: ainda entra
  * voto. Não é proibido — é para avisar, não para bloquear.
  */
@@ -85,9 +87,17 @@ export function publicacaoEhParcial(dia = hoje()): boolean {
   return dia <= CALENDARIO.fimFestival
 }
 
-/** Depois da divulgação, republicar mexe no que o público já viu. */
-export function republicarEhDelicado(dia = hoje()): boolean {
-  return mostrarVencedores(dia)
+/**
+ * Republicar mexe no que o público **já viu** — e quem sabe isso é o
+ * interruptor, não o calendário.
+ *
+ * Isto já perguntou pela data, e errava nos dois sentidos: depois de 14/10
+ * exigia a confirmação "o público já viu" mesmo com o pódio oculto, que
+ * ninguém tinha visto; e antes de 14/10 deixava republicar em silêncio um
+ * resultado que estava no ar desde setembro.
+ */
+export function republicarEhDelicado(publicado: { visivel?: boolean }[]): boolean {
+  return podioVisivel(publicado)
 }
 
 type LinhaBruta = {
@@ -200,15 +210,6 @@ export async function publicarPodio(
  * até ele — a página existia e ninguém achava.
  */
 export const resultadoNoAr = cache(async (edicao = EDICAO_ATUAL): Promise<boolean> => {
-  if (mostrarVencedores()) {
-    // Chegou a data: basta existir registro.
-    const { count } = await supabaseAdmin()
-      .from('resultado')
-      .select('*', { count: 'exact', head: true })
-      .eq('edicao', edicao)
-    return (count ?? 0) > 0
-  }
-
   const { count } = await supabaseAdmin()
     .from('resultado')
     .select('*', { count: 'exact', head: true })
@@ -216,3 +217,27 @@ export const resultadoNoAr = cache(async (edicao = EDICAO_ATUAL): Promise<boolea
     .eq('visivel', true)
   return (count ?? 0) > 0
 })
+
+/**
+ * Liga e desliga o pódio no site sem tocar em nota nenhuma.
+ *
+ * Separado de `publicarPodio` de propósito: mostrar e congelar são decisões
+ * diferentes. Republicar só para ocultar refaria a apuração e regravaria o
+ * retrato — justamente o que a tabela existe para impedir. Aqui só o
+ * interruptor se mexe; o número publicado fica exatamente como estava.
+ *
+ * Devolve quantas linhas mudaram, para o painel saber se havia o que mostrar.
+ */
+export async function alterarVisibilidade(
+  visivel: boolean,
+  edicao = EDICAO_ATUAL,
+): Promise<number> {
+  const { data, error } = await supabaseAdmin()
+    .from('resultado')
+    .update({ visivel })
+    .eq('edicao', edicao)
+    .select('posicao')
+
+  if (error) throw new Error(`Falha ao mudar a visibilidade: ${error.message}`)
+  return (data ?? []).length
+}

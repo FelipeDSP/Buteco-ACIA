@@ -20,8 +20,6 @@ export type Candidata = {
 
 export default function PublicarResultado({
   candidatas,
-  liberado,
-  motivoBloqueio,
   jaPublicado,
   publicadoEm,
   exigeConfirmacaoExtra,
@@ -31,8 +29,6 @@ export default function PublicarResultado({
   avisoDeParcial,
 }: {
   candidatas: Candidata[]
-  liberado: boolean
-  motivoBloqueio: string
   jaPublicado: boolean
   publicadoEm: string | null
   /** Casas que não alcançaram o piso do Art. 18 e ficam sem colocação. */
@@ -84,14 +80,7 @@ export default function PublicarResultado({
           {jaPublicado ? 'Republicar resultado' : 'Publicar resultado oficial'}
         </button>
         {publicadoEm ? (
-          <span className="text-[12px] text-tinta-3">
-            Publicado em {publicadoEm} ·{' '}
-            {jaVisivel ? (
-              <b className="text-tinta">no ar</b>
-            ) : (
-              'ainda não visível no site'
-            )}
-          </span>
+          <span className="text-[12px] text-tinta-3">Publicado em {publicadoEm}</span>
         ) : null}
       </span>
     )
@@ -172,8 +161,9 @@ export default function PublicarResultado({
         />
         <span className="text-tinta-3">
           <b className="text-tinta">Mostrar no site agora.</b> Sem marcar, o resultado fica
-          gravado e congelado, mas a página de vencedores só passa a exibi-lo na data de
-          divulgação — útil para fechar o número antes da cerimônia sem vazar o campeão.
+          gravado e congelado, e a página de vencedores continua dizendo que não saiu —
+          útil para fechar o número antes da cerimônia sem vazar o campeão. Dá para
+          mostrar depois com um clique, sem republicar.
         </span>
       </label>
 
