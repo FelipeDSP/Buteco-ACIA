@@ -2,10 +2,14 @@ import Link from 'next/link'
 import Logo from '@/components/Logo'
 import MenuNavegacao from '@/components/MenuNavegacao'
 import { menu } from '@/lib/navegacao'
+import { resultadoNoAr } from '@/lib/resultado'
 import { contagem } from '@/lib/fase'
 import { EDICAO } from '@/lib/dados'
 
-export default function Cabecalho() {
+export default async function Cabecalho() {
+  // O item "Vencedores" aparece quando o resultado está no ar, não numa data.
+  const itens = menu(await resultadoNoAr())
+
   const { detalhe } = contagem()
 
   return (
@@ -38,7 +42,7 @@ export default function Cabecalho() {
             </span>
           </Link>
 
-          <MenuNavegacao itens={menu()} />
+          <MenuNavegacao itens={itens} />
         </div>
       </nav>
     </header>

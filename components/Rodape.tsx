@@ -1,10 +1,14 @@
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { menu } from '@/lib/navegacao'
+import { resultadoNoAr } from '@/lib/resultado'
 import { EDICAO } from '@/lib/dados'
 import { listarApoiadores } from '@/lib/apoiadores'
 
-export default function Rodape() {
+export default async function Rodape() {
+  // O item "Vencedores" aparece quando o resultado está no ar, não numa data.
+  const itens = menu(await resultadoNoAr())
+
   const apoiadores = listarApoiadores()
 
   return (
@@ -29,7 +33,7 @@ export default function Rodape() {
         <nav aria-label="Rodapé">
           <h2 className="mb-3.5 text-[13px] font-bold text-ouro">Navegar</h2>
           <ul className="flex flex-col gap-2.5">
-            {menu().map((item) => (
+            {itens.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="hover:text-ouro">
                   {item.rotulo}

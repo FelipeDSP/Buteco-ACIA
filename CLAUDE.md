@@ -60,10 +60,10 @@ Todas usam a mesma capa: faixa marinho, migalha de navegação, selo âmbar, tí
 /casas/[slug]           Página da casa — URL estável entre edições
 /como-se-vota           Índice, passos, critérios, apuração, premiação, calendário
 /acia                   Manifesto, objetivos, apoiadores por nível, números
-/vencedores             Só entra no menu a partir de 14/10
+/vencedores             Só entra no menu quando o resultado está no ar
 ```
 
-Menu: `Início · As casas · Monte seu rolê · Como se vota · A ACIA`
+Menu: `Início · As casas · Monte seu rolê · Como se vota · A ACIA`, mais `Vencedores` quando o resultado está no ar.
 
 **Não criar:** página "Sobre" separada, regulamento jurídico como aba (é PDF no rodapé), nem qualquer fluxo de inscrição.
 
@@ -216,6 +216,8 @@ Na página, as inelegíveis aparecem numa lista separada, **sem número de coloc
 O pódio aparece se **a Comissão liberou** (`visivel = true`) **ou** se chegou a data de divulgação — basta uma das duas. Assim dá para congelar o número antes da cerimônia sem vazar o campeão, e quem quiser publicar no dia da premiação, com o público vendo na hora, só marca a caixa. A data continua valendo como automatismo: sem ninguém marcar nada, o pódio aparece sozinho em 14/10.
 
 Publicar antes do fim do festival congela número parcial — o painel **avisa**, não bloqueia; republicar depois resolve.
+
+**Quem sabe que o resultado saiu é o site inteiro, não só a página.** O item "Vencedores" no menu e o hero da home seguem a mesma regra do pódio (`resultadoNoAr`), não a data. Quando eram coisas diferentes, publicar antes de 14/10 punha o pódio no ar sem nenhum link levando até ele — a página existia e ninguém achava.
 
 A regra está em `podioVisivel`, travada em `tests/resultado.test.ts`: sem registro, liberado antes da data, não liberado antes da data, e não liberado na data.
 

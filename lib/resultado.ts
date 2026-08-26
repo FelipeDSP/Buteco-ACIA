@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { EDICAO, CALENDARIO } from '@/data/edicao'
 import { hoje, mostrarVencedores } from '@/lib/fase'
@@ -186,3 +187,32 @@ export async function publicarPodio(
   )
   if (error) throw new Error(`Falha ao publicar o resultado: ${error.message}`)
 }
+
+/**
+ * O resultado está aparecendo no site?
+ *
+ * Pergunta que o cabeçalho e a home precisam responder em toda página, então é
+ * uma contagem sem corpo (`head: true`) e memorizada por requisição. O que
+ * decide é a mesma regra da página de vencedores: liberado pela Comissão, ou
+ * data de divulgação alcançada.
+ *
+ * Sem isto, publicar antes da data punha o pódio no ar sem nenhum link levando
+ * até ele — a página existia e ninguém achava.
+ */
+export const resultadoNoAr = cache(async (edicao = EDICAO_ATUAL): Promise<boolean> => {
+  if (mostrarVencedores()) {
+    // Chegou a data: basta existir registro.
+    const { count } = await supabaseAdmin()
+      .from('resultado')
+      .select('*', { count: 'exact', head: true })
+      .eq('edicao', edicao)
+    return (count ?? 0) > 0
+  }
+
+  const { count } = await supabaseAdmin()
+    .from('resultado')
+    .select('*', { count: 'exact', head: true })
+    .eq('edicao', edicao)
+    .eq('visivel', true)
+  return (count ?? 0) > 0
+})

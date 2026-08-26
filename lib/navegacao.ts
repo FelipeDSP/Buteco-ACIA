@@ -1,5 +1,3 @@
-import { mostrarVencedores } from '@/lib/fase'
-
 export type ItemMenu = { href: string; rotulo: string }
 
 /* "As casas" e "Monte seu rolê" são seções da home, não rotas: a lista completa
@@ -12,9 +10,16 @@ const BASE: ItemMenu[] = [
   { href: '/acia', rotulo: 'A ACIA' },
 ]
 
-/** "Vencedores" entra como último item só a partir de 14 de outubro. */
-export function menu(): ItemMenu[] {
-  return mostrarVencedores()
+/**
+ * "Vencedores" entra como último item **quando o resultado está no ar** — e
+ * não numa data fixa.
+ *
+ * A função é pura de propósito: quem sabe se o resultado saiu é o banco, e
+ * essa consulta vive em `lib/resultado.ts`. Passar o fato para cá mantém a
+ * navegação testável e sem acesso a rede.
+ */
+export function menu(vencedoresNoAr: boolean): ItemMenu[] {
+  return vencedoresNoAr
     ? [...BASE, { href: '/vencedores', rotulo: 'Vencedores' }]
     : BASE
 }

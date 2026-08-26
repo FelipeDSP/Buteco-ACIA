@@ -16,6 +16,7 @@ import {
   listarCasas,
 } from '@/lib/dados'
 import { contagem, type Fase } from '@/lib/fase'
+import { resultadoNoAr } from '@/lib/resultado'
 
 /* A home lê busca e filtro da URL, então é renderizada a cada visita — o que
    também mantém a contagem do calendário sempre certa, sem esperar deploy. */
@@ -115,7 +116,14 @@ export default async function Home({ searchParams }: Props) {
   const { bairro, busca } = await searchParams
 
   const estado = contagem()
-  const texto = chamadaDaFase(estado.fase)
+  /**
+   * Se o resultado já está no ar, o hero fala dele — mesmo que a data de
+   * divulgação ainda não tenha chegado, porque a Comissão pode ter liberado
+   * antes. Sem isto a home continuaria chamando para votar com o pódio
+   * publicado, e o único caminho até ele seria digitar a URL.
+   */
+  const vencedoresNoAr = await resultadoNoAr()
+  const texto = chamadaDaFase(vencedoresNoAr ? 'divulgado' : estado.fase)
 
   const bairros = await listarBairros()
   // Bairro inventado na URL não filtra nada: cai para "todos".
