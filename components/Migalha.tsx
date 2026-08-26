@@ -18,7 +18,10 @@ export default function Migalha({
       <ol className="flex flex-wrap items-center gap-2 text-selo">
         {elos.map((elo) => (
           <li key={elo.href} className="flex items-center gap-2">
-            <Link href={elo.href} className="underline-offset-4 hover:text-ouro hover:underline">
+            <Link
+              href={elo.href}
+              className="inline-block py-1 underline-offset-4 hover:text-ouro hover:underline"
+            >
               {elo.rotulo}
             </Link>
             <span aria-hidden="true">›</span>

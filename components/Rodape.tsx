@@ -34,10 +34,13 @@ export default async function Rodape() {
 
         <nav aria-label="Rodapé">
           <h2 className="mb-3.5 text-[13px] font-bold text-ouro">Navegar</h2>
-          <ul className="flex flex-col gap-2.5">
+          {/* py-1.5 não é respiro: sem ele o link tem 16px de altura, abaixo
+              do mínimo de 24px do WCAG 2.5.8. O gap encolhe na mesma medida
+              para o espaçamento visual continuar o mesmo. */}
+          <ul className="flex flex-col gap-1">
             {itens.map((item) => (
               <li key={item.href}>
-                <Link href={item.href} className="hover:text-ouro">
+                <Link href={item.href} className="inline-block py-1.5 hover:text-ouro">
                   {item.rotulo}
                 </Link>
               </li>

@@ -383,7 +383,21 @@ Vale também para a trava: ela só conta como verificada depois de você inserir
 
 ## Qualidade mínima
 
-Responsivo até 360px. Foco de teclado visível. Contraste AA. HTML semântico, `alt` em toda imagem. `next/image` nas fotos. `prefers-reduced-motion` respeitado. Rodar `npm run build` e `npm test` antes de dar qualquer tarefa por concluída.
+Responsivo até 360px. Foco de teclado visível. Contraste AA.
+
+**Alvo de toque mínimo de 24px** (WCAG 2.5.8). Link em linha de texto herda a
+altura da linha — 16px — e fica abaixo do mínimo: quem for link de navegação,
+contato ou filtro precisa de `inline-block` com padding vertical. Aconteceu no
+rodapé, na migalha, nos contatos da `/acia` e da página de casa.
+
+**Campo de texto nunca abaixo de 16px.** O Safari do iOS dá zoom ao focar
+campo com fonte menor, e a tela salta no meio do preenchimento. A observação da
+tela de voto estava em 15,5px — o CPF já estava certo, que é o que mais
+importava.
+
+Varredura de responsividade feita em 320, 360, 390 e 414px, sobre as nove
+páginas públicas: nenhuma rola na horizontal e nenhum alvo fica abaixo de 24px.
+Em 320px (abaixo do piso) a página de casa escapa 2px. HTML semântico, `alt` em toda imagem. `next/image` nas fotos. `prefers-reduced-motion` respeitado. Rodar `npm run build` e `npm test` antes de dar qualquer tarefa por concluída.
 
 ---
 

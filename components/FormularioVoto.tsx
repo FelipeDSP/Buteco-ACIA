@@ -155,7 +155,9 @@ export default function FormularioVoto({
           value={comentario}
           onChange={(e) => setComentario(e.target.value.slice(0, COMENTARIO_MAXIMO))}
           placeholder="O que funcionou, o que dava para melhorar…"
-          className="w-full rounded-xl bg-claro px-4 py-3 text-[15.5px] text-tinta"
+          /* 16px é piso, não estética: abaixo disso o Safari do iOS dá zoom ao
+             focar o campo e desalinha a tela no meio do voto. */
+          className="w-full rounded-xl bg-claro px-4 py-3 text-[16px] text-tinta"
         />
         <p
           aria-live="polite"

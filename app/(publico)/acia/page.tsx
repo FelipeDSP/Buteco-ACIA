@@ -120,7 +120,7 @@ export default async function PaginaAcia() {
                   <li>
                     <a
                       href={CONTATO.telefoneUrl}
-                      className="underline-offset-4 hover:text-ouro hover:underline"
+                      className="inline-block py-1 underline-offset-4 hover:text-ouro hover:underline"
                     >
                       {CONTATO.telefone}
                     </a>
@@ -128,7 +128,7 @@ export default async function PaginaAcia() {
                   <li>
                     <a
                       href={`mailto:${CONTATO.email}`}
-                      className="break-all underline-offset-4 hover:text-ouro hover:underline"
+                      className="inline-block break-all py-1 underline-offset-4 hover:text-ouro hover:underline"
                     >
                       {CONTATO.email}
                     </a>

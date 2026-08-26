@@ -187,7 +187,7 @@ export default async function PaginaCasa({ params }: Props) {
                     <dd>
                       <a
                         href={c.href}
-                        className="font-semibold text-marinho underline underline-offset-4"
+                        className="inline-block py-1 font-semibold text-marinho underline underline-offset-4"
                       >
                         {c.texto}
                       </a>

@@ -64,7 +64,7 @@ export default function FiltroPilulas({
                 href={montarHref(parametro, item.valor, outros, base, ancora)}
                 scroll={false}
                 aria-current={selecionado ? 'true' : undefined}
-                className={`inline-block rounded-full px-4 py-1.5 text-[14px] font-semibold transition-colors ${
+                className={`inline-block rounded-full px-4 py-2.5 text-[14px] font-semibold transition-colors ${
                   selecionado
                     ? 'bg-marinho text-branco'
                     : 'bg-claro text-tinta-3 hover:bg-creme hover:text-tinta'
