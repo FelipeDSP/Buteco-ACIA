@@ -46,7 +46,7 @@ export default async function Vencedores() {
         titulo={mostrar ? 'Os vencedores' : 'O resultado ainda não saiu'}
         sub={
           mostrar
-            ? `Apurado a partir de todas as avaliações válidas do público, pela média aritmética simples. A nota vai de 0 a ${NOTA_MAXIMA_TOTAL} pontos.`
+            ? undefined
             : `${estado.detalhe}. A apuração acontece de ${dataLonga(
                 CALENDARIO.inicioApuracao,
               )} a ${dataLonga(CALENDARIO.fimApuracao)}, e o resultado é divulgado a partir de ${dataLonga(
