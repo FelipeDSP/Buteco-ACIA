@@ -127,6 +127,12 @@ diferentes e aparecem em lugares diferentes: realizador assina o evento numa
 faixa própria (`FaixaRealizacao`, na home e na `/acia`) e no cartão claro do
 rodapé; patrocinador entra na grade de `SecaoApoio`.
 
+**Há um arquivo por marca, e um só.** A `LogoAcia` do cartão institucional da
+`/acia` lê o mesmo `public/realizacao/acia.png` que a faixa e o rodapé usam.
+Existia uma cópia separada em `public/acia-logo.png` — mesma arte, resolução
+maior — e duas cópias da mesma marca é como uma delas fica para trás quando a
+associação manda a arte nova.
+
 A fonte é `lib/realizacao.ts`, e ela **não lê disco de propósito** — são duas
 entidades fixas, não uma pasta que cresce. `listarApoiadores()` filtra os
 arquivos de realização: se alguém soltar `cdl-ariquemes.png` em
