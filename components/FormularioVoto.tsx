@@ -144,15 +144,9 @@ export default function FormularioVoto({
       })}
 
       <div>
-        <label htmlFor="comentario" className="block font-display text-[17px] font-extrabold">
+        <label htmlFor="comentario" className="mb-3 block font-display text-[17px] font-extrabold">
           Quer deixar uma observação? <span className="font-normal text-tinta-3">(opcional)</span>
         </label>
-        <p className="mt-1 mb-3 text-[14px] text-tinta-3">
-          A observação <b className="font-semibold text-tinta">não entra na nota</b>. Ela é
-          repassada ao estabelecimento como devolutiva, e{' '}
-          <b className="font-semibold text-tinta">não identifica quem escreveu</b>.
-        </p>
-
         <textarea
           id="comentario"
           name="comentario"
