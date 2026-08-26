@@ -261,7 +261,15 @@ Na página, as inelegíveis aparecem numa lista separada, **sem número de coloc
 
 **Publicar é livre; mostrar é escolha.** Publicar não tem trava de data — a ACIA pode remarcar o festival (Art. 30) e o Art. 20 fala do prazo da apuração, não de proibição de gravar. O que o regulamento protege é a **divulgação**, e isso é a coluna `visivel`.
 
-O pódio aparece se **a Comissão liberou** (`visivel = true`) **ou** se chegou a data de divulgação — basta uma das duas. Assim dá para congelar o número antes da cerimônia sem vazar o campeão, e quem quiser publicar no dia da premiação, com o público vendo na hora, só marca a caixa. A data continua valendo como automatismo: sem ninguém marcar nada, o pódio aparece sozinho em 14/10.
+**Quem decide é a Comissão, e a decisão vale nos dois sentidos.** O pódio aparece se `visivel = true` e some se for falso — em qualquer data.
+
+A data já mandou aqui, e o efeito era perverso: a partir de 14/10 o pódio era forçado no ar e **não havia mais como ocultá-lo**, nem para corrigir número errado, nem enquanto uma casa contestava. Quem opera o painel é a própria Comissão, atrás de senha; tirar dela o controle da própria divulgação não protegia ninguém.
+
+A data virou aviso: `divulgacaoAtrasada` acende no painel se o dia previsto chegou e o pódio segue oculto. Avisa, não decide — a mesma escolha que o painel já fazia com a publicação parcial. Sem esse aviso, trocar a trava por um botão criaria um jeito novo de errar: esquecer de clicar no dia da premiação.
+
+**Mostrar e congelar são ações separadas.** `/api/painel/visibilidade` só vira o interruptor, sem recalcular nada — republicar apenas para ocultar refaria a apuração e regravaria o retrato, que é o que a tabela existe para impedir.
+
+`republicarEhDelicado` também deixou de olhar a data e passou a olhar o interruptor. Errava nos dois sentidos: depois de 14/10 exigia a confirmação "o público já viu" com o pódio oculto, que ninguém tinha visto; e antes de 14/10 deixava republicar em silêncio um resultado no ar desde setembro.
 
 Publicar antes do fim do festival congela número parcial — o painel **avisa**, não bloqueia; republicar depois resolve.
 
@@ -271,7 +279,7 @@ A regra está em `podioVisivel`, travada em `tests/resultado.test.ts`: sem regis
 
 **A leitura do pódio usa `service_role`, e isso é deliberado.** A policy de `casas` esconde inativa e desclassificada; com a chave anônima, desclassificar uma vencedora depois da premiação a faria sumir do pódio — exatamente a mudança retroativa que a tabela existe para impedir. Roda em componente de servidor e devolve só os campos do pódio.
 
-**Publicar exige a data de início da apuração** (Art. 20). Antes disso o botão fica bloqueado e a API recusa: o festival ainda recebe voto e não há o que congelar. Republicar depois da divulgação pede uma confirmação extra, porque aí não é corrigir rascunho — é mudar o que as casas e a imprensa já viram.
+**Publicar não tem trava de data.** O painel avisa que o número é parcial se o festival ainda não terminou, e pede confirmação extra para republicar com o pódio no ar — mas não bloqueia. O regulamento protege a **divulgação**, e isso é o interruptor.
 
 O cálculo é refeito **no servidor** na hora de publicar, nunca recebido do cliente: se viesse do formulário, quem chamasse a API direto escolheria o campeão.
 
