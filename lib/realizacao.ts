@@ -26,11 +26,9 @@ export type Realizador = {
    * A ACIA é quadrada (0,99:1) e a CDL é deitada (2,91:1). Alinhar as duas
    * pela mesma altura faria a CDL parecer três vezes maior — ela ganharia
    * três vezes mais área com o mesmo número. Por isso a ACIA é limitada pela
-   * ALTURA e a CDL pela LARGURA. Nos números escolhidos a CDL fica com 64px
-   * de altura contra 74px da ACIA: menor em altura, maior em largura, e as
-   * duas com peso parecido no olho.
+   * ALTURA e a CDL pela LARGURA, nos três lugares onde as duas aparecem.
    */
-  naFaixa: string
+  noCabecalho: string
   noRodape: string
 }
 
@@ -41,7 +39,7 @@ export const REALIZADORES: readonly Realizador[] = [
     arquivo: 'acia.png',
     largura: 397,
     altura: 400,
-    naFaixa: 'h-[58px] w-auto media:h-[74px]',
+    noCabecalho: 'h-[30px] w-auto',
     noRodape: 'h-[34px] w-auto',
   },
   {
@@ -50,7 +48,7 @@ export const REALIZADORES: readonly Realizador[] = [
     arquivo: 'cdl-ariquemes.png',
     largura: 1164,
     altura: 400,
-    naFaixa: 'h-auto w-[150px] media:w-[186px]',
+    noCabecalho: 'h-auto w-[76px]',
     noRodape: 'h-auto w-[86px]',
   },
 ]
@@ -60,12 +58,26 @@ export const ARQUIVOS_DE_REALIZACAO: readonly string[] = REALIZADORES.map(
   (r) => r.arquivo,
 )
 
-/**
- * "ACIA e CDL Ariquemes" — derivado, para a linha final do rodapé não
- * desmentir a faixa se a composição da realização mudar.
- */
-export function realizadoPor(): string {
-  const nomes = REALIZADORES.map((r) => r.curto)
+function porExtenso(nomes: string[]): string {
   if (nomes.length < 2) return nomes.join('')
   return `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`
+}
+
+/**
+ * "ACIA e CDL Ariquemes" — derivado, para a linha final do rodapé não
+ * desmentir as marcas se a composição da realização mudar.
+ */
+export function realizadoPor(): string {
+  return porExtenso(REALIZADORES.map((r) => r.curto))
+}
+
+/**
+ * Os nomes completos.
+ *
+ * No cabeçalho as duas marcas aparecem **sem rótulo** — são só imagens ao
+ * lado da do evento, e quem não conhece os brasões não tem como saber que
+ * aquilo é a realização. Esta linha é onde a informação continua escrita.
+ */
+export function realizadoPorExtenso(): string {
+  return porExtenso(REALIZADORES.map((r) => r.nome))
 }

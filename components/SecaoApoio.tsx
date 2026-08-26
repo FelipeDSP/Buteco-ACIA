@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { TituloSecao } from '@/components/Secao'
 import { listarApoiadores } from '@/lib/apoiadores'
+import { realizadoPorExtenso } from '@/lib/realizacao'
 
 /**
  * Seção de apoio, idêntica na home e na /acia — é um componente só justamente
@@ -45,6 +46,14 @@ export default function SecaoApoio({
           titulo="Quem faz o Boteco ACIA acontecer"
           sub={sub}
         />
+
+        {/* No cabeçalho as duas marcas aparecem sem rótulo. Aqui é onde a
+            informação continua escrita — quem não conhece os brasões não teria
+            como saber que aquilo ali é a realização. */}
+        <p className="mt-4 max-w-[62ch] text-[15.5px] text-tinta-3">
+          <b className="font-semibold text-tinta">Realização:</b>{' '}
+          {realizadoPorExtenso()}.
+        </p>
 
         {/* Quatro colunas, não cinco: cartão mais largo é o que devolve
             altura às marcas deitadas. Altura de cartão não resolve isso. */}

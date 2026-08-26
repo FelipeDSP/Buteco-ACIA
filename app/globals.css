@@ -39,6 +39,7 @@
   --breakpoint-media:  760px;  /* listas de 3 colunas                     */
   --breakpoint-larga:  900px;  /* blocos de conteúdo em duas colunas      */
   --breakpoint-deco:   980px;  /* decorações do brasão aparecem           */
+  --breakpoint-menu:  1120px;  /* menu vira linha de abas; abaixo, hambúrguer */
   --breakpoint-ampla: 1280px;  /* grades ganham a última coluna           */
 }
 

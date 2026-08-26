@@ -45,12 +45,11 @@ Ordem das seções, de cima para baixo:
 
 1. **Hero** — marinho, título, dois botões, e um leque de três cartões de prato sobrepostos e inclinados, **em rotação por todas as casas**
 2. **Faixa de números** — casas, dias, bairros atendidos, premiação. Escala em dois segundos
-3. **Faixa de realização** — ACIA e CDL Ariquemes, discreta, entre dois filetes
-4. **Mapa das casas** — "Onde ficam as casas", com marcador por casa e popup que leva à página dela
-5. **A lista** — busca por casa ou prato, pílulas de bairro, contagem, grade de cartões
-6. **Monte seu rolê** — três passos numerados
-7. **Como se vota** — só a mecânica em uma frase, com link para a página completa
-8. **Apoiadores**
+3. **Mapa das casas** — "Onde ficam as casas", com marcador por casa e popup que leva à página dela
+4. **A lista** — busca por casa ou prato, pílulas de bairro, contagem, grade de cartões
+5. **Monte seu rolê** — três passos numerados
+6. **Como se vota** — só a mecânica em uma frase, com link para a página completa
+7. **Apoiadores**
 
 ### Internas — capa padronizada
 
@@ -124,8 +123,14 @@ Montserrat é a família da própria logo. É larga — usar tracking negativo (
 
 **ACIA e CDL Ariquemes realizam o festival. Os outros patrocinam.** São papéis
 diferentes e aparecem em lugares diferentes: realizador assina o evento numa
-faixa própria (`FaixaRealizacao`, na home e na `/acia`) e no cartão claro do
-rodapé; patrocinador entra na grade de `SecaoApoio`.
+cabeçalho, ao lado da marca do evento, e no cartão claro do rodapé;
+patrocinador entra na grade de `SecaoApoio`.
+
+**No cabeçalho as duas aparecem sem rótulo** — são imagens ao lado da marca do
+evento, e quem não conhece os brasões não tem como saber que aquilo é a
+realização. Por isso `SecaoApoio` abre com a linha `realizadoPorExtenso()`,
+que nomeia as duas por extenso na home e na `/acia`. Tirar essa linha deixa a
+informação existindo só como desenho.
 
 **Há um arquivo por marca, e um só.** A `LogoAcia` do cartão institucional da
 `/acia` lê o mesmo `public/realizacao/acia.png` que a faixa e o rodapé usam.
@@ -152,14 +157,32 @@ CDL pela **largura**:
 
 | | ACIA | CDL |
 |---|---|---|
-| Faixa, ≥760px | altura 74px | largura 186px (→ 64px de altura) |
-| Faixa, <760px | altura 58px | largura 150px (→ 52px de altura) |
+| Cabeçalho | altura 30px | largura 76px (→ 26px de altura) |
 | Rodapé | altura 34px | largura 86px |
 
 Os números moram junto de cada marca em `lib/realizacao.ts`, não no
 componente: **o equilíbrio óptico é propriedade da arte, não do lugar onde ela
 aparece.** Caber não é o mesmo que parecer do mesmo tamanho — é a mesma regra
 que já valia para `chatyou.png` na grade de apoio.
+
+### O cabeçalho tem três marcas e um orçamento de largura
+
+A barra carrega a marca do evento, um filete e as duas da realização, mais um
+menu que chegou a **seis** itens com `Vencedores`. As três marcas juntas custam
+342px; o menu de seis, 607px.
+
+Por isso a linha de abas virou em **1120px** (`--breakpoint-menu`), não nos
+900px de antes: em 1120 sobram 59px de folga, e abaixo disso o menu quebraria
+em duas linhas — empurrando o conteúdo da página para baixo em toda visita.
+
+**Abaixo de 900px as marcas de realização somem do cabeçalho**, filete
+incluso. Nessa largura as três juntas viram uma fileira ilegível, e a do
+evento é a que tem de sobreviver. O rodapé e a linha de `SecaoApoio` continuam
+nomeando as duas.
+
+Conferido em 1440, 1280, 1120, 1119, 1024, 900, 899, 768 e 360px, com o menu
+de seis itens: uma linha só acima de 1120, hambúrguer abaixo, barra sempre com
+85px e nenhum overflow horizontal.
 
 **No rodapé as duas precisam de cartão claro atrás.** O fundo é marinho e as
 duas artes são azuis sobre transparente, sem versão monocromática para fundo
