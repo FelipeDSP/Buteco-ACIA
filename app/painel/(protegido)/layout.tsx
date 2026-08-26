@@ -30,6 +30,7 @@ export const metadata: Metadata = {
 const ABAS = [
   { href: '/painel', rotulo: 'Apuração' },
   { href: '/painel/auditoria', rotulo: 'Auditoria' },
+  { href: '/painel/observacoes', rotulo: 'Observações' },
   { href: '/painel/casas', rotulo: 'Casas' },
 ]
 

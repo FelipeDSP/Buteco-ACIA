@@ -64,6 +64,7 @@ type AvaliacaoBruta = {
   nota_atendimento: number
   anulada_em: string | null
   anulada_motivo: string | null
+  comentario: string | null
 }
 
 type CasaBruta = {
@@ -89,7 +90,7 @@ async function lerTudo() {
     banco
       .from('avaliacoes')
       .select(
-        'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo',
+        'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo, comentario',
       )
       .order('criada_em', { ascending: false }),
   ])
@@ -233,7 +234,12 @@ export function calcularApuracao(
   }
 }
 
-export type Anomalia = 'ip-repetido' | 'ip-em-varias-casas' | 'fora-de-horario' | 'rajada'
+export type Anomalia =
+  | 'ip-repetido'
+  | 'ip-em-varias-casas'
+  | 'fora-de-horario'
+  | 'rajada'
+  | 'comentario-repetido'
 
 export type LinhaDaAuditoria = {
   id: string
@@ -250,6 +256,10 @@ export type LinhaDaAuditoria = {
   doIpNaCasa: number
   /** Em quantas casas diferentes este IP votou. */
   casasDoIp: number
+  /** Observação de quem avaliou. Nunca sai para página pública. */
+  comentario: string | null
+  /** Quantas avaliações da mesma casa repetem este texto exato. */
+  comentariosIguais: number
 }
 
 export type Limiares = {
@@ -257,6 +267,7 @@ export type Limiares = {
   ipEmCasas: number
   rajadaMinima: number
   janelaDeRajadaMin: number
+  comentariosIguais: number
 }
 
 /**
@@ -293,6 +304,15 @@ export function limiares(): Limiares {
     ipEmCasas: numeroDoAmbiente('PAINEL_LIMIAR_IP_EM_CASAS', 5),
     rajadaMinima: numeroDoAmbiente('PAINEL_LIMIAR_RAJADA', 8),
     janelaDeRajadaMin: numeroDoAmbiente('PAINEL_JANELA_RAJADA_MIN', 5),
+    /**
+     * Textos idênticos na mesma casa.
+     *
+     * Duas pessoas escrevem "muito bom" no mesmo dia sem combinar nada — daí o
+     * limiar não ser 2. Mas o mesmo texto longo repetido é assinatura de quem
+     * preencheu o formulário várias vezes, e nesse caso o sinal é tão bom
+     * quanto IP repetido.
+     */
+    comentariosIguais: numeroDoAmbiente('PAINEL_LIMIAR_COMENTARIO_IGUAL', 3),
   }
 }
 
@@ -309,6 +329,7 @@ type AvaliacaoDaAuditoria = Pick<
   | 'nota_atendimento'
   | 'anulada_em'
   | 'anulada_motivo'
+  | 'comentario'
 >
 
 /**
@@ -331,6 +352,18 @@ export function calcularAuditoria(
     porIpECasa.set(chave, (porIpECasa.get(chave) ?? 0) + 1)
     if (!casasPorIp.has(a.ip)) casasPorIp.set(a.ip, new Set())
     casasPorIp.get(a.ip)!.add(a.casa_id)
+  }
+
+  // Comentários idênticos dentro da mesma casa. Compara sem acento, sem caixa
+  // e sem espaço sobrando: "Muito bom!" e "muito bom" são o mesmo texto.
+  const normalizar = (t: string) =>
+    t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+
+  const repeticoes = new Map<string, number>()
+  for (const a of avaliacoes) {
+    if (!a.comentario) continue
+    const chave = `${a.casa_id}|${normalizar(a.comentario)}`
+    repeticoes.set(chave, (repeticoes.get(chave) ?? 0) + 1)
   }
 
   // Rajada: para cada avaliação, quantas outras da mesma casa caíram na janela.
@@ -362,6 +395,11 @@ export function calcularAuditoria(
     if (casasDoIp >= limites.ipEmCasas) anomalias.push('ip-em-varias-casas')
     if (emRajada.has(a.id)) anomalias.push('rajada')
 
+    const comentariosIguais = a.comentario
+      ? (repeticoes.get(`${a.casa_id}|${normalizar(a.comentario)}`) ?? 0)
+      : 0
+    if (comentariosIguais >= limites.comentariosIguais) anomalias.push('comentario-repetido')
+
     // Só acusa horário quando a casa tem horário cadastrado: com `{}` todo
     // voto seria "fora de horário", e o alerta viraria ruído.
     const situacao = situacaoDaCasa(casa?.horarios ?? {}, new Date(a.criada_em))
@@ -385,6 +423,8 @@ export function calcularAuditoria(
       anomalias,
       doIpNaCasa,
       casasDoIp,
+      comentario: a.comentario,
+      comentariosIguais,
     }
   })
 }

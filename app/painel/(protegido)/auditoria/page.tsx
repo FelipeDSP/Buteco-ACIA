@@ -12,6 +12,7 @@ const FILTROS = [
   'ip-repetido',
   'rajada',
   'fora-de-horario',
+  'comentario-repetido',
   'anuladas',
 ] as const
 type Filtro = (typeof FILTROS)[number]
@@ -23,6 +24,7 @@ const ROTULO: Record<Filtro, string> = {
   'ip-em-varias-casas': 'IP em várias casas',
   rajada: 'Rajada',
   'fora-de-horario': 'Fora de horário',
+  'comentario-repetido': 'Observação repetida',
   anuladas: 'Anuladas',
 }
 
@@ -103,6 +105,7 @@ export default async function Auditoria({
                   >
                     Notas
                   </th>
+                  <th className="py-2.5 pr-3 font-semibold">Observação</th>
                   <th className="py-2.5 pr-3 font-semibold">Sinais</th>
                   <th className="px-5 py-2.5 text-right font-semibold">Ação</th>
                 </tr>

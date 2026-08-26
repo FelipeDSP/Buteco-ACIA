@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cpfValido, formatarCpf, limparCpf } from '@/lib/cpf'
+import { COMENTARIO_MAXIMO } from '@/lib/voto'
 
 /**
  * Tela de voto. É a página mais vista do projeto e a que tem prazo real:
@@ -37,6 +38,7 @@ export default function FormularioVoto({
 
   const [notas, setNotas] = useState<Record<string, number>>({})
   const [cpf, setCpf] = useState('')
+  const [comentario, setComentario] = useState('')
   const [aceite, setAceite] = useState(false)
   const [enviando, setEnviando] = useState(false)
   /**
@@ -66,7 +68,7 @@ export default function FormularioVoto({
       const resposta = await fetch('/api/voto', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ slug, cpf: digitos, aceite, aceiteVersao, notas }),
+        body: JSON.stringify({ slug, cpf: digitos, aceite, aceiteVersao, notas, comentario }),
       })
       const corpo = await resposta.json().catch(() => ({}))
 
@@ -140,6 +142,36 @@ export default function FormularioVoto({
           </fieldset>
         )
       })}
+
+      <div>
+        <label htmlFor="comentario" className="block font-display text-[17px] font-extrabold">
+          Quer deixar uma observação? <span className="font-normal text-tinta-3">(opcional)</span>
+        </label>
+        <p className="mt-1 mb-3 text-[14px] text-tinta-3">
+          A observação <b className="font-semibold text-tinta">não entra na nota</b>. Ela é
+          repassada ao estabelecimento como devolutiva, e{' '}
+          <b className="font-semibold text-tinta">não identifica quem escreveu</b>.
+        </p>
+
+        <textarea
+          id="comentario"
+          name="comentario"
+          rows={3}
+          maxLength={COMENTARIO_MAXIMO}
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value.slice(0, COMENTARIO_MAXIMO))}
+          placeholder="O que funcionou, o que dava para melhorar…"
+          className="w-full rounded-xl bg-claro px-4 py-3 text-[15.5px] text-tinta"
+        />
+        <p
+          aria-live="polite"
+          className={`mt-1 text-right text-[12.5px] ${
+            comentario.length >= COMENTARIO_MAXIMO ? 'font-bold text-ambar-e' : 'text-tinta-3'
+          }`}
+        >
+          {comentario.length} de {COMENTARIO_MAXIMO}
+        </p>
+      </div>
 
       <div className="rounded-2xl bg-creme p-5">
         <label htmlFor="cpf" className="block font-display text-[17px] font-extrabold">

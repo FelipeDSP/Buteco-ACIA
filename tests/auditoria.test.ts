@@ -15,6 +15,7 @@ const LIMITES: Limiares = {
   ipEmCasas: 5,
   rajadaMinima: 8,
   janelaDeRajadaMin: 5,
+  comentariosIguais: 3,
 }
 
 const casa = (id: string) => ({ id, slug: id, nome: id, horarios: {} })
@@ -32,6 +33,7 @@ const avaliacao = (casaId: string, ip: string | null, minuto = 0, segundo = 0) =
   nota_atendimento: 4,
   anulada_em: null,
   anulada_motivo: null,
+  comentario: null as string | null,
 })
 
 /** N avaliações espalhadas ao longo de horas, como movimento real de bar. */

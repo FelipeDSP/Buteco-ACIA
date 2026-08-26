@@ -6,7 +6,13 @@ import { lerSessao, RECUSA } from '@/lib/sessao'
 import { periodoDeVotacao } from '@/lib/fase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { NOME_DO_COOKIE, agenteDoPedido, ipDoPedido } from '@/lib/pedido'
-import { ACEITE_VERSAO, colunasDasNotas, validarNotas } from '@/lib/voto'
+import {
+  ACEITE_VERSAO,
+  COMENTARIO_MAXIMO,
+  colunasDasNotas,
+  limparComentario,
+  validarNotas,
+} from '@/lib/voto'
 
 /**
  * Gravação do voto. Roda só no servidor, com a chave service_role — `sessoes`
@@ -28,11 +34,12 @@ export async function POST(pedido: NextRequest) {
     return recusa('Pedido malformado.')
   }
 
-  const { slug, cpf, aceite, notas } = (corpo ?? {}) as {
+  const { slug, cpf, aceite, notas, comentario } = (corpo ?? {}) as {
     slug?: string
     cpf?: string
     aceite?: boolean
     notas?: unknown
+    comentario?: unknown
   }
 
   /**
@@ -62,6 +69,13 @@ export async function POST(pedido: NextRequest) {
   const validadas = validarNotas(notas)
   if (!validadas.ok) return recusa('Dê uma nota de 0 a 5 em cada critério.')
 
+  // O limite vale aqui, não só no contador da tela: um POST pode chegar sem
+  // passar pelo formulário.
+  const observacao = limparComentario(comentario)
+  if (!observacao.ok) {
+    return recusa(`A observação passa de ${COMENTARIO_MAXIMO} caracteres.`)
+  }
+
   // 3. O CPF vira HMAC aqui e não é usado em mais lugar nenhum.
   let cpfHash: string
   try {
@@ -79,6 +93,7 @@ export async function POST(pedido: NextRequest) {
     sessao_id: verificacao.sessao.id,
     cpf_hash: cpfHash,
     ...colunasDasNotas(validadas.notas),
+    comentario: observacao.texto,
     aceite: true,
     aceite_versao: ACEITE_VERSAO,
     ip: ipDoPedido(pedido.headers),

@@ -17,6 +17,7 @@ const ETIQUETA: Record<Anomalia, string> = {
   'ip-em-varias-casas': 'IP em várias casas',
   rajada: 'Rajada',
   'fora-de-horario': 'Fora de horário',
+  'comentario-repetido': 'Observação repetida',
 }
 
 export type Props = {
@@ -30,6 +31,8 @@ export type Props = {
   anomalias: Anomalia[]
   doIpNaCasa: number
   casasDoIp: number
+  comentario: string | null
+  comentariosIguais: number
 }
 
 export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
@@ -75,6 +78,23 @@ export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
         {linha.notas.apresentacao}·{linha.notas.sabor}·{linha.notas.criatividade}·
         {linha.notas.atendimento}
       </td>
+      <td className="max-w-[260px] py-3 pr-3">
+        {/* O texto fica na própria linha, sem abrir outra tela: quem audita
+            precisa ler o comentário junto do resto para julgar. O hash do CPF
+            nunca aparece perto disto — nem em lugar nenhum. */}
+        {linha.comentario ? (
+          <details>
+            <summary className="cursor-pointer text-[12.5px] font-semibold text-marinho">
+              tem observação
+            </summary>
+            <p className="mt-1.5 rounded-lg bg-creme px-3 py-2 text-[13px] whitespace-pre-wrap text-tinta-3">
+              {linha.comentario}
+            </p>
+          </details>
+        ) : (
+          <span className="text-[12.5px] text-tinta-3">—</span>
+        )}
+      </td>
       <td className="py-3 pr-3">
         <span className="flex flex-wrap gap-1">
           {linha.anomalias.map((a) => {
@@ -85,7 +105,9 @@ export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
                 ? linha.doIpNaCasa
                 : a === 'ip-em-varias-casas'
                   ? linha.casasDoIp
-                  : null
+                  : a === 'comentario-repetido'
+                    ? linha.comentariosIguais
+                    : null
             return (
               <span
                 key={a}

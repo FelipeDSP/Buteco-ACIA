@@ -47,3 +47,23 @@ export function colunasDasNotas(notas: Notas): Record<string, number> {
   }
   return linha
 }
+
+/** Limite da observação. Vale no cliente, no servidor e no banco. */
+export const COMENTARIO_MAXIMO = 400
+
+/**
+ * A observação não participa de cálculo nenhum — nem da média, nem do
+ * desempate, nem do piso. É devolutiva para a casa, e só.
+ *
+ * Vazio vira `null` em vez de string vazia: no banco, "não escreveu nada" e
+ * "escreveu espaços" precisam ser a mesma coisa.
+ */
+export function limparComentario(bruto: unknown): { ok: true; texto: string | null } | { ok: false } {
+  if (bruto === undefined || bruto === null) return { ok: true, texto: null }
+  if (typeof bruto !== 'string') return { ok: false }
+
+  const texto = bruto.trim()
+  if (texto === '') return { ok: true, texto: null }
+  if (texto.length > COMENTARIO_MAXIMO) return { ok: false }
+  return { ok: true, texto }
+}

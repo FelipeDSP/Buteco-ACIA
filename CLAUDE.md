@@ -393,6 +393,25 @@ A conta está em `calcularAuditoria`, separada do banco e travada em `tests/audi
 
 **O CPF não aparece no painel** porque nunca foi gravado. Só existe como HMAC, e nem o hash é mostrado.
 
+### Observações de quem vota
+
+Campo opcional na tela de voto, até 400 caracteres — limite validado no cliente, no servidor **e** no banco.
+
+**Não participa de cálculo nenhum:** nem da média, nem do desempate, nem do piso. `calcularApuracao` sequer recebe a coluna, e um teste trava isso.
+
+**Nunca aparece em página pública** — nem na página da casa, nem no pódio. Verificado nas cinco páginas com comentário real no banco.
+
+O CPF não é mostrado junto do texto porque nunca foi gravado. Ligar observação a identificador seria justamente o que a tela de voto promete que não acontece.
+
+**Dois CSV, e a diferença é de privacidade, não de formato:**
+
+- **Interno (ACIA)** — data, hora, casa e texto.
+- **Para o estabelecimento** — só o texto, uma por linha, **sem data, sem hora e em ordem embaralhada**. Data e hora deixariam o dono cruzar com a comanda e descobrir quem escreveu, ainda mais em noite de pouco movimento. E só tirar o horário não bastaria: a ordem cronológica sozinha já reconstrói a sequência de quem passou pela casa.
+
+Os dois botões são rotulados pelo destinatário, porque exportar o errado não dá para desfazer — o dono já leu.
+
+**Observação repetida é sinal de auditoria.** Mesmo texto em 3+ avaliações da mesma casa (`PAINEL_LIMIAR_COMENTARIO_IGUAL`), comparado sem acento e sem caixa. Duas pessoas escrevem "muito bom" no mesmo dia sem combinar nada — daí o limiar não ser 2. O sinal é **por casa**: o mesmo texto em casas diferentes não acende.
+
 ### O editor de horários é a peça com prazo
 
 É ele que liga a janela de votação. Hoje as doze casas estão com `{}`, e **enquanto estiverem o QR aceita voto a qualquer hora — inclusive às 4h com a casa fechada.** Precisa estar preenchido antes de 19 de setembro.

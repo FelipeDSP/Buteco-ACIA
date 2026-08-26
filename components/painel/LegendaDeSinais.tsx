@@ -36,12 +36,20 @@ export default function LegendaDeSinais({ limites }: { limites: Limiares }) {
         'O Art. 21 cita justamente volume atípico de notas máximas em curto período. Rajada com notas variadas costuma ser mesa cheia; rajada de 5·5·5·5 costuma ser outra coisa.',
     },
     {
+      nome: 'Observação repetida',
+      regra: `O mesmo texto de observação em ${limites.comentariosIguais} ou mais avaliações da mesma casa.`,
+      porque:
+        'Duas pessoas escrevem "muito bom" no mesmo dia sem combinar nada — por isso o limiar não é dois. A comparação ignora acento, maiúscula e espaço sobrando.',
+      quandoImporta:
+        'Texto longo e específico repetido é assinatura de quem preencheu o formulário várias vezes, e aí o sinal vale tanto quanto IP repetido. O mesmo texto em casas diferentes não acende: o sinal é por casa.',
+    },
+    {
       nome: 'Fora de horário',
       regra: 'Voto registrado com a casa fechada, segundo o horário cadastrado.',
       porque:
         'Só dispara em casa com horário preenchido. Casa sem cadastro nunca aciona, senão todo voto seria marcado e o painel viraria ruído.',
       quandoImporta:
-        'É o sinal mais direto dos quatro, mas confira o cadastro antes: horário errado no painel produz alerta falso.',
+        'É o sinal mais direto de todos, mas confira o cadastro antes: horário errado no painel produz alerta falso.',
     },
   ]
 
@@ -79,8 +87,9 @@ export default function LegendaDeSinais({ limites }: { limites: Limiares }) {
           Os limiares são ajustáveis sem novo deploy, por variável de ambiente:{' '}
           <code className="font-mono">PAINEL_LIMIAR_IP_POR_CASA</code>,{' '}
           <code className="font-mono">PAINEL_LIMIAR_IP_EM_CASAS</code>,{' '}
-          <code className="font-mono">PAINEL_LIMIAR_RAJADA</code> e{' '}
-          <code className="font-mono">PAINEL_JANELA_RAJADA_MIN</code>. Se um sinal estiver
+          <code className="font-mono">PAINEL_LIMIAR_RAJADA</code>,{' '}
+          <code className="font-mono">PAINEL_JANELA_RAJADA_MIN</code> e{' '}
+          <code className="font-mono">PAINEL_LIMIAR_COMENTARIO_IGUAL</code>. Se um sinal estiver
           aparecendo em quase tudo, o limiar está baixo demais para o movimento real — suba, em
           vez de aprender a ignorar o alerta.
         </p>
