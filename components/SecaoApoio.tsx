@@ -41,7 +41,7 @@ export default function SecaoApoio({
       {decoracao}
       <div className="wrap">
         <TituloSecao
-          rotulo="Realização e apoio"
+          rotulo="Quem apoia"
           titulo="Quem faz o Boteco ACIA acontecer"
           sub={sub}
         />

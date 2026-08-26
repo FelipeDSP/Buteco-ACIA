@@ -1,11 +1,17 @@
 import { closeSync, openSync, readdirSync, readSync } from 'node:fs'
 import path from 'node:path'
+import { ARQUIVOS_DE_REALIZACAO } from '@/lib/realizacao'
 
 /**
  * Quem apoia o festival, numa fonte só.
  *
  * A pasta `public/patrocinadores` é a única fonte: arte nova aparece só de ser
  * colocada lá, sem tocar em código.
+ *
+ * **Quem realiza não entra aqui.** A CDL Ariquemes tem arte e passou a
+ * assinar o festival junto da ACIA. Se o PNG dela cair nesta pasta, ela
+ * apareceria no meio de doze patrocinadoras — por isso o filtro é estrutural
+ * e não depende de ninguém lembrar da regra na hora de copiar o arquivo.
  *
  * **Quem não tem arquivo não aparece.** Já houve cartão de texto com o nome de
  * quem faltava, e o efeito foi o contrário do pretendido: no meio de doze
@@ -92,6 +98,8 @@ export function listarApoiadores(): Apoiador[] {
 
   return arquivos
     .filter((arquivo) => IMAGEM.test(arquivo))
+    // Realizador não é apoiador, mesmo que a arte esteja na pasta errada.
+    .filter((arquivo) => !ARQUIVOS_DE_REALIZACAO.includes(arquivo))
     .map((arquivo) => ({
       nome: nomeDaMarca(path.parse(arquivo).name),
       arquivo,

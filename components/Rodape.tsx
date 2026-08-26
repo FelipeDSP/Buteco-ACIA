@@ -1,9 +1,11 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { menu } from '@/lib/navegacao'
 import { resultadoNoAr } from '@/lib/resultado'
 import { EDICAO } from '@/lib/dados'
 import { listarApoiadores } from '@/lib/apoiadores'
+import { REALIZADORES, realizadoPor } from '@/lib/realizacao'
 
 export default async function Rodape() {
   // O item "Vencedores" aparece quando o resultado está no ar, não numa data.
@@ -45,19 +47,33 @@ export default async function Rodape() {
 
         <div>
           <h2 className="mb-3.5 text-[13px] font-bold text-ouro">Realização e apoio</h2>
-          <p className="text-branco">
-            Associação Comercial e Industrial de Ariquemes
-          </p>
+
+          {/* Cartão claro atrás das duas marcas. Sem ele o brasão da ACIA,
+              que é azul sobre transparente, some no rodapé marinho — a arte
+              não tem versão monocromática para fundo escuro. */}
+          <ul className="flex w-fit flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl bg-claro px-4 py-3.5">
+            {REALIZADORES.map((entidade) => (
+              <li key={entidade.arquivo}>
+                <Image
+                  src={`/realizacao/${entidade.arquivo}`}
+                  alt={entidade.nome}
+                  width={entidade.largura}
+                  height={entidade.altura}
+                  className={entidade.noRodape}
+                />
+              </li>
+            ))}
+          </ul>
           {/* Doze nomes em coluna viram uma tira estreita e comprida; em fluxo
               corrido cabem em três linhas e continuam legíveis. */}
-          <p className="mt-2.5">{apoiadores.map((a) => a.nome).join(' · ')}</p>
+          <p className="mt-3.5">{apoiadores.map((a) => a.nome).join(' · ')}</p>
         </div>
       </div>
 
       <div className="wrap mt-12 border-t border-white/10 pt-6 text-[13px] text-selo/70">
         <p>
           {EDICAO.nome} · {EDICAO.ordinal} · {EDICAO.cidade}/{EDICAO.uf}. Evento
-          realizado pela ACIA.
+          realizado por {realizadoPor()}.
         </p>
       </div>
     </footer>

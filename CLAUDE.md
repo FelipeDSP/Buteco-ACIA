@@ -1,6 +1,6 @@
 # Boteco ACIA — site oficial
 
-Festival gastronômico competitivo em Ariquemes/RO, 1ª edição, 2026. Realização: ACIA — Associação Comercial e Industrial de Ariquemes. Doze patrocinadores com marca no ar, mais CDL Ariquemes e Motopam, que apoiam mas ainda não enviaram a arte.
+Festival gastronômico competitivo em Ariquemes/RO, 1ª edição, 2026. Realização: ACIA — Associação Comercial e Industrial de Ariquemes. **Realização: ACIA e CDL Ariquemes**, as duas com marca no ar. Doze patrocinadores, mais Motopam, que apoia mas ainda não enviou a arte.
 
 As casas servem um prato em seus próprios espaços; o público avalia via QR Code. **Só voto popular — não há júri.** As inscrições estão encerradas.
 
@@ -45,11 +45,12 @@ Ordem das seções, de cima para baixo:
 
 1. **Hero** — marinho, título, dois botões, e um leque de três cartões de prato sobrepostos e inclinados, **em rotação por todas as casas**
 2. **Faixa de números** — casas, dias, bairros atendidos, premiação. Escala em dois segundos
-3. **Mapa das casas** — "Onde ficam as casas", com marcador por casa e popup que leva à página dela
-4. **A lista** — busca por casa ou prato, pílulas de bairro, contagem, grade de cartões
-5. **Monte seu rolê** — três passos numerados
-6. **Como se vota** — só a mecânica em uma frase, com link para a página completa
-7. **Apoiadores**
+3. **Faixa de realização** — ACIA e CDL Ariquemes, discreta, entre dois filetes
+4. **Mapa das casas** — "Onde ficam as casas", com marcador por casa e popup que leva à página dela
+5. **A lista** — busca por casa ou prato, pílulas de bairro, contagem, grade de cartões
+6. **Monte seu rolê** — três passos numerados
+7. **Como se vota** — só a mecânica em uma frase, com link para a página completa
+8. **Apoiadores**
 
 ### Internas — capa padronizada
 
@@ -116,6 +117,47 @@ Derivada da logo oficial do evento.
 | Corpo | **Archivo** 400/500/600 | Texto corrido, rótulos, botões |
 
 Montserrat é a família da própria logo. É larga — usar tracking negativo (`-.022em`) em títulos. Sem terceira fonte. Nunca Inter, Roboto ou fontes de sistema.
+
+---
+
+## Realização não é apoio
+
+**ACIA e CDL Ariquemes realizam o festival. Os outros patrocinam.** São papéis
+diferentes e aparecem em lugares diferentes: realizador assina o evento numa
+faixa própria (`FaixaRealizacao`, na home e na `/acia`) e no cartão claro do
+rodapé; patrocinador entra na grade de `SecaoApoio`.
+
+A fonte é `lib/realizacao.ts`, e ela **não lê disco de propósito** — são duas
+entidades fixas, não uma pasta que cresce. `listarApoiadores()` filtra os
+arquivos de realização: se alguém soltar `cdl-ariquemes.png` em
+`public/patrocinadores/`, a CDL **não** vira patrocinadora no meio de doze
+marcas. O filtro é estrutural porque a regra não pode depender de alguém
+lembrar dela na hora de copiar um arquivo.
+
+A linha final do rodapé deriva de `realizadoPor()`, nunca escreve os nomes à
+mão — senão mudar a composição da realização deixa o texto mentindo.
+
+### Equilíbrio óptico: a ACIA pela altura, a CDL pela largura
+
+A ACIA é quadrada (0,99:1) e a CDL é deitada (2,91:1). **Alinhar as duas pela
+mesma altura faz a CDL parecer três vezes maior**, porque com o mesmo número
+ela ganha três vezes mais área. Por isso a ACIA é limitada pela **altura** e a
+CDL pela **largura**:
+
+| | ACIA | CDL |
+|---|---|---|
+| Faixa, ≥760px | altura 74px | largura 186px (→ 64px de altura) |
+| Faixa, <760px | altura 58px | largura 150px (→ 52px de altura) |
+| Rodapé | altura 34px | largura 86px |
+
+Os números moram junto de cada marca em `lib/realizacao.ts`, não no
+componente: **o equilíbrio óptico é propriedade da arte, não do lugar onde ela
+aparece.** Caber não é o mesmo que parecer do mesmo tamanho — é a mesma regra
+que já valia para `chatyou.png` na grade de apoio.
+
+**No rodapé as duas precisam de cartão claro atrás.** O fundo é marinho e as
+duas artes são azuis sobre transparente, sem versão monocromática para fundo
+escuro; sem o cartão o brasão da ACIA some.
 
 ---
 
@@ -315,7 +357,7 @@ Responsivo até 360px. Foco de teclado visível. Contraste AA. HTML semântico, 
 - A ficha não coleta horário de funcionamento. Falta para o site, e será necessário para a janela de aceitação de voto
 - Fotos dos pratos — o item que mais falta. Todo espaço de foto é placeholder marcado
 - `public/logo/Logo_Boteco_Acia.png` é o brasão oficial. Nunca redesenhar, recolorir ou distorcer. Falta a versão horizontal e o vetorial
-- **Logos de CDL Ariquemes e Motopam.** As duas apoiam o festival mas não têm arquivo, e por isso **não aparecem em lugar nenhum do site** — nem na grade, nem no rodapé. Já foram cartão de texto com o nome; no meio de doze marcas desenhadas os dois retângulos pareciam imagem que não carregou, e saíram. Assim que a arte chegar, basta soltar o PNG em `public/patrocinadores/` e acrescentar o verbete de grafia em `NOMES` (`lib/apoiadores.ts`), senão o nome sai derivado do arquivo — `cdl-ariquemes.png` viraria "Cdl Ariquemes"
+- **Logo da Motopam.** Apoia o festival mas não tem arquivo, e por isso **não aparece em lugar nenhum do site** — nem na grade, nem no rodapé. (A CDL chegou e virou realização, não apoio — ver "Realização não é apoio".) Já foram cartão de texto com o nome; no meio de doze marcas desenhadas os dois retângulos pareciam imagem que não carregou, e saíram. Assim que a arte chegar, basta soltar o PNG em `public/patrocinadores/` e acrescentar o verbete de grafia em `NOMES` (`lib/apoiadores.ts`), senão o nome sai derivado do arquivo — `cdl-ariquemes.png` viraria "Cdl Ariquemes"
 - Telefone das casas (a ficha não coleta). Endereço, Instagram e coordenadas já estão no arquivo
 
 ---

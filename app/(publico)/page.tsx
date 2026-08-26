@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import FaixaNumeros from '@/components/FaixaNumeros'
+import FaixaRealizacao from '@/components/FaixaRealizacao'
 import LequePratos from '@/components/LequePratos'
 import ListaCasas from '@/components/ListaCasas'
 import Mapa from '@/components/Mapa'
@@ -186,6 +187,9 @@ export default async function Home({ searchParams }: Props) {
 
       {/* ---------- Faixa de números ---------- */}
       <FaixaNumeros />
+
+      {/* ---------- Realização ---------- */}
+      <FaixaRealizacao />
 
       {/* ---------- Mapa ---------- */}
       <section className="relative overflow-hidden py-16">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import CapaInterna from '@/components/CapaInterna'
 import FaixaDeNumeros from '@/components/FaixaDeNumeros'
+import FaixaRealizacao from '@/components/FaixaRealizacao'
 import LogoAcia from '@/components/LogoAcia'
 import SecaoApoio from '@/components/SecaoApoio'
 import { TituloSecao } from '@/components/Secao'
@@ -198,6 +199,8 @@ export default async function PaginaAcia() {
           </ul>
         </div>
       </section>
+
+      <FaixaRealizacao />
 
       <SecaoApoio
         className="relative overflow-hidden"
