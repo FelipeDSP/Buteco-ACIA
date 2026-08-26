@@ -24,6 +24,8 @@ export const CRITERIOS_DA_APURACAO = [
 export type LinhaDaApuracao = {
   /** Posição no ranking. `0` para quem não é elegível ou não tem voto. */
   posicao: number
+  /** Chave da casa — é o que a publicação do pódio grava em `resultado`. */
+  id: string
   slug: string
   nome: string
   ativa: boolean
@@ -186,6 +188,7 @@ export function calcularApuracao(
 
     return {
       posicao: 0,
+      id: casa.id,
       slug: casa.slug,
       nome: casa.nome,
       ativa: casa.ativa,

@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela, Vazio } from '@/components/painel/Peças'
+import PublicarResultado from '@/components/painel/PublicarResultado'
 import { CRITERIOS_DA_APURACAO, apurar } from '@/lib/painel'
+import { lerPodio, podePublicar, republicarEhDelicado } from '@/lib/resultado'
+import { dataLonga } from '@/lib/formato'
+import { CALENDARIO as CAL } from '@/data/edicao'
 import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +18,8 @@ const proporcao = (v: number | null) =>
 
 export default async function Apuracao() {
   const { linhas, votos, mediaDeAvaliacoes, piso } = await apurar()
+  const publicado = await lerPodio()
+  const liberado = podePublicar()
 
   const anuladas = linhas.reduce((s, l) => s + l.anuladas, 0)
   const comVoto = linhas.filter((l) => l.avaliacoes > 0)
@@ -32,9 +38,34 @@ export default async function Apuracao() {
         titulo="Apuração"
         sub={`Art. 17: nota final é a média aritmética simples de todas as avaliações válidas, na escala de 0 a ${NOTA_MAXIMA_TOTAL} pontos (soma dos quatro critérios por avaliação). Empate resolve por sabor, depois criatividade, depois número de avaliações.`}
         acao={
-          <a href="/api/painel/csv" className="btn btn-pequeno">
-            Exportar CSV
-          </a>
+          <span className="flex flex-wrap items-center gap-2">
+            <a href="/api/painel/csv" className="btn btn-pequeno btn-linha">
+              Exportar CSV
+            </a>
+            <PublicarResultado
+              liberado={liberado}
+              motivoBloqueio={`A apuração começa em ${dataLonga(CAL.inicioApuracao)}. Até lá o festival ainda recebe votos.`}
+              jaPublicado={publicado.length > 0}
+              publicadoEm={
+                publicado[0]
+                  ? new Date(publicado[0].publicadoEm).toLocaleString('pt-BR', {
+                      timeZone: 'America/Porto_Velho',
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : null
+              }
+              exigeConfirmacaoExtra={republicarEhDelicado()}
+              candidatas={podio.map((l) => ({
+                posicao: l.posicao,
+                nome: l.nome,
+                notaFinal: nota(l.mediaGeral),
+                avaliacoes: l.avaliacoes,
+              }))}
+            />
+          </span>
         }
       />
 
@@ -63,6 +94,15 @@ export default async function Apuracao() {
           }
         />
       </Numeros>
+
+      {publicado.length > 0 ? (
+        <p className="mt-5 rounded-2xl bg-marinho px-5 py-4 text-[14px] font-semibold text-branco">
+          Resultado oficial publicado e congelado:{' '}
+          {publicado.map((l) => `${l.posicao}º ${l.casa.nome}`).join(' · ')}. A partir daqui,
+          anular avaliação ou desclassificar casa não altera o que foi publicado — a tabela
+          abaixo continua sendo o cálculo ao vivo, para conferência.
+        </p>
+      ) : null}
 
       {foraDoPiso.length > 0 ? (
         <p className="mt-5 rounded-2xl bg-ambar/20 px-5 py-4 text-[14px] font-semibold text-ambar-e">

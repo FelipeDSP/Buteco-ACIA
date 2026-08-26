@@ -195,6 +195,24 @@ Varredura completa feita contra `regulamento_boteco_acia.pdf`. Estes artigos fic
 
 ---
 
+## O resultado publicado — tabela `resultado`
+
+O pódio é um **retrato congelado**, não uma view sobre `avaliacoes`. Depois de publicado, anular avaliação ou desclassificar casa **não muda** o que foi divulgado: o que a ACIA anunciou na premiação é o que fica. Verificado anulando todos os votos do campeão e desclassificando a casa — o pódio público não se mexeu.
+
+Colunas: `edicao` (texto, "2026"), `posicao` (1 a 3), `casa_id`, `nota_final` (0 a 20), `total_avaliacoes`, `publicado_em`, `publicado_por`. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
+
+**A área pública nunca deriva ranking de `avaliacoes`.** Uma consulta ao vivo em `/vencedores` entregaria a parcial antes da premiação para quem soubesse abrir a URL. A página lê de `resultado` e só.
+
+**A data manda sobre a existência do registro.** A Comissão apura de 11 a 13 e publica quando termina, mas o anúncio é no evento de premiação. Nesse intervalo a tabela está cheia e a página continua dizendo que o resultado não saiu — senão o campeão vaza antes da cerimônia. A regra está em `podioVisivel`, travada em `tests/resultado.test.ts` nos três cenários: sem registro, com registro antes da data, com registro depois.
+
+**A leitura do pódio usa `service_role`, e isso é deliberado.** A policy de `casas` esconde inativa e desclassificada; com a chave anônima, desclassificar uma vencedora depois da premiação a faria sumir do pódio — exatamente a mudança retroativa que a tabela existe para impedir. Roda em componente de servidor e devolve só os campos do pódio.
+
+**Publicar exige a data de início da apuração** (Art. 20). Antes disso o botão fica bloqueado e a API recusa: o festival ainda recebe voto e não há o que congelar. Republicar depois da divulgação pede uma confirmação extra, porque aí não é corrigir rascunho — é mudar o que as casas e a imprensa já viram.
+
+O cálculo é refeito **no servidor** na hora de publicar, nunca recebido do cliente: se viesse do formulário, quem chamasse a API direto escolheria o campeão.
+
+---
+
 ## A matemática da apuração
 
 Está em `calcularApuracao` (`lib/painel.ts`), separada do banco de propósito, e travada em `tests/apuracao.test.ts` — inclusive com o exemplo numérico do Art. 18º reproduzido.
@@ -381,7 +399,7 @@ Formato `{"seg":[["18:00","23:30"]]}`. Dia sem faixa = fechado nesse dia. Faixa 
 
 **Geração e impressão dos QR codes** — precisa estar pronta semanas antes do dia 19. O QR aponta para `/votar/[slug]`, e o slug é imutável.
 
-**Painel de apuração** — fora de escopo até a votação estar rodando.
+**Geração dos QR definitivos** — dependem do domínio final, que vai impresso dentro do código.
 
 ---
 
