@@ -220,3 +220,92 @@ describe('Art. 22 — desclassificação', () => {
     expect(piso).toBe(10)
   })
 })
+
+describe('Art. 18 — o que vai para o resultado publicado', () => {
+  /**
+   * Monta o que a publicação gravaria: elegível com posição, inelegível com
+   * posição 0. A regra vive na rota `/api/painel/publicar`; aqui ela é
+   * reproduzida sobre o cálculo, que é a parte que decide quem é o quê.
+   */
+  const paraPublicar = (linhas: ReturnType<typeof calcularApuracao>['linhas']) =>
+    linhas
+      .filter((l) => !l.desclassificada)
+      .map((l) => ({
+        casa: l.slug,
+        posicao: l.elegivel ? l.posicao : 0,
+        elegivel: l.elegivel,
+        avaliacoes: l.avaliacoes,
+      }))
+
+  it('quem não alcança o piso é gravado sem colocação', () => {
+    // 9 casas com 100 votos + 1 com 3: piso = 10% de (903/10) = 9,03.
+    const casas = [...Array.from({ length: 9 }, (_, i) => casa(`c${i}`)), casa('pouca', 'Casa Pouca')]
+    const avaliacoes = [
+      ...casas.slice(0, 9).flatMap((c) => varias(c.id, [4, 4, 4, 4], 100)),
+      ...varias('pouca', [5, 5, 5, 5], 3),
+    ]
+
+    const { linhas, piso } = calcularApuracao(casas, avaliacoes)
+    const gravar = paraPublicar(linhas)
+    const pouca = gravar.find((g) => g.casa === 'pouca')!
+
+    expect(piso).toBeCloseTo(9.03, 2)
+    expect(pouca.elegivel).toBe(false)
+    // O ponto: sem colocação, e não em 10º lugar.
+    expect(pouca.posicao).toBe(0)
+    expect(pouca.avaliacoes).toBe(3)
+  })
+
+  it('a casa fora do piso não ocupa o fim da fila do ranking', () => {
+    const casas = [...Array.from({ length: 9 }, (_, i) => casa(`c${i}`)), casa('pouca')]
+    const avaliacoes = [
+      ...casas.slice(0, 9).flatMap((c) => varias(c.id, [4, 4, 4, 4], 100)),
+      ...varias('pouca', [5, 5, 5, 5], 3),
+    ]
+    const gravar = paraPublicar(calcularApuracao(casas, avaliacoes).linhas)
+
+    const comColocacao = gravar.filter((g) => g.elegivel).map((g) => g.posicao)
+    // Nove elegíveis, posições 1 a 9 sem buraco — a décima não entra na conta.
+    expect(comColocacao.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    expect(gravar.filter((g) => !g.elegivel)).toHaveLength(1)
+  })
+
+  it('várias casas podem ficar sem colocação ao mesmo tempo', () => {
+    const casas = [
+      ...Array.from({ length: 5 }, (_, i) => casa(`grande${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => casa(`pequena${i}`)),
+    ]
+    const avaliacoes = [
+      ...casas.slice(0, 5).flatMap((c) => varias(c.id, [4, 4, 4, 4], 200)),
+      ...casas.slice(5).flatMap((c) => varias(c.id, [5, 5, 5, 5], 2)),
+    ]
+
+    const gravar = paraPublicar(calcularApuracao(casas, avaliacoes).linhas)
+    const semColocacao = gravar.filter((g) => !g.elegivel)
+
+    expect(semColocacao).toHaveLength(4)
+    // Todas com 0 — no banco isso só cabe porque a unicidade de posição é
+    // parcial (só vale para posicao > 0).
+    expect(semColocacao.every((g) => g.posicao === 0)).toBe(true)
+  })
+
+  it('casa sem nenhum voto também entra sem colocação, não some', () => {
+    const casas = [casa('votada'), casa('semvoto')]
+    const gravar = paraPublicar(
+      calcularApuracao(casas, varias('votada', [4, 4, 4, 4], 50)).linhas,
+    )
+    const sem = gravar.find((g) => g.casa === 'semvoto')!
+    expect(sem.elegivel).toBe(false)
+    expect(sem.posicao).toBe(0)
+  })
+
+  it('desclassificada (Art. 22) fica fora do retrato, não é inelegível', () => {
+    const gravar = paraPublicar(
+      calcularApuracao(
+        [desclassificada('fraudou'), casa('honesta')],
+        [...varias('fraudou', [5, 5, 5, 5], 100), ...varias('honesta', [4, 4, 4, 4], 100)],
+      ).linhas,
+    )
+    expect(gravar.map((g) => g.casa)).toEqual(['honesta'])
+  })
+})

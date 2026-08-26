@@ -13,7 +13,10 @@ import { hoje, mostrarVencedores } from '@/lib/fase'
  */
 
 export type LugarNoPodio = {
+  /** Colocação no ranking. `0` para quem não alcançou o piso do Art. 18. */
   posicao: number
+  /** Art. 18: concorreu de fato. Falso = participou, mas fora do ranking. */
+  elegivel: boolean
   notaFinal: number
   totalAvaliacoes: number
   publicadoEm: string
@@ -41,6 +44,15 @@ export function podioVisivel(quantosPublicados: number, dia = hoje()): boolean {
   return quantosPublicados > 0 && mostrarVencedores(dia)
 }
 
+/**
+ * Quantas casas ficaram de fora do ranking por não alcançar o piso.
+ * O painel mostra isso antes de confirmar a publicação: publicar sem saber
+ * quem sai é a forma mais fácil de descobrir tarde que o piso estava errado.
+ */
+export function contarInelegiveis(lugares: { elegivel: boolean }[]): number {
+  return lugares.filter((l) => !l.elegivel).length
+}
+
 /** A partir de quando a Comissão pode publicar (início da apuração, Art. 20). */
 export function podePublicar(dia = hoje()): boolean {
   return dia >= CALENDARIO.inicioApuracao
@@ -53,6 +65,7 @@ export function republicarEhDelicado(dia = hoje()): boolean {
 
 type LinhaBruta = {
   posicao: number
+  elegivel: boolean
   nota_final: string | number
   total_avaliacoes: number
   publicado_em: string
@@ -78,10 +91,13 @@ export async function lerPodio(edicao = EDICAO_ATUAL): Promise<LugarNoPodio[]> {
   const { data, error } = await supabaseAdmin()
     .from('resultado')
     .select(
-      'posicao, nota_final, total_avaliacoes, publicado_em, casas (slug, nome, prato, prato_confirmado, foto_url)',
+      'posicao, elegivel, nota_final, total_avaliacoes, publicado_em, casas (slug, nome, prato, prato_confirmado, foto_url)',
     )
     .eq('edicao', edicao)
+    // Elegíveis primeiro, na ordem do ranking; inelegíveis depois, por nota.
+    .order('elegivel', { ascending: false })
     .order('posicao')
+    .order('nota_final', { ascending: false })
 
   if (error) throw new Error(`Falha ao ler o resultado: ${error.message}`)
 
@@ -89,6 +105,7 @@ export async function lerPodio(edicao = EDICAO_ATUAL): Promise<LugarNoPodio[]> {
     .filter((l) => l.casas !== null)
     .map((l) => ({
       posicao: l.posicao,
+      elegivel: l.elegivel,
       notaFinal: Number(l.nota_final),
       totalAvaliacoes: l.total_avaliacoes,
       publicadoEm: l.publicado_em,
@@ -104,6 +121,7 @@ export async function lerPodio(edicao = EDICAO_ATUAL): Promise<LugarNoPodio[]> {
 
 export type LugarParaPublicar = {
   posicao: number
+  elegivel: boolean
   casaId: string
   notaFinal: number
   totalAvaliacoes: number
@@ -129,6 +147,7 @@ export async function publicarPodio(
     lugares.map((l) => ({
       edicao,
       posicao: l.posicao,
+      elegivel: l.elegivel,
       casa_id: l.casaId,
       nota_final: l.notaFinal,
       total_avaliacoes: l.totalAvaliacoes,

@@ -32,9 +32,12 @@ export default async function Vencedores() {
   const mostrar = podioVisivel(publicado.length)
   const estado = contagem()
 
-  // O pódio leva as três primeiras; o resto vai para a lista abaixo dele.
-  const podio = publicado.filter((l) => l.posicao <= 3)
-  const demais = publicado.filter((l) => l.posicao > 3)
+  // Três faixas distintas, e a diferença entre as duas últimas importa:
+  // "4º colocado" e "não concorreu" não são a mesma coisa.
+  const classificadas = publicado.filter((l) => l.elegivel)
+  const podio = classificadas.filter((l) => l.posicao <= 3)
+  const demais = classificadas.filter((l) => l.posicao > 3)
+  const foraDoRanking = publicado.filter((l) => !l.elegivel)
 
   return (
     <>
@@ -65,7 +68,7 @@ export default async function Vencedores() {
                     As demais colocadas
                   </h2>
                   <p className="mt-2 max-w-[62ch] text-[14.5px] text-tinta-3">
-                    Todas recebem prato personalizado de parede e certificado de participação.
+                    Casas que alcançaram o mínimo de avaliações e concorreram ao prêmio.
                   </p>
 
                   <div className="mt-5 overflow-x-auto">
@@ -114,6 +117,38 @@ export default async function Vencedores() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              ) : null}
+
+              {foraDoRanking.length > 0 ? (
+                <div className="mt-12">
+                  <h2 className="display text-[clamp(20px,2.4vw,26px)]">
+                    Casas participantes fora do ranking
+                  </h2>
+                  {/* Sem número de colocação, de propósito: elas não ficaram em
+                      último — não entraram na disputa por colocação. */}
+                  <p className="mt-2 max-w-[68ch] text-[14.5px] text-tinta-3">
+                    Estas casas serviram o prato durante todo o festival, mas não alcançaram o
+                    mínimo de avaliações que o regulamento exige para concorrer à colocação
+                    (Art. 18). Recebem, como todas as participantes, prato personalizado de
+                    parede e certificado.
+                  </p>
+
+                  <ul className="mt-5 grid gap-3 duas:grid-cols-2 larga:grid-cols-3">
+                    {foraDoRanking.map((lugar) => (
+                      <li key={lugar.casa.slug} className="rounded-2xl bg-creme p-5">
+                        <Link
+                          href={`/casas/${lugar.casa.slug}`}
+                          className="font-display text-[16px] font-extrabold hover:underline"
+                        >
+                          {lugar.casa.nome}
+                        </Link>
+                        {lugar.casa.pratoConfirmado && lugar.casa.prato ? (
+                          <p className="mt-1 text-[14px] text-tinta-3">{lugar.casa.prato}</p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
             </>

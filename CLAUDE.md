@@ -201,6 +201,12 @@ O pódio é um **retrato congelado**, não uma view sobre `avaliacoes`. Depois d
 
 Colunas: `edicao` (texto, "2026"), `posicao`, `casa_id`, `nota_final` (0 a 20), `total_avaliacoes`, `publicado_em`, `publicado_por`.
 
+**Registra também quem não qualificou.** Casa abaixo do piso do Art. 18 entra com `elegivel = false` e `posicao = 0` — não com posição sequencial no fim da fila. Ficar em último e não ter concorrido são coisas diferentes, e o retrato precisa saber qual foi. Duas travas no banco garantem: `posicao_combina_com_elegibilidade` (elegível tem colocação, inelegível não tem) e a unicidade de posição virou **índice parcial** `where posicao > 0`, senão as várias inelegíveis colidiriam entre si.
+
+Desclassificada (Art. 22) fica **fora do retrato**: foi excluída da competição, não é participante mal colocada.
+
+Na página, as inelegíveis aparecem numa lista separada, **sem número de colocação**, com a frase que explica o Art. 18 e lembra que recebem prato de parede e certificado. No painel, a confirmação diz quantas ficam de fora e qual foi o piso, antes de publicar.
+
 **Guarda o ranking inteiro, não só as três primeiras.** A página mostra o pódio em destaque e as demais colocadas numa lista abaixo; se as posições 4+ fossem calculadas ao vivo, a página teria topo congelado e cauda móvel — anular um voto depois da premiação mexeria na 4ª e não na 3ª, e uma casa poderia aparecer em 4º com nota maior que a do 3º lugar. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
 
 **A área pública nunca deriva ranking de `avaliacoes`.** Uma consulta ao vivo em `/vencedores` entregaria a parcial antes da premiação para quem soubesse abrir a URL. A página lê de `resultado` e só.

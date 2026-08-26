@@ -60,7 +60,7 @@ export async function POST(pedido: NextRequest) {
     )
   }
 
-  const { linhas } = await apurar()
+  const { linhas, piso } = await apurar()
 
   /**
    * Congela o ranking **inteiro**, não só o pódio.
@@ -74,23 +74,51 @@ export async function POST(pedido: NextRequest) {
    * Só elegíveis: o piso do Art. 18 e a desclassificação do Art. 22 já foram
    * aplicados na apuração, e `posicao` só existe para quem concorre.
    */
-  const podio = linhas.filter((l) => l.elegivel && l.posicao >= 1).sort((a, b) => a.posicao - b.posicao)
+  /**
+   * Desclassificada (Art. 22) fica fora do retrato: foi excluída da competição,
+   * não é participante que ficou mal colocada.
+   */
+  const participantes = linhas.filter((l) => !l.desclassificada)
 
-  if (podio.length === 0) {
+  const elegiveis = participantes
+    .filter((l) => l.elegivel && l.posicao >= 1)
+    .sort((a, b) => a.posicao - b.posicao)
+
+  if (elegiveis.length === 0) {
     return NextResponse.json(
       {
-        erro: 'Nenhuma casa elegível para o pódio. Confira o piso mínimo do Art. 18 na tela de apuração.',
+        erro: 'Nenhuma casa elegível para o ranking. Confira o piso mínimo do Art. 18 na tela de apuração.',
       },
       { status: 409 },
     )
   }
 
-  const lugares: LugarParaPublicar[] = podio.map((l) => ({
-    posicao: l.posicao,
-    casaId: l.id,
-    notaFinal: Number((l.mediaGeral ?? 0).toFixed(3)),
-    totalAvaliacoes: l.avaliacoes,
-  }))
+  /**
+   * Inelegível entra no retrato com `posicao = 0`.
+   *
+   * Art. 18: quem não alcança o piso não entra no ranking — mas continua sendo
+   * participante, e o Art. 23 lhe garante prato de parede e certificado.
+   * Gravar com posição sequencial diria que ficou em último, que é diferente
+   * de não ter concorrido; deixar de fora apagaria a participação.
+   */
+  const inelegiveis = participantes.filter((l) => !l.elegivel)
+
+  const lugares: LugarParaPublicar[] = [
+    ...elegiveis.map((l) => ({
+      posicao: l.posicao,
+      elegivel: true,
+      casaId: l.id,
+      notaFinal: Number((l.mediaGeral ?? 0).toFixed(3)),
+      totalAvaliacoes: l.avaliacoes,
+    })),
+    ...inelegiveis.map((l) => ({
+      posicao: 0,
+      elegivel: false,
+      casaId: l.id,
+      notaFinal: Number((l.mediaGeral ?? 0).toFixed(3)),
+      totalAvaliacoes: l.avaliacoes,
+    })),
+  ]
 
   try {
     await publicarPodio(lugares, (publicadoPor ?? '').trim(), EDICAO_ATUAL)
@@ -101,5 +129,11 @@ export async function POST(pedido: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true, publicadas: lugares.length })
+  return NextResponse.json({
+    ok: true,
+    publicadas: lugares.length,
+    noRanking: elegiveis.length,
+    foraDoRanking: inelegiveis.length,
+    piso: Number(piso.toFixed(2)),
+  })
 }

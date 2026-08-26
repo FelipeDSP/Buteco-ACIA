@@ -25,12 +25,17 @@ export default function PublicarResultado({
   jaPublicado,
   publicadoEm,
   exigeConfirmacaoExtra,
+  foraDoRanking,
+  piso,
 }: {
   candidatas: Candidata[]
   liberado: boolean
   motivoBloqueio: string
   jaPublicado: boolean
   publicadoEm: string | null
+  /** Casas que não alcançaram o piso do Art. 18 e ficam sem colocação. */
+  foraDoRanking: string[]
+  piso: string
   /** Depois da divulgação, republicar mexe no que o público já viu. */
   exigeConfirmacaoExtra: boolean
 }) {
@@ -115,6 +120,28 @@ export default function PublicarResultado({
           </li>
         ))}
       </ol>
+
+      {/* Publicar sem saber quem fica de fora é a forma mais fácil de
+          descobrir tarde que o piso estava errado. */}
+      <p className="mt-4 rounded-xl bg-creme px-3.5 py-3 text-[12.5px] text-tinta-3">
+        <b className="text-tinta">
+          {foraDoRanking.length === 0
+            ? 'Nenhuma casa fica fora do ranking.'
+            : foraDoRanking.length === 1
+              ? '1 casa fica fora do ranking'
+              : `${foraDoRanking.length} casas ficam fora do ranking`}
+        </b>
+        {foraDoRanking.length > 0 ? (
+          <>
+            {' '}
+            por não alcançar o piso de <b className="text-tinta">{piso} avaliações</b> (Art. 18):{' '}
+            {foraDoRanking.join(', ')}. Elas entram na página como participantes, sem colocação,
+            e recebem prato de parede e certificado.
+          </>
+        ) : (
+          <> O piso do Art. 18 é de {piso} avaliações.</>
+        )}
+      </p>
 
       <label className="mt-4 block">
         <span className="text-[13px] font-bold">Quem está publicando</span>

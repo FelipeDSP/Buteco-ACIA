@@ -58,6 +58,8 @@ export default async function Apuracao() {
                   : null
               }
               exigeConfirmacaoExtra={republicarEhDelicado()}
+              piso={decimal(piso)}
+              foraDoRanking={foraDoPiso.map((l) => `${l.nome} (${l.avaliacoes})`)}
               candidatas={podio.map((l) => ({
                 posicao: l.posicao,
                 nome: l.nome,
