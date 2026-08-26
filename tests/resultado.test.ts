@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { podePublicar, podioVisivel, republicarEhDelicado } from '@/lib/resultado'
+import {
+  podePublicar,
+  podioVisivel,
+  publicacaoEhParcial,
+  republicarEhDelicado,
+} from '@/lib/resultado'
 import { CALENDARIO } from '@/data/edicao'
 
 /**
@@ -55,19 +60,41 @@ describe('com registro, a partir da data de divulgação', () => {
   })
 })
 
-describe('quando a Comissão pode publicar (Art. 20)', () => {
-  it('não pode durante o festival — ainda entra voto', () => {
-    expect(podePublicar('2026-09-19')).toBe(false)
-    expect(podePublicar(CALENDARIO.fimFestival)).toBe(false)
+describe('publicar é livre — a trava virou escolha, não data', () => {
+  it('pode publicar durante o festival', () => {
+    expect(podePublicar()).toBe(true)
   })
 
-  it('pode a partir do primeiro dia da apuração', () => {
-    expect(podePublicar(CALENDARIO.inicioApuracao)).toBe(true)
-    expect(podePublicar('2026-10-13')).toBe(true)
+  it('publicar antes do fim do festival é avisado como parcial', () => {
+    expect(publicacaoEhParcial('2026-09-25')).toBe(true)
+    expect(publicacaoEhParcial(CALENDARIO.fimFestival)).toBe(true)
   })
 
-  it('continua podendo depois, para corrigir se preciso', () => {
-    expect(podePublicar('2026-10-20')).toBe(true)
+  it('depois do fim do festival deixa de ser parcial', () => {
+    expect(publicacaoEhParcial('2026-10-11')).toBe(false)
+  })
+})
+
+describe('a Comissão libera o pódio quando quiser', () => {
+  const publicado = (visivel: boolean) => [{ visivel }, { visivel }, { visivel }]
+
+  it('liberado aparece na hora, mesmo muito antes da data', () => {
+    expect(podioVisivel(publicado(true), '2026-09-20')).toBe(true)
+    expect(podioVisivel(publicado(true), CALENDARIO.inicioApuracao)).toBe(true)
+  })
+
+  it('não liberado continua esperando a data — a proteção não sumiu', () => {
+    expect(podioVisivel(publicado(false), '2026-09-20')).toBe(false)
+    expect(podioVisivel(publicado(false), '2026-10-13')).toBe(false)
+  })
+
+  it('não liberado aparece sozinho na data de divulgação', () => {
+    // O automatismo continua: ninguém precisa lembrar de clicar no dia.
+    expect(podioVisivel(publicado(false), CALENDARIO.divulgacao)).toBe(true)
+  })
+
+  it('sem registro nenhum, liberar não inventa pódio', () => {
+    expect(podioVisivel([], '2026-12-01')).toBe(false)
   })
 })
 

@@ -15,6 +15,8 @@ import { hoje, mostrarVencedores } from '@/lib/fase'
 export type LugarNoPodio = {
   /** Colocação no ranking. `0` para quem não alcançou o piso do Art. 18. */
   posicao: number
+  /** Liberado para o site pela Comissão, independente da data. */
+  visivel: boolean
   /** Art. 18: concorreu de fato. Falso = participou, mas fora do ranking. */
   elegivel: boolean
   notaFinal: number
@@ -33,15 +35,24 @@ export type LugarNoPodio = {
 export const EDICAO_ATUAL = String(EDICAO.ano)
 
 /**
- * **A data manda sobre a existência do registro.**
+ * Quando o pódio aparece no site.
  *
- * Publicar cedo é normal: a Comissão apura de 11 a 13 e o resultado só é
- * divulgado no evento de premiação. Entre uma coisa e outra a tabela está
- * preenchida e a página precisa continuar dizendo que não saiu — senão o
- * pódio vaza antes da cerimônia, por uma URL que qualquer um adivinha.
+ * Duas portas, e basta uma: **a Comissão liberou** (`visivel`), ou **chegou a
+ * data de divulgação**. Publicar não implica mostrar — dá para congelar o
+ * resultado antes da cerimônia e só abrir na hora, que era a razão da trava
+ * de data original.
+ *
+ * A data continua valendo como automatismo: se ninguém marcar nada, o pódio
+ * aparece sozinho no dia previsto, sem depender de alguém lembrar.
  */
-export function podioVisivel(quantosPublicados: number, dia = hoje()): boolean {
-  return quantosPublicados > 0 && mostrarVencedores(dia)
+export function podioVisivel(
+  publicado: { visivel?: boolean }[] | number,
+  dia = hoje(),
+): boolean {
+  // Aceita o número antigo para não quebrar quem só quer saber se há registro.
+  if (typeof publicado === 'number') return publicado > 0 && mostrarVencedores(dia)
+  if (publicado.length === 0) return false
+  return publicado.some((l) => l.visivel === true) || mostrarVencedores(dia)
 }
 
 /**
@@ -53,9 +64,24 @@ export function contarInelegiveis(lugares: { elegivel: boolean }[]): number {
   return lugares.filter((l) => !l.elegivel).length
 }
 
-/** A partir de quando a Comissão pode publicar (início da apuração, Art. 20). */
-export function podePublicar(dia = hoje()): boolean {
-  return dia >= CALENDARIO.inicioApuracao
+/**
+ * Publicar é livre, a qualquer momento.
+ *
+ * A trava por data saiu: a Comissão pode remarcar o festival (Art. 30), pode
+ * querer ensaiar o resultado antes, e o Art. 20 fala do prazo da **apuração**,
+ * não de uma proibição de gravar. O que o regulamento protege é a divulgação,
+ * e isso agora é controlado por `visivel`, não pela data de gravação.
+ */
+export function podePublicar(): boolean {
+  return true
+}
+
+/**
+ * Publicar antes do fim do festival congela um número parcial: ainda entra
+ * voto. Não é proibido — é para avisar, não para bloquear.
+ */
+export function publicacaoEhParcial(dia = hoje()): boolean {
+  return dia <= CALENDARIO.fimFestival
 }
 
 /** Depois da divulgação, republicar mexe no que o público já viu. */
@@ -66,6 +92,7 @@ export function republicarEhDelicado(dia = hoje()): boolean {
 type LinhaBruta = {
   posicao: number
   elegivel: boolean
+  visivel: boolean
   nota_final: string | number
   total_avaliacoes: number
   publicado_em: string
@@ -91,7 +118,7 @@ export async function lerPodio(edicao = EDICAO_ATUAL): Promise<LugarNoPodio[]> {
   const { data, error } = await supabaseAdmin()
     .from('resultado')
     .select(
-      'posicao, elegivel, nota_final, total_avaliacoes, publicado_em, casas (slug, nome, prato, prato_confirmado, foto_url)',
+      'posicao, elegivel, visivel, nota_final, total_avaliacoes, publicado_em, casas (slug, nome, prato, prato_confirmado, foto_url)',
     )
     .eq('edicao', edicao)
     // Elegíveis primeiro, na ordem do ranking; inelegíveis depois, por nota.
@@ -106,6 +133,7 @@ export async function lerPodio(edicao = EDICAO_ATUAL): Promise<LugarNoPodio[]> {
     .map((l) => ({
       posicao: l.posicao,
       elegivel: l.elegivel,
+      visivel: l.visivel,
       notaFinal: Number(l.nota_final),
       totalAvaliacoes: l.total_avaliacoes,
       publicadoEm: l.publicado_em,
@@ -134,6 +162,7 @@ export type LugarParaPublicar = {
 export async function publicarPodio(
   lugares: LugarParaPublicar[],
   publicadoPor: string,
+  visivel: boolean,
   edicao = EDICAO_ATUAL,
 ): Promise<void> {
   const banco = supabaseAdmin()
@@ -151,6 +180,7 @@ export async function publicarPodio(
       casa_id: l.casaId,
       nota_final: l.notaFinal,
       total_avaliacoes: l.totalAvaliacoes,
+      visivel,
       publicado_por: publicadoPor.slice(0, 200),
     })),
   )

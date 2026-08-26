@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela, Vazio } from '@/components/painel/Peças'
 import PublicarResultado from '@/components/painel/PublicarResultado'
 import { CRITERIOS_DA_APURACAO, apurar } from '@/lib/painel'
-import { lerPodio, podePublicar, republicarEhDelicado } from '@/lib/resultado'
+import { lerPodio, publicacaoEhParcial, republicarEhDelicado } from '@/lib/resultado'
 import { dataLonga } from '@/lib/formato'
 import { CALENDARIO as CAL } from '@/data/edicao'
 import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
@@ -19,7 +19,7 @@ const proporcao = (v: number | null) =>
 export default async function Apuracao() {
   const { linhas, votos, mediaDeAvaliacoes, piso } = await apurar()
   const publicado = await lerPodio()
-  const liberado = podePublicar()
+  const jaVisivel = publicado.some((l) => l.visivel)
 
   const anuladas = linhas.reduce((s, l) => s + l.anuladas, 0)
   const comVoto = linhas.filter((l) => l.avaliacoes > 0)
@@ -43,8 +43,14 @@ export default async function Apuracao() {
               Exportar CSV
             </a>
             <PublicarResultado
-              liberado={liberado}
-              motivoBloqueio={`A apuração começa em ${dataLonga(CAL.inicioApuracao)}. Até lá o festival ainda recebe votos.`}
+              liberado
+              motivoBloqueio=""
+              jaVisivel={jaVisivel}
+              avisoDeParcial={
+                publicacaoEhParcial()
+                  ? `O festival vai até ${dataLonga(CAL.fimFestival)} e ainda entra voto. Publicar agora congela um número parcial — dá para republicar depois com o resultado fechado.`
+                  : ''
+              }
               jaPublicado={publicado.length > 0}
               publicadoEm={
                 publicado[0]

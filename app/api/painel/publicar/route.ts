@@ -3,7 +3,6 @@ import { recusarSemSessao } from '@/lib/painel-auth'
 import { apurar } from '@/lib/painel'
 import {
   EDICAO_ATUAL,
-  podePublicar,
   publicarPodio,
   republicarEhDelicado,
   type LugarParaPublicar,
@@ -23,23 +22,14 @@ export async function POST(pedido: NextRequest) {
   const semSessao = await recusarSemSessao()
   if (semSessao) return semSessao
 
-  const { confirmar, confirmarRepublicacao, publicadoPor } = (await pedido
+  const { confirmar, confirmarRepublicacao, publicadoPor, visivel } = (await pedido
     .json()
     .catch(() => ({}))) as {
     confirmar?: boolean
     confirmarRepublicacao?: boolean
     publicadoPor?: string
-  }
-
-  // Art. 20: a apuração é de 11 a 13 de outubro. Antes disso não há o que
-  // congelar — o festival ainda está recebendo voto.
-  if (!podePublicar()) {
-    return NextResponse.json(
-      {
-        erro: `A apuração começa em ${dataLonga(CALENDARIO.inicioApuracao)}. Antes disso o festival ainda está recebendo votos e não há resultado para congelar.`,
-      },
-      { status: 409 },
-    )
+    /** Liberar no site agora, sem esperar a data de divulgação. */
+    visivel?: boolean
   }
 
   if (confirmar !== true) {
@@ -121,7 +111,7 @@ export async function POST(pedido: NextRequest) {
   ]
 
   try {
-    await publicarPodio(lugares, (publicadoPor ?? '').trim(), EDICAO_ATUAL)
+    await publicarPodio(lugares, (publicadoPor ?? '').trim(), visivel === true, EDICAO_ATUAL)
   } catch (erro) {
     return NextResponse.json(
       { erro: erro instanceof Error ? erro.message : 'Falha ao publicar.' },
@@ -135,5 +125,6 @@ export async function POST(pedido: NextRequest) {
     noRanking: elegiveis.length,
     foraDoRanking: inelegiveis.length,
     piso: Number(piso.toFixed(2)),
+    visivel: visivel === true,
   })
 }

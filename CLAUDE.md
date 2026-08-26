@@ -211,7 +211,13 @@ Na página, as inelegíveis aparecem numa lista separada, **sem número de coloc
 
 **A área pública nunca deriva ranking de `avaliacoes`.** Uma consulta ao vivo em `/vencedores` entregaria a parcial antes da premiação para quem soubesse abrir a URL. A página lê de `resultado` e só.
 
-**A data manda sobre a existência do registro.** A Comissão apura de 11 a 13 e publica quando termina, mas o anúncio é no evento de premiação. Nesse intervalo a tabela está cheia e a página continua dizendo que o resultado não saiu — senão o campeão vaza antes da cerimônia. A regra está em `podioVisivel`, travada em `tests/resultado.test.ts` nos três cenários: sem registro, com registro antes da data, com registro depois.
+**Publicar é livre; mostrar é escolha.** Publicar não tem trava de data — a ACIA pode remarcar o festival (Art. 30) e o Art. 20 fala do prazo da apuração, não de proibição de gravar. O que o regulamento protege é a **divulgação**, e isso é a coluna `visivel`.
+
+O pódio aparece se **a Comissão liberou** (`visivel = true`) **ou** se chegou a data de divulgação — basta uma das duas. Assim dá para congelar o número antes da cerimônia sem vazar o campeão, e quem quiser publicar no dia da premiação, com o público vendo na hora, só marca a caixa. A data continua valendo como automatismo: sem ninguém marcar nada, o pódio aparece sozinho em 14/10.
+
+Publicar antes do fim do festival congela número parcial — o painel **avisa**, não bloqueia; republicar depois resolve.
+
+A regra está em `podioVisivel`, travada em `tests/resultado.test.ts`: sem registro, liberado antes da data, não liberado antes da data, e não liberado na data.
 
 **A leitura do pódio usa `service_role`, e isso é deliberado.** A policy de `casas` esconde inativa e desclassificada; com a chave anônima, desclassificar uma vencedora depois da premiação a faria sumir do pódio — exatamente a mudança retroativa que a tabela existe para impedir. Roda em componente de servidor e devolve só os campos do pódio.
 

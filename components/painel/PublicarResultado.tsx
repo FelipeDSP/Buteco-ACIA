@@ -27,6 +27,8 @@ export default function PublicarResultado({
   exigeConfirmacaoExtra,
   foraDoRanking,
   piso,
+  jaVisivel,
+  avisoDeParcial,
 }: {
   candidatas: Candidata[]
   liberado: boolean
@@ -36,6 +38,10 @@ export default function PublicarResultado({
   /** Casas que não alcançaram o piso do Art. 18 e ficam sem colocação. */
   foraDoRanking: string[]
   piso: string
+  /** O pódio já está aparecendo no site. */
+  jaVisivel: boolean
+  /** Texto do aviso quando o festival ainda não terminou; vazio se terminou. */
+  avisoDeParcial: string
   /** Depois da divulgação, republicar mexe no que o público já viu. */
   exigeConfirmacaoExtra: boolean
 }) {
@@ -43,6 +49,7 @@ export default function PublicarResultado({
   const [aberto, setAberto] = useState(false)
   const [quem, setQuem] = useState('')
   const [cienteDaRepublicacao, setCiente] = useState(false)
+  const [liberar, setLiberar] = useState(false)
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
@@ -56,6 +63,7 @@ export default function PublicarResultado({
         confirmar: true,
         confirmarRepublicacao: cienteDaRepublicacao,
         publicadoPor: quem,
+        visivel: liberar,
       }),
     })
     const dados = await resposta.json().catch(() => ({}))
@@ -69,17 +77,6 @@ export default function PublicarResultado({
     router.refresh()
   }
 
-  if (!liberado) {
-    return (
-      <span
-        title={motivoBloqueio}
-        className="inline-block cursor-help rounded-full bg-creme px-4 py-2 text-[13.5px] font-bold text-tinta-3"
-      >
-        Publicar resultado · bloqueado
-      </span>
-    )
-  }
-
   if (!aberto) {
     return (
       <span className="flex flex-col items-end gap-1">
@@ -87,7 +84,14 @@ export default function PublicarResultado({
           {jaPublicado ? 'Republicar resultado' : 'Publicar resultado oficial'}
         </button>
         {publicadoEm ? (
-          <span className="text-[12px] text-tinta-3">Publicado em {publicadoEm}</span>
+          <span className="text-[12px] text-tinta-3">
+            Publicado em {publicadoEm} ·{' '}
+            {jaVisivel ? (
+              <b className="text-tinta">no ar</b>
+            ) : (
+              'ainda não visível no site'
+            )}
+          </span>
         ) : null}
       </span>
     )
@@ -156,6 +160,28 @@ export default function PublicarResultado({
           do outro lado.
         </span>
       </label>
+
+      {/* Publicar e mostrar deixaram de ser a mesma coisa: dá para congelar o
+          resultado antes da cerimônia e só abrir na hora. */}
+      <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl bg-creme px-3.5 py-3 text-[13px]">
+        <input
+          type="checkbox"
+          checked={liberar}
+          onChange={(e) => setLiberar(e.target.checked)}
+          className="mt-0.5 size-4 shrink-0 accent-[var(--color-marinho)]"
+        />
+        <span className="text-tinta-3">
+          <b className="text-tinta">Mostrar no site agora.</b> Sem marcar, o resultado fica
+          gravado e congelado, mas a página de vencedores só passa a exibi-lo na data de
+          divulgação — útil para fechar o número antes da cerimônia sem vazar o campeão.
+        </span>
+      </label>
+
+      {avisoDeParcial ? (
+        <p className="mt-3 rounded-xl bg-ambar/20 px-3.5 py-3 text-[12.5px] font-semibold text-ambar-e">
+          {avisoDeParcial}
+        </p>
+      ) : null}
 
       {exigeConfirmacaoExtra ? (
         <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl bg-ambar/20 px-3.5 py-3 text-[13px] text-ambar-e">

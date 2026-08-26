@@ -27,9 +27,8 @@ const nota = (v: number) => v.toFixed(2).replace('.', ',')
 
 export default async function Vencedores() {
   const publicado = await lerPodio()
-  // A data manda sobre a existência do registro: publicado antes da hora
-  // continua invisível até o dia da divulgação.
-  const mostrar = podioVisivel(publicado.length)
+  // Aparece se a Comissão liberou, ou se chegou a data de divulgação.
+  const mostrar = podioVisivel(publicado)
   const estado = contagem()
 
   // Três faixas distintas, e a diferença entre as duas últimas importa:
