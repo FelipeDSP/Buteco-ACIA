@@ -20,7 +20,18 @@ const archivo = Archivo({
   display: 'swap',
 })
 
+/**
+ * Endereço público do site. Sem ele, o Next não consegue transformar caminho
+ * relativo em URL absoluta na hora de montar a prévia de compartilhamento — e
+ * o link colado no WhatsApp sai sem imagem e sem descrição.
+ *
+ * Variável de runtime, sem prefixo NEXT_PUBLIC_: é lida no servidor ao montar
+ * o metadata, então trocar o domínio não exige rebuild.
+ */
+const enderecoDoSite = process.env.BOTECO_SITE_URL ?? 'http://localhost:3311'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(enderecoDoSite),
   title: {
     default: `${EDICAO.nome} — festival gastronômico de ${EDICAO.cidade}`,
     template: `%s · ${EDICAO.nome}`,
