@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import CapaInterna from '@/components/CapaInterna'
+import Podio from '@/components/Podio'
 import { CALENDARIO, NOTA_MAXIMA_TOTAL, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/lib/dados'
 import { contagem, mostrarVencedores } from '@/lib/fase'
 import { dataLonga, reais } from '@/lib/formato'
@@ -25,18 +25,16 @@ export const metadata: Metadata = {
 
 const nota = (v: number) => v.toFixed(2).replace('.', ',')
 
-const CORES = [
-  'bg-marinho text-branco',
-  'bg-claro',
-  'bg-claro',
-] as const
-
 export default async function Vencedores() {
   const publicado = await lerPodio()
   // A data manda sobre a existência do registro: publicado antes da hora
   // continua invisível até o dia da divulgação.
   const mostrar = podioVisivel(publicado.length)
   const estado = contagem()
+
+  // O pódio leva as três primeiras; o resto vai para a lista abaixo dele.
+  const podio = publicado.filter((l) => l.posicao <= 3)
+  const demais = publicado.filter((l) => l.posicao > 3)
 
   return (
     <>
@@ -58,78 +56,67 @@ export default async function Vencedores() {
       <section className="py-14">
         <div className="wrap">
           {mostrar ? (
-            <ol className="grid gap-4 media:grid-cols-3">
-              {publicado.map((lugar, i) => (
-                <li
-                  key={lugar.posicao}
-                  className={`overflow-hidden rounded-2xl ${CORES[i] ?? 'bg-claro'} ${
-                    lugar.posicao === 1 ? 'media:-mt-4' : ''
-                  }`}
-                >
-                  <div className="relative aspect-4/3 bg-marinho-2">
-                    {lugar.casa.fotoUrl ? (
-                      <Image
-                        src={lugar.casa.fotoUrl}
-                        alt={`${lugar.casa.prato ?? 'Prato'}, de ${lugar.casa.nome}`}
-                        fill
-                        sizes="(max-width: 760px) 92vw, 380px"
-                        priority={lugar.posicao === 1}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="grid h-full place-content-center text-[12.5px] font-semibold text-selo">
-                        foto do prato
-                      </span>
-                    )}
-                    <span
-                      className={`absolute top-3 left-3 grid size-11 place-content-center rounded-full font-display text-[17px] font-extrabold ${
-                        lugar.posicao === 1 ? 'bg-ambar text-marinho' : 'bg-branco text-tinta'
-                      }`}
-                    >
-                      {lugar.posicao}º
-                    </span>
+            <>
+              <Podio lugares={podio} notaMaxima={NOTA_MAXIMA_TOTAL} />
+
+              {demais.length > 0 ? (
+                <div className="mt-12">
+                  <h2 className="display text-[clamp(20px,2.4vw,26px)]">
+                    As demais colocadas
+                  </h2>
+                  <p className="mt-2 max-w-[62ch] text-[14.5px] text-tinta-3">
+                    Todas recebem prato personalizado de parede e certificado de participação.
+                  </p>
+
+                  <div className="mt-5 overflow-x-auto">
+                    <table className="w-full min-w-[520px] border-collapse text-[15px]">
+                      <thead>
+                        <tr className="border-b-2 border-risco text-left">
+                          <th className="py-2.5 pr-3 font-semibold">#</th>
+                          <th className="py-2.5 pr-3 font-semibold">Casa</th>
+                          <th className="py-2.5 pr-3 font-semibold">Prato</th>
+                          <th
+                            className="py-2.5 pr-3 text-right font-semibold"
+                            title={`Nota final, de 0 a ${NOTA_MAXIMA_TOTAL}`}
+                          >
+                            Nota
+                          </th>
+                          <th className="py-2.5 text-right font-semibold">Avaliações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {demais.map((lugar) => (
+                          <tr key={lugar.posicao} className="border-b border-risco">
+                            <td className="py-3 pr-3 font-display font-extrabold text-tinta-3">
+                              {lugar.posicao}º
+                            </td>
+                            <td className="py-3 pr-3">
+                              <Link
+                                href={`/casas/${lugar.casa.slug}`}
+                                className="font-semibold hover:underline"
+                              >
+                                {lugar.casa.nome}
+                              </Link>
+                            </td>
+                            <td className="py-3 pr-3 text-tinta-3">
+                              {lugar.casa.pratoConfirmado && lugar.casa.prato
+                                ? lugar.casa.prato
+                                : '—'}
+                            </td>
+                            <td className="py-3 pr-3 text-right font-display font-extrabold">
+                              {nota(lugar.notaFinal)}
+                            </td>
+                            <td className="py-3 text-right text-tinta-3">
+                              {lugar.totalAvaliacoes}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-
-                  <div className="p-6">
-                    <h2 className="display text-[21px]">
-                      {lugar.casa.pratoConfirmado && lugar.casa.prato
-                        ? lugar.casa.prato
-                        : 'Prato da casa'}
-                    </h2>
-                    <p
-                      className={`mt-1 font-display text-[16px] font-bold ${
-                        lugar.posicao === 1 ? 'text-ouro' : 'text-tinta-3'
-                      }`}
-                    >
-                      {lugar.casa.nome}
-                    </p>
-
-                    <p className="mt-4 flex items-baseline gap-2">
-                      <b className="font-display text-[30px] leading-none font-extrabold">
-                        {nota(lugar.notaFinal)}
-                      </b>
-                      <span
-                        className={`text-[13.5px] ${
-                          lugar.posicao === 1 ? 'text-selo' : 'text-tinta-3'
-                        }`}
-                      >
-                        de {NOTA_MAXIMA_TOTAL}, em {lugar.totalAvaliacoes}{' '}
-                        {lugar.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações'}
-                      </span>
-                    </p>
-
-                    <p className="mt-5">
-                      <Link
-                        href={`/casas/${lugar.casa.slug}`}
-                        className={`btn btn-pequeno ${lugar.posicao === 1 ? 'btn-ambar' : ''}`}
-                      >
-                        Ver a casa
-                      </Link>
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-risco bg-claro p-9 text-center">
               <p className="font-display text-[20px] font-bold">Pódio a divulgar</p>

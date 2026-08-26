@@ -62,11 +62,19 @@ export async function POST(pedido: NextRequest) {
 
   const { linhas } = await apurar()
 
-  // Só elegíveis: o piso do Art. 18 e a desclassificação do Art. 22 já foram
-  // aplicados na apuração, e `posicao` só existe para quem concorre.
-  const podio = linhas
-    .filter((l) => l.elegivel && l.posicao >= 1 && l.posicao <= 3)
-    .sort((a, b) => a.posicao - b.posicao)
+  /**
+   * Congela o ranking **inteiro**, não só o pódio.
+   *
+   * A página pública mostra as três primeiras em destaque e as demais numa
+   * lista abaixo. Se as posições 4+ fossem calculadas ao vivo, a página teria
+   * topo congelado e cauda móvel — anular um voto depois da premiação mexeria
+   * na 4ª e não na 3ª, e uma casa poderia aparecer em 4º com nota maior que a
+   * do 3º lugar.
+   *
+   * Só elegíveis: o piso do Art. 18 e a desclassificação do Art. 22 já foram
+   * aplicados na apuração, e `posicao` só existe para quem concorre.
+   */
+  const podio = linhas.filter((l) => l.elegivel && l.posicao >= 1).sort((a, b) => a.posicao - b.posicao)
 
   if (podio.length === 0) {
     return NextResponse.json(
