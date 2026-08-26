@@ -67,7 +67,7 @@ describe('o formulário de voto nunca manda o CPF pela URL', () => {
   let noPeriodo = false
 
   beforeAll(async () => {
-    await exigirBancoSemVotosReais(banco, cpfHash)
+    await exigirBancoSemVotosReais(banco, cpfHash, env.CPF_PEPPER)
     noAr = await servidorNoAr()
     if (noAr) {
       noPeriodo = await servidorAceitaVoto(BASE)
@@ -112,7 +112,7 @@ describe('redirect do QR respeita o host que o visitante pediu', () => {
   let noPeriodo = false
 
   beforeAll(async () => {
-    await exigirBancoSemVotosReais(banco, cpfHash)
+    await exigirBancoSemVotosReais(banco, cpfHash, env.CPF_PEPPER)
     noAr = await servidorNoAr()
     if (noAr) {
       noPeriodo = await servidorAceitaVoto(BASE)

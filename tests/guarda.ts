@@ -1,4 +1,29 @@
+import { createHmac } from 'node:crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
+
+/**
+ * Todo CPF que a suíte usa, num lugar só.
+ *
+ * A trava conta as linhas que **não** são de teste, e para isso precisa saber
+ * quais são. Enquanto os arquivos compartilhavam o mesmo CPF isso não
+ * aparecia; no instante em que um teste novo trouxe o seu, os arquivos
+ * passaram a se abortar em paralelo — cada um enxergando a linha do outro como
+ * voto real.
+ *
+ * CPF de teste novo entra aqui. Ele também precisa ser **exclusivo** do seu
+ * arquivo: dois testes com o mesmo CPF apagam a linha um do outro na limpeza.
+ */
+export const CPFS_DE_TESTE = [
+  '11144477735', // voto-ip.test.ts e redirect.test.ts
+  '52998224725', // comentario.test.ts
+  '39000000009', // oraculo-cpf.test.ts — o que vota
+  '39000000181', // oraculo-cpf.test.ts — o sondado
+] as const
+
+/** Os hashes correspondentes, que é o que o banco guarda. */
+export function hashesDeTeste(pepper: string): string[] {
+  return CPFS_DE_TESTE.map((cpf) => createHmac('sha256', pepper).update(cpf).digest('hex'))
+}
 
 /**
  * Trava para os testes que escrevem no banco.
@@ -20,12 +45,19 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function exigirBancoSemVotosReais(
   banco: SupabaseClient,
-  cpfHashDoTeste: string,
+  cpfHashDoTeste: string | string[],
+  /** Pepper, para ignorar também os CPFs dos outros arquivos de teste. */
+  pepper?: string,
 ): Promise<void> {
+  const proprios = Array.isArray(cpfHashDoTeste) ? cpfHashDoTeste : [cpfHashDoTeste]
+  // Ignora o CPF deste teste e o de todos os outros: em paralelo, um arquivo
+  // veria a linha do outro e abortaria a suíte inteira sem haver voto real.
+  const ignorar = [...new Set([...proprios, ...(pepper ? hashesDeTeste(pepper) : [])])]
+
   const { count, error } = await banco
     .from('avaliacoes')
     .select('*', { count: 'exact', head: true })
-    .neq('cpf_hash', cpfHashDoTeste)
+    .not('cpf_hash', 'in', `(${ignorar.join(',')})`)
 
   if (error) {
     throw new Error(

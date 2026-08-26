@@ -70,7 +70,7 @@ describe('x-forwarded-for chega gravado na coluna ip', () => {
   beforeAll(async () => {
     // A trava vem antes de qualquer coisa: se houver voto real na tabela, nem
     // chega a checar o servidor. Lança aqui e a suíte inteira para.
-    await exigirBancoSemVotosReais(banco, cpfHash)
+    await exigirBancoSemVotosReais(banco, cpfHash, env.CPF_PEPPER)
 
     noAr = await servidorNoAr()
     if (noAr) {

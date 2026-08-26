@@ -371,6 +371,8 @@ A limpeza dos testes já é escopada ao próprio `cpf_hash`, então nunca apagar
 
 Teste novo que escreva no banco **tem que** chamar a trava. Sem isso ele é uma bomba com data marcada.
 
+**E precisa de CPF próprio, registrado em `CPFS_DE_TESTE` (`tests/guarda.ts`).** Dois arquivos com o mesmo CPF apagam a linha um do outro na limpeza; dois arquivos com CPFs diferentes que a trava não conheça se abortam em paralelo, cada um lendo a linha do outro como voto real. A lista existe para os dois casos — a trava ignora todos os CPFs de teste, não só o do arquivo que a chamou.
+
 ### Sabotar o código para conferir o teste
 
 Teste que passa pode estar passando por engano, e aí é pior que teste nenhum: dá confiança sem dar garantia. Antes de considerar um teste pronto, **quebre de propósito o código que ele cobre e confirme que ele falha** — e falha pelo motivo certo, com o valor errado aparecendo na mensagem.
@@ -378,6 +380,28 @@ Teste que passa pode estar passando por engano, e aí é pior que teste nenhum: 
 Foi assim que o teste do IP se provou: invertendo a ordem da lista do `x-forwarded-for`, o banco passou a gravar o IP do proxy e o teste acusou nas três asserções. Sem esse passo, um teste que sempre passa e um teste que nunca testa nada são indistinguíveis.
 
 Vale também para a trava: ela só conta como verificada depois de você inserir uma linha no banco, ver a suíte abortar, e conferir que **a linha continua lá** — teste que apaga dado alheio é pior que teste que não roda.
+
+---
+
+## Cabeçalhos de segurança
+
+Definidos em `next.config.ts`. Não havia nenhum — nem local nem em produção; o
+Traefik não adiciona por conta própria.
+
+O que mais importa é **`frame-ancestors 'none'`**: sem ele qualquer site embute
+`/votar/[slug]/avaliar` num iframe e induz a pessoa a votar sem perceber em
+quê. Numa aplicação cujo produto é o voto, moldura de terceiro é o ataque
+óbvio. `Referrer-Policy` é a segunda tranca do CPF, e `poweredByHeader: false`
+tira a versão da stack do ar.
+
+**A CSP tem duas armadilhas conhecidas:**
+
+`script-src` libera `unsafe-inline` porque o Next injeta o estado de hidratação
+inline. Apertar isso exige nonce por requisição — trabalho de outra rodada.
+
+`img-src` precisa de `https://tile.openstreetmap.org` na forma **exata**:
+`*.tile.openstreetmap.org` não casa com o host sem subdomínio, e o curinga
+sozinho deixa o mapa cinza sem nenhum erro visível na página.
 
 ---
 
@@ -444,6 +468,15 @@ A casa vem da rota, **nunca de campo do formulário**. Se o estabelecimento pude
 **Trocar `CPF_PEPPER` invalida todos os hashes já gravados** e a deduplicação para de funcionar retroativamente. É segredo de guardar, não de rotacionar.
 
 Validação do CPF é só aritmética de dígito verificador, nos dois lados. No cliente para dar retorno na hora; no servidor porque é lá que vale — um POST pode chegar sem passar pelo formulário.
+
+**A recusa por voto repetido queima a sessão.** "Você já avaliou esta casa"
+responde uma pergunta que ninguém deveria poder fazer: *fulano votou neste
+bar?* Enquanto a sessão sobrevivia à recusa, **uma** leitura do QR permitia
+testar CPF atrás de CPF, e cada 409 confirmava que aquela pessoa votou ali —
+quem tem lista de CPF de cliente é justamente o dono da casa. O HMAC protege o
+banco; sem isto, o endpoint contornava o HMAC pela porta da frente. Com a
+sessão queimada, cada sondagem custa uma ida física à mesa. Travado em
+`tests/oraculo-cpf.test.ts`.
 
 **Voto repetido é barrado pelo índice único, não por `SELECT` antes.** Sob concorrência, checar antes de inserir deixa as duas gravações passarem. O código trata o `23505` do Postgres. Os nomes das constraints estão conferidos contra o banco: `uma_avaliacao_por_cpf_por_casa` (que **não** tem "cpf_hash" no nome) e `avaliacoes_sessao_id_key`.
 

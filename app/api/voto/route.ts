@@ -111,6 +111,30 @@ export async function POST(pedido: NextRequest) {
       if (alvo.includes('avaliacoes_sessao_id_key')) {
         return recusa('Esta sessão já virou uma avaliação.', 409)
       }
+
+      /**
+       * **Queima a sessão aqui, e isto é segurança, não arrumação.**
+       *
+       * "Você já avaliou esta casa" responde uma pergunta que ninguém deveria
+       * poder fazer: *fulano votou neste bar?* Enquanto a sessão sobrevivia à
+       * recusa, uma única leitura do QR permitia testar CPF atrás de CPF até
+       * achar um que ainda não tivesse votado — e cada 409 pelo caminho era a
+       * confirmação de que aquela pessoa votou ali.
+       *
+       * Quem tem lista de CPF de cliente — fidelidade, nota fiscal — é
+       * justamente o dono da casa, que é quem tem interesse em saber. O HMAC
+       * protege o banco; sem isto, este endpoint contornava o HMAC pela porta
+       * da frente.
+       *
+       * Com a sessão queimada, cada sondagem custa uma leitura física do QR
+       * que está na mesa do bar. Quem já votou de verdade vê a mensagem uma
+       * vez e não precisa de sessão — já votou.
+       */
+      await banco
+        .from('sessoes')
+        .update({ usada_em: new Date().toISOString() })
+        .eq('id', verificacao.sessao.id)
+
       return recusa('Você já avaliou esta casa.', 409)
     }
     return recusa('Não foi possível registrar o seu voto. Tente de novo.', 500)
