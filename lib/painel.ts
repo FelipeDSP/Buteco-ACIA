@@ -64,7 +64,7 @@ type AvaliacaoBruta = {
   nota_atendimento: number
   anulada_em: string | null
   anulada_motivo: string | null
-  comentario: string | null
+  cpf: string | null
 }
 
 type CasaBruta = {
@@ -90,7 +90,7 @@ async function lerTudo() {
     banco
       .from('avaliacoes')
       .select(
-        'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo, comentario',
+        'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo, cpf',
       )
       .order('criada_em', { ascending: false }),
   ])
@@ -239,7 +239,6 @@ export type Anomalia =
   | 'ip-em-varias-casas'
   | 'fora-de-horario'
   | 'rajada'
-  | 'comentario-repetido'
 
 export type LinhaDaAuditoria = {
   id: string
@@ -256,10 +255,13 @@ export type LinhaDaAuditoria = {
   doIpNaCasa: number
   /** Em quantas casas diferentes este IP votou. */
   casasDoIp: number
-  /** Observação de quem avaliou. Nunca sai para página pública. */
-  comentario: string | null
-  /** Quantas avaliações da mesma casa repetem este texto exato. */
-  comentariosIguais: number
+  /**
+   * CPF em claro de quem avaliou, só dígitos — **decisão da ACIA**, não
+   * escolha técnica. `null` nas avaliações gravadas antes de 27/08/2026: o
+   * número não ficou guardado em lugar nenhum, então não há como preencher
+   * depois. A tela mostra "não registrado".
+   */
+  cpf: string | null
 }
 
 export type Limiares = {
@@ -329,7 +331,7 @@ type AvaliacaoDaAuditoria = Pick<
   | 'nota_atendimento'
   | 'anulada_em'
   | 'anulada_motivo'
-  | 'comentario'
+  | 'cpf'
 >
 
 /**
@@ -352,18 +354,6 @@ export function calcularAuditoria(
     porIpECasa.set(chave, (porIpECasa.get(chave) ?? 0) + 1)
     if (!casasPorIp.has(a.ip)) casasPorIp.set(a.ip, new Set())
     casasPorIp.get(a.ip)!.add(a.casa_id)
-  }
-
-  // Comentários idênticos dentro da mesma casa. Compara sem acento, sem caixa
-  // e sem espaço sobrando: "Muito bom!" e "muito bom" são o mesmo texto.
-  const normalizar = (t: string) =>
-    t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
-
-  const repeticoes = new Map<string, number>()
-  for (const a of avaliacoes) {
-    if (!a.comentario) continue
-    const chave = `${a.casa_id}|${normalizar(a.comentario)}`
-    repeticoes.set(chave, (repeticoes.get(chave) ?? 0) + 1)
   }
 
   // Rajada: para cada avaliação, quantas outras da mesma casa caíram na janela.
@@ -395,11 +385,6 @@ export function calcularAuditoria(
     if (casasDoIp >= limites.ipEmCasas) anomalias.push('ip-em-varias-casas')
     if (emRajada.has(a.id)) anomalias.push('rajada')
 
-    const comentariosIguais = a.comentario
-      ? (repeticoes.get(`${a.casa_id}|${normalizar(a.comentario)}`) ?? 0)
-      : 0
-    if (comentariosIguais >= limites.comentariosIguais) anomalias.push('comentario-repetido')
-
     // Só acusa horário quando a casa tem horário cadastrado: com `{}` todo
     // voto seria "fora de horário", e o alerta viraria ruído.
     const situacao = situacaoDaCasa(casa?.horarios ?? {}, new Date(a.criada_em))
@@ -423,8 +408,7 @@ export function calcularAuditoria(
       anomalias,
       doIpNaCasa,
       casasDoIp,
-      comentario: a.comentario,
-      comentariosIguais,
+      cpf: a.cpf,
     }
   })
 }
@@ -432,6 +416,173 @@ export function calcularAuditoria(
 export async function auditar(): Promise<LinhaDaAuditoria[]> {
   const { casas, avaliacoes } = await lerTudo()
   return calcularAuditoria(casas, avaliacoes)
+}
+
+/* ------------------------------------------------------------------------ */
+/* Observações — fora da avaliação, e fora dela de verdade                   */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * A observação não mora mais na linha da avaliação, e o desvínculo é de banco,
+ * não de tela: `observacoes` não tem `avaliacao_id`, não tem `cpf_hash` e não
+ * tem `ip`.
+ *
+ * **`criada_em` guarda só a data, sem hora**, e isso é a parte que faz a regra
+ * valer. Com hora, bastava abrir a auditoria ao lado desta aba e alinhar as
+ * duas por horário para descobrir quem escreveu o quê — e agora que o CPF
+ * aparece na auditoria, esse alinhamento ligaria CPF a comentário. Pelo mesmo
+ * motivo a listagem sai **sempre embaralhada**: ordem cronológica sozinha já
+ * reconstrói a sequência de quem passou pela casa.
+ *
+ * O sinal de texto repetido mudou de aba junto com o texto. Ele continua sendo
+ * por casa — o mesmo texto em casas diferentes não acende — e continua sendo
+ * pista, não prova.
+ */
+
+type ObservacaoBruta = {
+  id: string
+  casa_id: string
+  texto: string
+  /** Data, sem hora: `AAAA-MM-DD`. */
+  criada_em: string
+}
+
+type CasaDaObservacao = {
+  id: string
+  slug: string
+  nome: string
+  prato: string | null
+  prato_confirmado: boolean
+  foto_url: string | null
+  ativa: boolean
+}
+
+export type Observacao = {
+  id: string
+  texto: string
+  /** Só o dia. Não existe hora para mostrar, e é de propósito. */
+  dia: string
+  /** Quantas observações desta casa repetem este texto. */
+  iguais: number
+  /** Alcançou o limiar de repetição — sinal de auditoria, não prova. */
+  repetida: boolean
+}
+
+export type ObservacoesDaCasa = {
+  id: string
+  slug: string
+  nome: string
+  /** O mesmo cuidado da área pública com prato ainda não confirmado. */
+  prato: string
+  /** Foto do prato, para o cartão da grade. `null` mostra o placeholder. */
+  foto: string | null
+  ativa: boolean
+  total: number
+  /** Quantas observações desta casa acenderam o sinal de repetição. */
+  repetidas: number
+  itens: Observacao[]
+}
+
+/**
+ * Compara sem acento, sem caixa e sem espaço sobrando: "Muito bom!" e
+ * "muito  bom" são o mesmo texto para quem repete de propósito.
+ */
+const normalizar = (t: string) =>
+  t
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+
+/** Fisher-Yates. O sorteio entra por parâmetro para o teste ser determinístico. */
+function embaralhar<T>(itens: T[], sortear: () => number): T[] {
+  const copia = [...itens]
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(sortear() * (i + 1))
+    ;[copia[i], copia[j]] = [copia[j], copia[i]]
+  }
+  return copia
+}
+
+/**
+ * Agrupa por casa, conta as repetições e embaralha. Separada do banco pelo
+ * mesmo motivo das outras contas: dá para testar com cenário montado.
+ */
+export function calcularObservacoes(
+  casas: CasaDaObservacao[],
+  observacoes: ObservacaoBruta[],
+  limites: Limiares = limiares(),
+  sortear: () => number = Math.random,
+): ObservacoesDaCasa[] {
+  const repeticoes = new Map<string, number>()
+  for (const o of observacoes) {
+    const chave = `${o.casa_id}|${normalizar(o.texto)}`
+    repeticoes.set(chave, (repeticoes.get(chave) ?? 0) + 1)
+  }
+
+  return casas
+    .map((casa) => {
+      const daCasa = observacoes.filter((o) => o.casa_id === casa.id)
+      const itens = embaralhar(daCasa, sortear).map((o) => {
+        const iguais = repeticoes.get(`${casa.id}|${normalizar(o.texto)}`) ?? 0
+        return {
+          id: o.id,
+          texto: o.texto,
+          dia: o.criada_em,
+          iguais,
+          repetida: iguais >= limites.comentariosIguais,
+        }
+      })
+
+      return {
+        id: casa.id,
+        slug: casa.slug,
+        nome: casa.nome,
+        prato: casa.prato_confirmado && casa.prato ? casa.prato : 'Prato a confirmar',
+        foto: casa.foto_url,
+        ativa: casa.ativa,
+        total: itens.length,
+        repetidas: itens.filter((i) => i.repetida).length,
+        itens,
+      }
+    })
+    /**
+     * **Casa com zero observações continua na grade**, com o número zerado e
+     * o cartão apagado. Sumir é pior: uma casa ausente é lida como falha de
+     * carregamento, e a ACIA fica sem saber se a casa não recebeu nada ou se
+     * a tela não trouxe. Quem filtra é quem chama, não esta função.
+     */
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'))
+}
+
+export async function lerObservacoes(): Promise<ObservacoesDaCasa[]> {
+  const banco = supabaseAdmin()
+  const [casas, observacoes] = await Promise.all([
+    banco
+      .from('casas')
+      .select('id, slug, nome, prato, prato_confirmado, foto_url, ativa')
+      .order('nome'),
+    // Sem `order`: a ordem de chegada não precisa nem sair do banco.
+    banco.from('observacoes').select('id, casa_id, texto, criada_em'),
+  ])
+
+  if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
+  if (observacoes.error) {
+    throw new Error(`Falha ao ler observações: ${observacoes.error.message}`)
+  }
+
+  return calcularObservacoes(
+    (casas.data ?? []) as CasaDaObservacao[],
+    (observacoes.data ?? []) as ObservacaoBruta[],
+  ).filter(
+    /**
+     * A grade é das casas ativas. A casa inativa entra só se tiver texto —
+     * desativar uma casa não pode fazer sumir a devolutiva que ela recebeu, e
+     * observação não tem como ser anulada nem restaurada depois.
+     */
+    (c) => c.ativa || c.total > 0,
+  )
 }
 
 export type CasaDoPainel = {

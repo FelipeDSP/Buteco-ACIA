@@ -212,6 +212,8 @@ Next.js (App Router) + TypeScript, Tailwind v4 com tokens via `@theme`, deploy V
 
 As casas vivem na tabela `casas` do Supabase, acessadas sempre por `lib/dados.ts`. Nenhuma página fala com o banco direto. `data/restaurantes.ts` não existe mais.
 
+Tabelas em uso: `casas`, `sessoes`, `avaliacoes`, `observacoes` e `resultado`. **`observacoes` é separada de `avaliacoes` de propósito** — ver "Observações de quem vota". O SQL de cada mudança de schema fica em `db/`, com data no nome; aplicar no SQL Editor do Supabase antes do deploy que depende dele.
+
 As funções de leitura são assíncronas — não tem como não serem. As puras (`nomeDoPrato`, `linkComoChegar`, `enderecoCompleto`) e o tipo `Casa` moram em `lib/tipos.ts`, separadas de propósito: os componentes de cliente precisam delas, e importar de `lib/dados` arrastaria o cliente do Supabase para o bundle do navegador.
 
 ### Duas chaves, dois papéis
@@ -371,6 +373,8 @@ A limpeza dos testes já é escopada ao próprio `cpf_hash`, então nunca apagar
 
 Teste novo que escreva no banco **tem que** chamar a trava. Sem isso ele é uma bomba com data marcada.
 
+**A trava não cobre `observacoes`, e não tem como cobrir.** A tabela não guarda `cpf_hash` — é o ponto dela — então não existe chave para separar linha de teste de linha real. Teste que mande `comentario` no corpo do voto cria uma observação invisível para a trava, e precisa limpá-la pelo próprio `texto`, com um marcador exclusivo do arquivo. Nenhum teste faz isso hoje.
+
 **E precisa de CPF próprio, registrado em `CPFS_DE_TESTE` (`tests/guarda.ts`).** Dois arquivos com o mesmo CPF apagam a linha um do outro na limpeza; dois arquivos com CPFs diferentes que a trava não conheça se abortam em paralelo, cada um lendo a linha do outro como voto real. A lista existe para os dois casos — a trava ignora todos os CPFs de teste, não só o do arquivo que a chamou.
 
 ### Sabotar o código para conferir o teste
@@ -449,7 +453,7 @@ Cada uma custou uma rodada de trabalho. O motivo importa mais que a regra: se o 
 
 **O resultado é fechado até a premiação.** Nota, média, parcial e posição não aparecem em lugar nenhum do site público — nem na tela de voto, nem na confirmação, nem na página da casa. Mostrar parcial durante o festival vira campanha: casa atrás corre atrás de voto, casa na frente vira alvo. A apuração é de 11 a 13 de outubro e o resultado sai depois disso.
 
-**O CPF nunca é gravado.** Ver "Votação".
+**O CPF é gravado em claro, por decisão da ACIA.** Foi o contrário até 27/08/2026. Ver "Votação".
 
 **Os blocos de bairro saíram da home; no lugar entrou o mapa.** Eram doze casas espalhadas por seis bairros, quase um bairro por casa — clicar num bloco filtrava de doze para uma ou duas, o que não é filtrar, é dar um passo a mais para chegar na mesma lista. O mapa responde a pergunta que o bairro só aproximava: *onde isso fica em relação a mim*. As pílulas de bairro seguem na lista, onde custam um clique e nada de espaço vertical.
 
@@ -463,9 +467,23 @@ Fluxo: o QR da mesa aponta para `/votar/[slug]`, que é **route handler e não p
 
 A casa vem da rota, **nunca de campo do formulário**. Se o estabelecimento pudesse ser escolhido pelo cliente, alguém votaria no bar errado de propósito.
 
-**O CPF nunca é gravado.** Entra pelo corpo do POST, vira `HMAC-SHA256(cpf, CPF_PEPPER)` e some. Não é gravado, não é logado, não volta na resposta. Hash simples não serviria: CPF tem ~1,1 bilhão de números válidos e a tabela inteira se monta em minutos num notebook — o pepper é o que a torna inútil para quem levar um dump do banco.
+### O CPF é gravado — decisão da ACIA, 27/08/2026
 
-**Trocar `CPF_PEPPER` invalida todos os hashes já gravados** e a deduplicação para de funcionar retroativamente. É segredo de guardar, não de rotacionar.
+**Isto foi decisão da ACIA, não escolha técnica, e reverteu a regra anterior.** Até 27/08/2026 o CPF morria dentro do route handler: entrava pelo corpo do POST, virava HMAC e sumia. A ACIA decidiu passar a armazená-lo em claro para que a organização possa consultá-lo na auditoria. Está registrado aqui para que a mudança seja lida como decisão datada, e não como descuido de quem escreveu o código.
+
+O que a decisão custou, escrito para quem for reavaliá-la: um dump do banco passou a valer uma lista de CPF de clientes de bar da cidade, e o HMAC deixou de ser a única linha de defesa do número. O que sobrou de proteção é o RLS (`avaliacoes` não tem policy nenhuma — só `service_role` lê), a senha do painel e o cuidado de quem exporta CSV.
+
+**O `cpf_hash` continua sendo gravado, e continua sendo a base do índice único.** A deduplicação **não** passou para a coluna em claro: `uma_avaliacao_por_cpf_por_casa` segue apontando para o hash. Trocar a constraint não traria ganho e quebraria as linhas antigas.
+
+- Coluna `cpf` em `avaliacoes`, `text`, anulável. Só dígitos, sem pontuação.
+- **Fica nula nas avaliações anteriores à decisão** — o número não foi guardado, então não há como preencher depois. Auditoria e CSV mostram "não registrado"; célula vazia pareceria falha de carregamento.
+- Aparece **inteiro** na aba Auditoria e nos CSV de auditoria e de apuração. **Não** aparece na aba Observações, nem em nenhuma página pública.
+
+**`ACEITE_VERSAO` subiu para `2026-08-27` junto com o texto da tela de voto**, e as duas coisas andam sempre juntas. Quem votou sob `2026-09-01` aceitou um texto que dizia que o CPF não era guardado; quem vota agora aceita um que diz que fica registrado e é acessível à organização. A coluna existe para essa diferença continuar legível depois do festival — mexer no texto de aceite sem subir a versão apaga a distinção.
+
+**Trocar `CPF_PEPPER` invalida todos os hashes já gravados** e a deduplicação para de funcionar retroativamente. É segredo de guardar, não de rotacionar. Continua valendo mesmo com o CPF em claro no banco: a unicidade é do hash.
+
+Hash simples não serviria: CPF tem ~1,1 bilhão de números válidos e a tabela inteira se monta em minutos num notebook — o pepper é o que a torna inútil para quem levar um dump do banco.
 
 Validação do CPF é só aritmética de dígito verificador, nos dois lados. No cliente para dar retorno na hora; no servidor porque é lá que vale — um POST pode chegar sem passar pelo formulário.
 
@@ -523,28 +541,37 @@ O risco aqui **não é deixar fraude passar: é marcar cliente honesto.** Alerta
 - **Rajada** — 8+ na mesma casa em 5 minutos. Casa o Art. 21 ("volume atípico de notas máximas em curto período").
 - **Fora de horário** — só dispara em casa com horário cadastrado. Com `{}` todo voto seria marcado e o painel viraria ruído.
 
+**"Observação repetida" saiu daqui.** O sinal não sumiu: mudou de aba junto com o texto, e agora vive em `calcularObservacoes`, comparando observações dentro da mesma casa. Continua usando `PAINEL_LIMIAR_COMENTARIO_IGUAL`. Não recolocar na auditoria — ver a seção seguinte.
+
 A conta está em `calcularAuditoria`, separada do banco e travada em `tests/auditoria.test.ts` com cenários reais: wi-fi de bar cheio, cliente fazendo rolê, mesa pedindo a conta junto.
 
-**O CPF não aparece no painel** porque nunca foi gravado. Só existe como HMAC, e nem o hash é mostrado.
+**O CPF aparece inteiro na auditoria**, por decisão da ACIA, e sai também no CSV — que é rotulado com isso antes do clique, porque planilha exportada não volta. **A coluna de observação saiu da mesma tela no mesmo movimento:** com CPF e texto lado a lado, uma linha só ligaria comentário a pessoa, que é exatamente o que a separação das observações existe para impedir.
 
-### Observações de quem vota
+### Observações de quem vota — tabela própria, desvinculada
 
 Campo opcional na tela de voto, até 400 caracteres — limite validado no cliente, no servidor **e** no banco.
 
-**Não participa de cálculo nenhum:** nem da média, nem do desempate, nem do piso. `calcularApuracao` sequer recebe a coluna, e um teste trava isso.
+**Desde 27/08/2026 a observação não é coluna da avaliação: é a tabela `observacoes`** (`id`, `casa_id`, `texto`, `criada_em`). A coluna `avaliacoes.comentario` foi migrada e removida. Decisão da ACIA, tomada na mesma rodada em que o CPF passou a ser gravado — e as duas andam juntas: com o CPF visível na auditoria, texto e pessoa na mesma linha seria ligar comentário a CPF numa tela só.
 
-**Nunca aparece em página pública** — nem na página da casa, nem no pódio. Verificado nas cinco páginas com comentário real no banco.
+**O desvínculo é de banco, não de tela.** Não há `avaliacao_id`, não há `cpf_hash`, não há `ip`. Se alguém for "melhorar" isso um dia, o que se perde é a regra inteira.
 
-O CPF não é mostrado junto do texto porque nunca foi gravado. Ligar observação a identificador seria justamente o que a tela de voto promete que não acontece.
+**`criada_em` é `date`, não `timestamp`, e essa é a parte que faz a regra valer.** Com hora, bastaria abrir a auditoria ao lado desta aba e alinhar as duas por horário para descobrir quem escreveu o quê — o vínculo voltaria sem nenhuma coluna ligando as tabelas. **Pelo mesmo motivo a listagem sai sempre embaralhada, nunca em ordem de chegada:** a sequência cronológica sozinha já reconstrói quem passou pela casa. Só tirar o horário não bastaria.
 
-**Dois CSV, e a diferença é de privacidade, não de formato:**
+**Não participa de cálculo nenhum:** nem da média, nem do desempate, nem do piso. `calcularApuracao` nem chega perto da tabela, e um teste trava isso.
 
-- **Interno (ACIA)** — data, hora, casa e texto.
-- **Para o estabelecimento** — só o texto, uma por linha, **sem data, sem hora e em ordem embaralhada**. Data e hora deixariam o dono cruzar com a comanda e descobrir quem escreveu, ainda mais em noite de pouco movimento. E só tirar o horário não bastaria: a ordem cronológica sozinha já reconstrói a sequência de quem passou pela casa.
+**Nunca aparece em página pública** — nem na página da casa, nem no pódio.
 
-Os dois botões são rotulados pelo destinatário, porque exportar o errado não dá para desfazer — o dono já leu.
+**A aba tem duas camadas.** A primeira é uma grade de cartões, um por casa: foto do prato (o mesmo `FotoPrato` e o mesmo placeholder dos cartões do site), nome do prato em destaque, nome da casa abaixo, e a contagem de observações grande. Ordenada da casa com mais para a com menos. No topo, o resumo: total de observações e quantas casas já receberam alguma. A segunda camada abre ao clicar num cartão — a lista embaralhada daquela casa, com botão de voltar e o CSV dela.
 
-**Observação repetida é sinal de auditoria.** Mesmo texto em 3+ avaliações da mesma casa (`PAINEL_LIMIAR_COMENTARIO_IGUAL`), comparado sem acento e sem caixa. Duas pessoas escrevem "muito bom" no mesmo dia sem combinar nada — daí o limiar não ser 2. O sinal é **por casa**: o mesmo texto em casas diferentes não acende.
+**Casa com zero observações continua na grade**, com o número zerado e o cartão apagado. Sumir seria pior: casa ausente é lida como carregamento que falhou, e a ACIA ficaria sem saber se a casa não recebeu nada ou se a tela não trouxe o dado. Casa inativa só entra se tiver texto — desativar não pode fazer sumir devolutiva já recebida, e observação não tem como ser anulada nem restaurada depois.
+
+A navegação entre as camadas é por parâmetro de URL (`?casa=slug`), como o resto do site: funciona sem JS, é compartilhável, e slug inventado cai na grade.
+
+**Um CSV só, e por casa: apenas o texto, embaralhado.** Não existe mais a versão "interna" com data, hora e casa. Ela existia porque a observação morava na avaliação e a ACIA precisava do contexto; agora não há hora para exportar, e o mesmo arquivo serve à ACIA e ao estabelecimento. O que havia para proteger foi protegido no banco, não no formato do arquivo.
+
+**Observação repetida é sinal de auditoria — e mora aqui, não na aba Auditoria.** Mesmo texto em 3+ observações da mesma casa (`PAINEL_LIMIAR_COMENTARIO_IGUAL`), comparado sem acento e sem caixa. Duas pessoas escrevem "muito bom" no mesmo dia sem combinar nada — daí o limiar não ser 2. O sinal é **por casa**: o mesmo texto em casas diferentes não acende.
+
+A conta está em `calcularObservacoes` (`lib/painel.ts`), separada do banco e travada em `tests/comentario.test.ts` — inclusive o desvínculo em si: que a linha da auditoria não carrega texto, que o item de observação não tem CPF, IP nem hora, e que a lista não sai em ordem de chegada. Os três foram conferidos sabotando o código e vendo cada teste acusar.
 
 ### O editor de horários é a peça com prazo
 

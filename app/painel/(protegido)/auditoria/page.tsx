@@ -12,7 +12,6 @@ const FILTROS = [
   'ip-repetido',
   'rajada',
   'fora-de-horario',
-  'comentario-repetido',
   'anuladas',
 ] as const
 type Filtro = (typeof FILTROS)[number]
@@ -24,7 +23,6 @@ const ROTULO: Record<Filtro, string> = {
   'ip-em-varias-casas': 'IP em várias casas',
   rajada: 'Rajada',
   'fora-de-horario': 'Fora de horário',
-  'comentario-repetido': 'Observação repetida',
   anuladas: 'Anuladas',
 }
 
@@ -56,7 +54,7 @@ export default async function Auditoria({
     <div className="wrap">
       <TopoDaTela
         titulo="Auditoria"
-        sub="O CPF não aparece aqui nem em lugar nenhum: ele nunca foi gravado, só o HMAC. Os marcadores dirigem o olhar; a decisão de anular é da comissão, olhando o conjunto."
+        sub="O CPF de quem votou aparece inteiro, por decisão da ACIA — quem abre esta tela está vendo dado pessoal de cliente de bar da cidade. A observação não está aqui: ela vive na aba Observações, sem vínculo com a avaliação. Os marcadores dirigem o olhar; a decisão de anular é da comissão, olhando o conjunto."
       />
 
       <Numeros>
@@ -72,6 +70,17 @@ export default async function Auditoria({
       </Numeros>
 
       <LegendaDeSinais limites={limites} />
+
+      {/* O CSV leva o CPF junto. O rótulo diz isso antes do clique: planilha
+          exportada sai do painel e não volta. */}
+      <div className="mt-6 flex flex-col gap-1 rounded-2xl bg-claro p-4">
+        <a href="/api/painel/auditoria" className="btn btn-pequeno btn-linha self-start">
+          CSV da auditoria (ACIA)
+        </a>
+        <span className="text-[12px] text-tinta-3">
+          uma linha por avaliação, com CPF, IP, notas e sinais — contém dado pessoal
+        </span>
+      </div>
 
       <div className="mt-6 mb-4">
         <Filtros
@@ -98,6 +107,7 @@ export default async function Auditoria({
                 <tr className="border-b border-risco bg-creme text-left">
                   <th className="px-5 py-2.5 font-semibold">Quando</th>
                   <th className="py-2.5 pr-3 font-semibold">Casa</th>
+                  <th className="py-2.5 pr-3 font-semibold">CPF</th>
                   <th className="py-2.5 pr-3 font-semibold">IP</th>
                   <th
                     className="py-2.5 pr-3 font-semibold"
@@ -105,7 +115,6 @@ export default async function Auditoria({
                   >
                     Notas
                   </th>
-                  <th className="py-2.5 pr-3 font-semibold">Observação</th>
                   <th className="py-2.5 pr-3 font-semibold">Sinais</th>
                   <th className="px-5 py-2.5 text-right font-semibold">Ação</th>
                 </tr>

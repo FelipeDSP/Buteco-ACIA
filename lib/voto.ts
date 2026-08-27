@@ -3,8 +3,13 @@ import { CRITERIOS } from '@/data/edicao'
 /**
  * Versão do texto de aceite. Fica gravada em cada avaliação para que, se o
  * texto mudar, ainda se saiba exatamente o que cada pessoa aceitou.
+ *
+ * Subiu para 27/08/2026 quando a ACIA decidiu gravar o CPF em claro. **Não
+ * baixar nem reaproveitar a versão anterior:** quem votou sob `2026-09-01`
+ * aceitou um texto que dizia que o CPF não era guardado, e essa diferença
+ * precisa continuar legível na tabela depois do festival.
  */
-export const ACEITE_VERSAO = '2026-09-01'
+export const ACEITE_VERSAO = '2026-08-27'
 
 export const NOTA_MINIMA = 0
 export const NOTA_MAXIMA = 5

@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { recusarSemSessao } from '@/lib/painel-auth'
-import { auditar } from '@/lib/painel'
+import { lerObservacoes } from '@/lib/painel'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,68 +14,41 @@ const semAcento = (t: string) =>
   t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()
 
 /**
- * Exporta as observações em dois modos, e a diferença entre eles é de
- * privacidade, não de formato.
+ * Exportação das observações de **uma** casa: só o texto, uma por linha, em
+ * ordem embaralhada.
  *
- * **interno** — data, hora, casa e texto. Fica com a ACIA.
+ * Não existe mais um segundo modo com data, hora e casa. Antes existia porque
+ * a observação era coluna da avaliação e a ACIA precisava do contexto; agora a
+ * tabela não guarda hora nenhuma, e a única data que existe é o dia. O arquivo
+ * é o mesmo para a ACIA e para o estabelecimento porque não sobrou diferença
+ * de privacidade entre os dois — o que havia para proteger foi protegido no
+ * banco, não no formato.
  *
- * **estabelecimento** — só o texto, uma observação por linha, **sem data,
- * sem hora e em ordem embaralhada**. Data e hora deixariam o dono cruzar com
- * a comanda e descobrir quem escreveu, ainda mais em noite de pouco
- * movimento. E só tirar o horário não bastaria: a ordem cronológica sozinha
- * já reconstrói a sequência de quem passou pela casa.
+ * A ordem embaralhada vem de `lerObservacoes`: ordem cronológica sozinha já
+ * reconstrói a sequência de quem passou pela casa, mesmo sem horário na tela.
  */
 export async function GET(pedido: NextRequest) {
   const semSessao = await recusarSemSessao()
   if (semSessao) return semSessao
 
-  const params = pedido.nextUrl.searchParams
-  const casaFiltrada = params.get('casa') ?? ''
-  const paraCasa = params.get('modo') === 'estabelecimento'
+  const slug = pedido.nextUrl.searchParams.get('casa') ?? ''
+  const casa = (await lerObservacoes()).find((c) => c.slug === slug)
 
-  const linhas = (await auditar())
-    .filter((l) => l.comentario && !l.anulada)
-    .filter((l) => !casaFiltrada || l.casaSlug === casaFiltrada)
-
-  const quando = (iso: string) =>
-    new Date(iso).toLocaleString('pt-BR', {
-      timeZone: 'America/Porto_Velho',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+  if (!casa) {
+    return new Response('Casa não encontrada, ou ainda sem observações.', {
+      status: 404,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
     })
-
-  let csv: string
-  let nome: string
-
-  if (paraCasa) {
-    // Embaralha para a ordem não virar linha do tempo. Sem `Math.random` em
-    // sequência previsível — é troca de Fisher-Yates simples, e basta aqui.
-    const textos = linhas.map((l) => l.comentario as string)
-    for (let i = textos.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[textos[i], textos[j]] = [textos[j], textos[i]]
-    }
-    csv = ['observacao', ...textos.map(campo)].join('\r\n')
-    nome = `observacoes-${casaFiltrada || 'todas'}-para-o-estabelecimento`
-  } else {
-    const cabecalho = ['data', 'hora', 'casa', 'observacao'].join(';')
-    const corpo = linhas.map((l) => {
-      const [data, hora] = quando(l.quando).split(', ')
-      return [data, hora, l.casa, l.comentario].map(campo).join(';')
-    })
-    csv = [cabecalho, ...corpo].join('\r\n')
-    nome = `observacoes-${casaFiltrada || 'todas'}-interno`
   }
 
-  const data = new Date().toISOString().slice(0, 10)
+  const csv = ['observacao', ...casa.itens.map((i) => campo(i.texto))].join('\r\n')
+  const dia = new Date().toISOString().slice(0, 10)
+
   // BOM na frente: sem ele o Excel abre os acentos errados.
   return new Response('﻿' + csv, {
     headers: {
       'content-type': 'text/csv; charset=utf-8',
-      'content-disposition': `attachment; filename="${semAcento(nome)}-${data}.csv"`,
+      'content-disposition': `attachment; filename="observacoes-${semAcento(casa.slug)}-${dia}.csv"`,
     },
   })
 }

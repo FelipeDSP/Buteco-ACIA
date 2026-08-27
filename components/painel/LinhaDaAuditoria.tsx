@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { formatarCpf } from '@/lib/cpf'
 import type { Anomalia } from '@/lib/painel'
 
 /**
@@ -10,6 +11,12 @@ import type { Anomalia } from '@/lib/painel'
  * Anular pede motivo obrigatório: a decisão fica registrada no banco e pode
  * ser questionada depois pela casa afetada. "Anulei porque achei estranho" não
  * se sustenta numa reunião; o campo existe para obrigar a escrever o porquê.
+ *
+ * **O CPF aparece aqui inteiro, por decisão da ACIA.** A observação, que antes
+ * ficava nesta mesma linha, saiu: ela vive na aba Observações e não tem mais
+ * vínculo com a avaliação. Ter os dois lado a lado ligaria CPF a comentário
+ * numa tela só, que é exatamente o que a separação existe para impedir — não
+ * recolocar a coluna de texto aqui.
  */
 
 const ETIQUETA: Record<Anomalia, string> = {
@@ -17,13 +24,14 @@ const ETIQUETA: Record<Anomalia, string> = {
   'ip-em-varias-casas': 'IP em várias casas',
   rajada: 'Rajada',
   'fora-de-horario': 'Fora de horário',
-  'comentario-repetido': 'Observação repetida',
 }
 
 export type Props = {
   id: string
   quando: string
   casa: string
+  /** Só dígitos. `null` nas avaliações anteriores a 27/08/2026. */
+  cpf: string | null
   ip: string | null
   notas: Record<string, number>
   anulada: boolean
@@ -31,8 +39,6 @@ export type Props = {
   anomalias: Anomalia[]
   doIpNaCasa: number
   casasDoIp: number
-  comentario: string | null
-  comentariosIguais: number
 }
 
 export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
@@ -73,27 +79,20 @@ export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
     <tr className={`border-b border-risco ${linha.anulada ? 'opacity-55' : ''}`}>
       <td className="py-3 pr-3 whitespace-nowrap text-tinta-3">{quando}</td>
       <td className="py-3 pr-3 font-semibold">{linha.casa}</td>
+      {/* Avaliação anterior a 27/08/2026 não tem CPF: o número não foi
+          guardado, então não há como preencher agora. "não registrado" diz
+          isso; célula vazia pareceria falha de carregamento. */}
+      <td className="py-3 pr-3 font-mono text-[13px] whitespace-nowrap">
+        {linha.cpf ? (
+          formatarCpf(linha.cpf)
+        ) : (
+          <span className="text-[12.5px] text-tinta-3">não registrado</span>
+        )}
+      </td>
       <td className="py-3 pr-3 font-mono text-[13px] text-tinta-3">{linha.ip ?? '—'}</td>
       <td className="py-3 pr-3 font-mono text-[13px] whitespace-nowrap">
         {linha.notas.apresentacao}·{linha.notas.sabor}·{linha.notas.criatividade}·
         {linha.notas.atendimento}
-      </td>
-      <td className="max-w-[260px] py-3 pr-3">
-        {/* O texto fica na própria linha, sem abrir outra tela: quem audita
-            precisa ler o comentário junto do resto para julgar. O hash do CPF
-            nunca aparece perto disto — nem em lugar nenhum. */}
-        {linha.comentario ? (
-          <details>
-            <summary className="cursor-pointer text-[12.5px] font-semibold text-marinho">
-              tem observação
-            </summary>
-            <p className="mt-1.5 rounded-lg bg-creme px-3 py-2 text-[13px] whitespace-pre-wrap text-tinta-3">
-              {linha.comentario}
-            </p>
-          </details>
-        ) : (
-          <span className="text-[12.5px] text-tinta-3">—</span>
-        )}
       </td>
       <td className="py-3 pr-3">
         <span className="flex flex-wrap gap-1">
@@ -105,9 +104,7 @@ export default function LinhaDaAuditoria({ linha }: { linha: Props }) {
                 ? linha.doIpNaCasa
                 : a === 'ip-em-varias-casas'
                   ? linha.casasDoIp
-                  : a === 'comentario-repetido'
-                    ? linha.comentariosIguais
-                    : null
+                  : null
             return (
               <span
                 key={a}

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { obterCasa } from '@/lib/dados'
-import { cpfValido } from '@/lib/cpf'
+import { cpfValido, limparCpf } from '@/lib/cpf'
 import { hashDoCpf } from '@/lib/cpf-hash'
 import { lerSessao, RECUSA } from '@/lib/sessao'
 import { periodoDeVotacao } from '@/lib/fase'
@@ -18,8 +18,14 @@ import {
  * Gravação do voto. Roda só no servidor, com a chave service_role — `sessoes`
  * e `avaliacoes` não têm policy de RLS, então nenhuma outra chave escreve nelas.
  *
- * O CPF em texto puro morre nesta função: entra pelo corpo do pedido, vira
- * HMAC e some. Não é gravado, não é logado e não volta na resposta.
+ * **O CPF é gravado em claro, por decisão da ACIA de 27/08/2026**, para ficar
+ * acessível à organização na auditoria. O `cpf_hash` continua sendo gravado e
+ * continua sendo a base do índice único de deduplicação — a unicidade não
+ * passou para o número em claro. O texto de aceite da tela de voto diz isso, e
+ * `ACEITE_VERSAO` subiu para separar quem votou sob o texto novo.
+ *
+ * A observação vai para `observacoes`, tabela própria, sem nada que a ligue a
+ * esta avaliação — ver o comentário do passo 5.
  */
 
 export const dynamic = 'force-dynamic'
@@ -76,7 +82,7 @@ export async function POST(pedido: NextRequest) {
     return recusa(`A observação passa de ${COMENTARIO_MAXIMO} caracteres.`)
   }
 
-  // 3. O CPF vira HMAC aqui e não é usado em mais lugar nenhum.
+  // 3. O hash continua sendo calculado: é ele que barra o voto repetido.
   let cpfHash: string
   try {
     cpfHash = hashDoCpf(cpf)
@@ -92,8 +98,9 @@ export async function POST(pedido: NextRequest) {
     casa_id: casa.id,
     sessao_id: verificacao.sessao.id,
     cpf_hash: cpfHash,
+    // Decisão da ACIA, não escolha técnica. Só os dígitos, sem pontuação.
+    cpf: limparCpf(cpf),
     ...colunasDasNotas(validadas.notas),
-    comentario: observacao.texto,
     aceite: true,
     aceite_versao: ACEITE_VERSAO,
     ip: ipDoPedido(pedido.headers),
@@ -140,7 +147,31 @@ export async function POST(pedido: NextRequest) {
     return recusa('Não foi possível registrar o seu voto. Tente de novo.', 500)
   }
 
-  // 5. Marca a sessão como usada. Se este passo falhar, uma segunda tentativa
+  /**
+   * 5. A observação, se houver, vai para tabela própria — **depois** de a
+   *    avaliação ter passado, senão um voto recusado por duplicidade deixaria
+   *    texto solto no banco.
+   *
+   *    Nada aqui liga o texto a esta avaliação: sem `avaliacao_id`, sem
+   *    `cpf_hash`, sem `ip`, e a data entra sem hora (a coluna é `date`).
+   *    Guardar a hora bastaria para alinhar as duas telas do painel e
+   *    reconstruir quem escreveu o quê — e o CPF agora aparece na auditoria.
+   *
+   *    Falha aqui não derruba o voto: a avaliação já está gravada e a pessoa
+   *    não conseguiria reenviar (o índice único a barraria). Perder o texto é
+   *    ruim; perder o voto e deixar a pessoa sem saída é pior.
+   */
+  if (observacao.texto) {
+    const { error: erroDaObservacao } = await banco
+      .from('observacoes')
+      .insert({ casa_id: casa.id, texto: observacao.texto })
+
+    if (erroDaObservacao) {
+      console.error('[voto] observação não gravada:', erroDaObservacao.message)
+    }
+  }
+
+  // 6. Marca a sessão como usada. Se este passo falhar, uma segunda tentativa
   //    esbarra no índice único de `sessao_id` — o replay continua barrado.
   await banco
     .from('sessoes')

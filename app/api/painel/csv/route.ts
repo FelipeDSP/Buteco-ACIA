@@ -1,5 +1,6 @@
 import { recusarSemSessao } from '@/lib/painel-auth'
-import { CRITERIOS_DA_APURACAO, apurar } from '@/lib/painel'
+import { CRITERIOS_DA_APURACAO, apurar, auditar } from '@/lib/painel'
+import { formatarCpf } from '@/lib/cpf'
 import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL } from '@/data/edicao'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +17,10 @@ export async function GET() {
   const semSessao = await recusarSemSessao()
   if (semSessao) return semSessao
 
-  const { linhas, votos, mediaDeAvaliacoes, piso } = await apurar()
+  const [{ linhas, votos, mediaDeAvaliacoes, piso }, avaliacoes] = await Promise.all([
+    apurar(),
+    auditar(),
+  ])
 
   const cabecalho = [
     'posicao',
@@ -59,9 +63,54 @@ export async function GET() {
     `Piso minimo para concorrer (Art. 18, 10%);${numero(piso)}`,
   ].map((l) => l.split(';').map(campo).join(';'))
 
+  /**
+   * Detalhe por avaliacao, **com o CPF em claro** - decisao da ACIA de
+   * 27/08/2026. Vai depois do rodape porque a planilha continua sendo a da
+   * apuracao: as colunas de cima sao a conta do regulamento, e este bloco e o
+   * lastro dela.
+   *
+   * Observacao nao entra aqui, e o motivo nao e espaco: os textos deixaram de
+   * morar na avaliacao, e traze-los para a mesma linha do CPF refaria por
+   * planilha o vinculo que a separacao desfez no banco.
+   */
+  const detalhe = [
+    '',
+    'Avaliacoes (detalhe)',
+    [
+      'data',
+      'casa',
+      'cpf',
+      'apresentacao',
+      'sabor',
+      'criatividade',
+      'atendimento',
+      `total_de_0_a_${NOTA_MAXIMA_TOTAL}`,
+      'anulada',
+    ]
+      .map(campo)
+      .join(';'),
+    ...avaliacoes.map((a) =>
+      [
+        new Date(a.quando).toLocaleDateString('pt-BR', { timeZone: 'America/Porto_Velho' }),
+        a.casa,
+        // Antes de 27/08/2026 o CPF nao era guardado. Celula vazia pareceria
+        // exportacao truncada; a palavra diz que nao existe numero para por.
+        a.cpf ? formatarCpf(a.cpf) : 'nao registrado',
+        a.notas.apresentacao,
+        a.notas.sabor,
+        a.notas.criatividade,
+        a.notas.atendimento,
+        a.notas.apresentacao + a.notas.sabor + a.notas.criatividade + a.notas.atendimento,
+        a.anulada ? 'sim' : 'nao',
+      ]
+        .map(campo)
+        .join(';'),
+    ),
+  ]
+
   const data = new Date().toISOString().slice(0, 10)
   // BOM na frente: sem ele o Excel abre os acentos errados.
-  const csv = '﻿' + [cabecalho.join(';'), ...corpo, ...rodape].join('\r\n')
+  const csv = '﻿' + [cabecalho.join(';'), ...corpo, ...rodape, ...detalhe].join('\r\n')
 
   return new Response(csv, {
     headers: {

@@ -41,6 +41,14 @@ export function hashesDeTeste(pepper: string): string[] {
  * A limpeza dos testes já é escopada (apaga só o próprio `cpf_hash`), então
  * ela nunca apagaria voto real. Esta trava é a segunda tranca: impede até de
  * começar.
+ *
+ * **`observacoes` não é coberta por esta trava, e não tem como ser.** A tabela
+ * não guarda `cpf_hash` — é justamente o ponto dela — então não há chave para
+ * separar linha de teste de linha real. Teste que envie `comentario` no corpo
+ * do voto cria uma observação que esta função não enxerga: ele precisa
+ * limpá-la pelo próprio `texto`, usando um marcador exclusivo do arquivo, do
+ * mesmo jeito que os CPFs desta lista são exclusivos. Nenhum teste faz isso
+ * hoje; o primeiro que fizer tem que trazer a limpeza junto.
  */
 
 export async function exigirBancoSemVotosReais(

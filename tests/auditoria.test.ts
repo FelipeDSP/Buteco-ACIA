@@ -33,7 +33,9 @@ const avaliacao = (casaId: string, ip: string | null, minuto = 0, segundo = 0) =
   nota_atendimento: 4,
   anulada_em: null,
   anulada_motivo: null,
-  comentario: null as string | null,
+  // CPF em claro desde 27/08/2026. Nao entra em sinal nenhum: esta aqui porque
+  // a linha da auditoria o carrega para a tela, nao porque a conta o use.
+  cpf: '11144477735' as string | null,
 })
 
 /** N avaliações espalhadas ao longo de horas, como movimento real de bar. */

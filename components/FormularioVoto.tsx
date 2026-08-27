@@ -144,9 +144,15 @@ export default function FormularioVoto({
       })}
 
       <div>
-        <label htmlFor="comentario" className="mb-3 block font-display text-[17px] font-extrabold">
+        <label htmlFor="comentario" className="mb-1 block font-display text-[17px] font-extrabold">
           Quer deixar uma observação? <span className="font-normal text-tinta-3">(opcional)</span>
         </label>
+        {/* O desvínculo é de banco, não de promessa: a observação vai para
+            outra tabela, sem CPF, sem IP e sem hora. Ver `lib/painel.ts`. */}
+        <p className="mt-1 mb-3 text-[14px] text-tinta-3">
+          Ela não fica ligada à sua avaliação nem a você: é guardada à parte, sem o seu CPF e sem
+          horário. A casa recebe só o texto, fora de ordem.
+        </p>
         <textarea
           id="comentario"
           name="comentario"
@@ -174,7 +180,8 @@ export default function FormularioVoto({
           Seu CPF
         </label>
         <p className="mt-1 mb-3 text-[14px] text-tinta-3">
-          Serve só para impedir que a mesma pessoa vote duas vezes na mesma casa.
+          Impede que a mesma pessoa vote duas vezes na mesma casa, e fica registrado para
+          conferência da organização.
         </p>
 
         <input
@@ -208,11 +215,19 @@ export default function FormularioVoto({
             onChange={(e) => setAceite(e.target.checked)}
             className="mt-0.5 size-5 shrink-0 accent-[var(--color-marinho)]"
           />
+          {/*
+            Texto de aceite vigente desde 27/08/2026, quando a ACIA decidiu
+            passar a armazenar o CPF. Ele precisa dizer as duas coisas que
+            mudaram — que o número fica registrado, e que a organização o
+            acessa — porque `ACEITE_VERSAO` só distingue as versões se elas de
+            fato disserem coisas diferentes. Mexer aqui exige subir a versão em
+            `lib/voto.ts`.
+          */}
           <span>
-            Concordo em informar meu CPF só para evitar voto duplicado. Ele não é
-            guardado: fica registrado apenas um código embaralhado, do qual não dá
-            para voltar ao número. Nada mais é coletado, e esse código é apagado
-            depois da apuração.
+            Concordo em informar meu CPF. Ele <b className="text-tinta">fica registrado</b> junto
+            da minha avaliação e é acessível à organização do festival para conferência e
+            auditoria. Serve para impedir que a mesma pessoa vote duas vezes na mesma casa. Minha
+            observação, se eu escrever uma, é guardada separada e não fica ligada ao meu CPF.
           </span>
         </label>
       </div>
