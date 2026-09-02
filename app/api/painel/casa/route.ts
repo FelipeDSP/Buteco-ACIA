@@ -20,6 +20,28 @@ const TEXTO = [
   'foto_url',
 ] as const
 
+/**
+ * `maps_url` fica fora de `TEXTO` porque não é texto qualquer: ele vai direto
+ * para o `href` do botão "Como chegar" de todos os cartões da casa, e um
+ * `javascript:` ali é execução de script na página pública. Só `https://`
+ * entra. `http://` também é recusado — link de mapa colado hoje é sempre
+ * https, e aceitar o outro só abriria a porta sem servir a ninguém.
+ */
+function mapsLimpo(bruto: unknown): { ok: true; valor: string | null } | { ok: false; erro: string } {
+  if (bruto === undefined) return { ok: true, valor: null }
+  const texto = typeof bruto === 'string' ? bruto.trim() : ''
+  if (texto === '') return { ok: true, valor: null }
+  if (!/^https:\/\//i.test(texto)) {
+    return { ok: false, erro: 'O link do mapa precisa começar com https://.' }
+  }
+  try {
+    new URL(texto)
+  } catch {
+    return { ok: false, erro: 'O link do mapa não é um endereço válido.' }
+  }
+  return { ok: true, valor: texto }
+}
+
 const HORA = /^([01]?\d|2[0-3]):[0-5]\d$/
 
 /**
@@ -111,6 +133,12 @@ export async function POST(pedido: NextRequest) {
   const ln = coordenada(lng, 180)
   if (la !== undefined) linha.lat = la
   if (ln !== undefined) linha.lng = ln
+
+  if (corpo.maps_url !== undefined) {
+    const conferido = mapsLimpo(corpo.maps_url)
+    if (!conferido.ok) return NextResponse.json({ erro: conferido.erro }, { status: 400 })
+    linha.maps_url = conferido.valor
+  }
 
   if (horarios !== undefined) {
     const conferido = horariosLimpos(horarios)

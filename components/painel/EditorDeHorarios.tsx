@@ -49,6 +49,13 @@ export default function EditorDeHorarios({
   }
 
   const semCadastro = DIAS_DA_SEMANA.every((d) => faixasDe(d.chave).length === 0)
+  /**
+   * Copiar um dia vazio apagaria a semana inteira num clique, e sem nada na
+   * tela mudando de lugar para denunciar. O botão fica travado até o dia de
+   * origem ter faixa.
+   */
+  const modelo = faixasDe(copiarDe)
+  const nomeDeOrigem = DIAS_DA_SEMANA.find((d) => d.chave === copiarDe)?.nome ?? ''
 
   return (
     <div className="flex flex-col gap-3">
@@ -150,18 +157,30 @@ export default function EditorDeHorarios({
         <span className="text-tinta-3">para todos os outros dias</span>
         <button
           type="button"
+          disabled={modelo.length === 0}
+          title={
+            modelo.length === 0
+              ? `${nomeDeOrigem} está fechada — não há horário para copiar.`
+              : `Substitui o horário dos outros seis dias pelo de ${nomeDeOrigem}.`
+          }
           onClick={() => {
-            const modelo = faixasDe(copiarDe)
             const novo: Horarios = {}
             for (const d of DIAS_DA_SEMANA) {
-              if (modelo.length > 0) novo[d.chave] = modelo.map((f) => [...f] as Faixa)
+              novo[d.chave] = modelo.map((f) => [...f] as Faixa)
             }
             aoMudar(novo)
           }}
-          className="rounded-full bg-marinho px-3 py-1 text-[12.5px] font-bold text-branco"
+          className="rounded-full bg-marinho px-3 py-1 text-[12.5px] font-bold text-branco disabled:opacity-45"
         >
           Aplicar
         </button>
+        {modelo.length === 0 ? (
+          <span className="text-[12.5px] text-tinta-3">
+            {nomeDeOrigem} está fechada. Preencha antes de copiar.
+          </span>
+        ) : (
+          <span className="text-[12.5px] text-tinta-3">Substitui o que já houver nos outros dias.</span>
+        )}
       </div>
     </div>
   )

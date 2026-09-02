@@ -50,7 +50,7 @@ export {
 
 /** Colunas pedidas ao PostgREST. Explícitas para não trazer lixo novo sozinho. */
 const COLUNAS =
-  'id, slug, nome, prato, prato_confirmado, preco, descricao, foto_url, categoria, bairro, endereco, instagram, telefone, lat, lng, horarios, ordem'
+  'id, slug, nome, prato, prato_confirmado, preco, descricao, foto_url, categoria, bairro, endereco, maps_url, instagram, telefone, lat, lng, horarios, ordem'
 
 type Linha = {
   id: string
@@ -64,6 +64,7 @@ type Linha = {
   categoria: string | null
   bairro: string | null
   endereco: string | null
+  maps_url: string | null
   instagram: string | null
   telefone: string | null
   /** `numeric` do Postgres chega como string pelo PostgREST, não como número. */
@@ -96,6 +97,7 @@ function daLinha(l: Linha): Casa {
     },
     instagram: l.instagram,
     telefone: l.telefone,
+    mapsUrl: l.maps_url,
     lat: numero(l.lat),
     lng: numero(l.lng),
     horarios: l.horarios ?? {},

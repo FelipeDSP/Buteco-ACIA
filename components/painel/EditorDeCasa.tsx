@@ -72,6 +72,7 @@ export default function EditorDeCasa({ casa }: { casa?: CasaDoPainel }) {
     categoria: casa?.categoria ?? 'Bar',
     bairro: casa?.bairro ?? '',
     endereco: casa?.endereco ?? '',
+    maps_url: casa?.maps_url ?? '',
     instagram: casa?.instagram ?? '',
     telefone: casa?.telefone ?? '',
     lat: casa?.lat != null ? String(casa.lat) : '',
@@ -185,6 +186,23 @@ export default function EditorDeCasa({ casa }: { casa?: CasaDoPainel }) {
 
         <Campo rotulo="Bairro" nome="bairro" valor={String(campos.bairro)} aoMudar={(v) => trocar('bairro', v)} />
         <Campo rotulo="Endereço" nome="endereco" valor={String(campos.endereco)} aoMudar={(v) => trocar('endereco', v)} />
+
+        <label className="flex flex-col gap-1.5 duas:col-span-2">
+          <span className="text-[13.5px] font-bold">Link do mapa</span>
+          <input
+            name="maps_url"
+            type="url"
+            inputMode="url"
+            placeholder="https://maps.app.goo.gl/…"
+            value={String(campos.maps_url)}
+            onChange={(e) => trocar('maps_url', e.target.value)}
+            className="rounded-xl bg-claro px-3.5 py-2.5 text-[15px]"
+          />
+          <span className="text-[12.5px] text-tinta-3">
+            Opcional, e só <b>https://</b>. Preenchido, é para onde o botão &quot;Como
+            chegar&quot; leva. Vazio, o botão usa a coordenada abaixo — que é o normal.
+          </span>
+        </label>
 
         <Campo
           rotulo="Instagram"

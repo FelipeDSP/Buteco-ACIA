@@ -596,6 +596,7 @@ export type CasaDoPainel = {
   categoria: string | null
   bairro: string | null
   endereco: string | null
+  maps_url: string | null
   instagram: string | null
   telefone: string | null
   foto_url: string | null

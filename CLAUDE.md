@@ -573,11 +573,61 @@ A navegação entre as camadas é por parâmetro de URL (`?casa=slug`), como o r
 
 A conta está em `calcularObservacoes` (`lib/painel.ts`), separada do banco e travada em `tests/comentario.test.ts` — inclusive o desvínculo em si: que a linha da auditoria não carrega texto, que o item de observação não tem CPF, IP nem hora, e que a lista não sai em ordem de chegada. Os três foram conferidos sabotando o código e vendo cada teste acusar.
 
+### A tela de edição da casa
+
+Botão **Editar** em cada linha da aba Casas, levando a `/painel/casas/[id]`.
+Uma tela só, com os dados, o horário e a foto — porque quem abre para cadastrar
+o horário costuma ser a mesma pessoa que percebeu que o bairro está em branco.
+
+**O slug aparece, mas não se edita.** Ele vai impresso dentro do QR da mesa, e
+não há redirecionamento que conserte papel. Na criação a tela mostra a prévia
+do slug antes de gravar, que é o único momento em que ele ainda pode mudar.
+
+**A foto sobe pelo `/api/painel/foto`, com `service_role`, nunca do cliente.**
+Bucket `casas`, JPG/PNG/WebP, até 5 MB. Cada envio gera **caminho novo**
+(`slug/timestamp.ext`) em vez de sobrescrever: o mesmo caminho deixaria a foto
+velha presa no cache do navegador e da CDN, e a ACIA trocaria a imagem sem ver
+diferença nenhuma. O corolário é que substituir deixa o arquivo antigo no
+bucket — órfão barato, e preferível a foto que não atualiza.
+
+**`maps_url` é o único campo do formulário que vira `href`.** Ele alimenta o
+botão "Como chegar", que aparece em todo cartão da grade, no popup do mapa e
+duas vezes na página da casa — e `javascript:` num `href` é execução de script
+na página pública. Por isso só `https://` entra, conferido **duas vezes**: na
+gravação (`app/api/painel/casa/route.ts`, fora da lista `TEXTO` justamente para
+não passar como texto qualquer) e de novo em `linkComoChegar`, que cobre linha
+antiga e escrita feita fora do painel. Travado em `tests/como-chegar.test.ts`,
+conferido sabotando as duas metades da regra.
+
+`linkComoChegar` tem três degraus, nesta ordem: o link que a casa indicou, a
+coordenada conferida, e uma busca pelo nome e endereço. As doze casas têm
+coordenada e nenhuma tem `maps_url` — o campo existe para a casa cujo ponto no
+Google não bate com a coordenada, e vazio não muda nada.
+
+**Editar não aparece na hora no site público.** `/casas/[slug]` é ISR com
+`revalidate = 3600`: a alteração leva até uma hora para chegar à página. Não é
+defeito, mas é o que faz alguém salvar de novo achando que não gravou — o
+painel já mostra o valor novo, que é onde se confere.
+
 ### O editor de horários é a peça com prazo
 
 É ele que liga a janela de votação. Hoje as doze casas estão com `{}`, e **enquanto estiverem o QR aceita voto a qualquer hora — inclusive às 4h com a casa fechada.** Precisa estar preenchido antes de 19 de setembro.
 
 Formato `{"seg":[["18:00","23:30"]]}`. Dia sem faixa = fechado nesse dia. Faixa que termina antes de começar atravessa a meia-noite, e isso é proposital para casa que fecha às 2h. O route handler valida tudo antes de gravar: jsonb torto aqui vira casa que não recebe voto no dia do festival.
+
+A interface é por dia da semana, com faixas somáveis — uma casa que fecha para
+o almoço tem duas no mesmo dia. **"Copiar o horário de X para todos os outros
+dias"** existe para não preencher sete vezes por casa, e o botão fica travado
+quando o dia de origem está fechado: copiar um dia vazio apagaria a semana
+inteira num clique, sem nada na tela mudando de lugar para denunciar.
+
+Conferido ponta a ponta contra o banco real, com o servidor dentro da janela do
+festival (`BOTECO_FASE_HOJE`): horário que não cobre a hora atual faz o QR
+responder `?erro=fechada` **sem criar sessão**; duas faixas no mesmo dia aceitam
+dentro da segunda; dia sem faixa recusa; faixa de ontem que atravessa a
+meia-noite ainda aceita; e as seis formas de jsonb torto são recusadas com 400
+**sem tocar no que já estava gravado**. Ao fim, as doze casas voltaram a `{}` —
+que é como continuam.
 
 ---
 

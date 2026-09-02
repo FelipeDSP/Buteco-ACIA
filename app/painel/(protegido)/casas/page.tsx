@@ -139,14 +139,23 @@ export default async function Casas() {
                     </td>
                     <td className="py-3 pr-3 text-right">{casa.avaliacoes}</td>
                     <td className="px-5 py-3 text-right">
-                      <EstadoDaCasa
-                        id={casa.id}
-                        nome={casa.nome}
-                        ativa={casa.ativa}
-                        desclassificada={casa.desclassificada_em !== null}
-                        desclassificadaMotivo={casa.desclassificada_motivo}
-                        avaliacoes={casa.avaliacoes}
-                      />
+                      <span className="flex flex-wrap items-start justify-end gap-1.5">
+                        <Link
+                          href={`/painel/casas/${casa.id}`}
+                          title="Dados, horário de funcionamento e foto do prato"
+                          className="rounded-full bg-marinho px-3 py-1 text-[12.5px] font-bold text-branco hover:bg-marinho-2"
+                        >
+                          Editar
+                        </Link>
+                        <EstadoDaCasa
+                          id={casa.id}
+                          nome={casa.nome}
+                          ativa={casa.ativa}
+                          desclassificada={casa.desclassificada_em !== null}
+                          desclassificadaMotivo={casa.desclassificada_motivo}
+                          avaliacoes={casa.avaliacoes}
+                        />
+                      </span>
                     </td>
                   </tr>
                 )

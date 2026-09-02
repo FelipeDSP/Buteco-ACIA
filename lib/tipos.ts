@@ -29,6 +29,8 @@ export type Casa = {
   }
   instagram: string | null
   telefone: string | null
+  /** Link de mapa que a própria casa indicou. Vazio na maioria; ver `linkComoChegar`. */
+  mapsUrl: string | null
   lat: number | null
   lng: number | null
   /** Funcionamento por dia: `{"seg":[["18:00","23:30"]]}`. `{}` = não coletado. */
@@ -57,8 +59,18 @@ export function enderecoCompleto(casa: Casa): string {
   return `${local} — ${CIDADE}/${UF}`
 }
 
-/** Link de rota. Prefere a coordenada conferida; cai no endereço se faltar. */
+/**
+ * Link de rota, em três degraus: o link que a casa indicou, a coordenada
+ * conferida, e por último uma busca pelo nome e endereço.
+ *
+ * O `https://` é conferido aqui de novo, e não por desconfiança do painel: o
+ * valor vai direto para um `href`, e `javascript:` num `href` é execução de
+ * script. A validação na gravação é a primeira tranca; esta é a segunda, e
+ * cobre linha antiga ou escrita fora do painel.
+ */
 export function linkComoChegar(casa: Casa): string {
+  if (casa.mapsUrl && casa.mapsUrl.startsWith('https://')) return casa.mapsUrl
+
   const alvo =
     casa.lat != null && casa.lng != null
       ? `${casa.lat},${casa.lng}`
