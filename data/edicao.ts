@@ -96,8 +96,18 @@ export const DESEMPATE: readonly string[] = [
   'Maior número de avaliações válidas',
 ]
 
-/** Piso mínimo de avaliações para a casa ser elegível à premiação. */
-export const PISO_MINIMO_PERCENTUAL = 10
+/**
+ * Piso mínimo de avaliações para a casa ser elegível à premiação, em
+ * percentual da média de avaliações por estabelecimento.
+ *
+ * **O regulamento publicado (Art. 18º) diz 10%. A ACIA decidiu subir para 20%
+ * em 15/09/2026**, antes do início do festival. O texto do PDF na raiz ainda
+ * diz 10% — se o regulamento não for republicado, este número e o documento
+ * dizem coisas diferentes, e é o documento que a casa contestante vai citar.
+ * Mudar aqui muda tudo: a apuração, a página "Como se vota", o painel e o
+ * CSV derivam desta constante; nada escreve o percentual à mão.
+ */
+export const PISO_MINIMO_PERCENTUAL = 20
 
 export type Premio = {
   posicao: string

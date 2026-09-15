@@ -30,7 +30,7 @@ Não inventar, não arredondar, não "melhorar".
 - **Nota final = soma das notas recebidas ÷ número de avaliações (Art. 17º).** Escala de **0 a 20 pontos**, não de 0 a 5: cada avaliação vale a soma dos quatro critérios. Dividir por quatro dá o mesmo ranking e o número errado — e é este número que vai no certificado. Nenhum voto é descartado nem tem peso reduzido
 - Uma avaliação por pessoa em cada casa; pode avaliar quantas casas quiser
 - Desempate: maior média em sabor → criatividade → número de avaliações
-- **Piso mínimo de elegibilidade (Art. 18º): 10% da média de avaliações por estabelecimento**, calculado sobre TODAS as casas do festival, inclusive as que receberam pouco. Exemplo do próprio regulamento: 4.000 avaliações entre 20 estabelecimentos → média 200 → piso 20. Quem fica abaixo **não entra no ranking**, mas recebe placa e certificado. Com volume baixo o piso quase não morde — isso é a regra funcionando, não defeito
+- **Piso mínimo de elegibilidade (Art. 18º): 20% da média de avaliações por estabelecimento — decisão da ACIA em 15/09/2026; o PDF publicado ainda diz 10%.** Calculado sobre TODAS as casas do festival, inclusive as que receberam pouco. Exemplo do próprio regulamento: 4.000 avaliações entre 20 estabelecimentos → média 200 → piso 40 (era 20 com os 10%). Quem fica abaixo **não entra no ranking**, mas recebe placa e certificado. Com volume baixo o piso quase não morde — isso é a regra funcionando, não defeito. O percentual mora em `PISO_MINIMO_PERCENTUAL` (`data/edicao.ts`) e tudo deriva dele; `tests/apuracao.test.ts` trava o 20 para a próxima mudança ser consciente. **Enquanto o regulamento não for republicado com 20%, o software e o documento dizem coisas diferentes — e é o documento que a casa contestante vai citar**
 - Premiação: 1º R$ 1.000 + mesa (Rosalin Mesas) + lixeira (Motopam) + placa + certificado · 2º R$ 750 · 3º R$ 500 · todas recebem placa e certificado
 - **Número de casas indefinido no código.** Qualquer layout funciona com qualquer N
 - Hashtag: `#BotecoACIA`
@@ -212,7 +212,7 @@ Next.js (App Router) + TypeScript, Tailwind v4 com tokens via `@theme`, deploy V
 
 As casas vivem na tabela `casas` do Supabase, acessadas sempre por `lib/dados.ts`. Nenhuma página fala com o banco direto. `data/restaurantes.ts` não existe mais.
 
-Tabelas em uso: `casas`, `sessoes`, `avaliacoes`, `observacoes` e `resultado`. **`observacoes` é separada de `avaliacoes` de propósito** — ver "Observações de quem vota". O SQL de cada mudança de schema fica em `db/`, com data no nome; aplicar no SQL Editor do Supabase antes do deploy que depende dele.
+Tabelas em uso: `casas`, `sessoes`, `avaliacoes`, `observacoes`, `avaliacoes_garcom` e `resultado`. **`observacoes` e `avaliacoes_garcom` são separadas de `avaliacoes` de propósito** — ver "Observações de quem vota" e "Avaliação do garçom". O SQL de cada mudança de schema fica em `db/`, com data no nome; aplicar no SQL Editor do Supabase antes do deploy que depende dele.
 
 As funções de leitura são assíncronas — não tem como não serem. As puras (`nomeDoPrato`, `linkComoChegar`, `enderecoCompleto`) e o tipo `Casa` moram em `lib/tipos.ts`, separadas de propósito: os componentes de cliente precisam delas, e importar de `lib/dados` arrastaria o cliente do Supabase para o bundle do navegador.
 
@@ -251,6 +251,8 @@ O cookie de sessão sai com `Secure` quando `NODE_ENV=production`. Isso signific
 ### O build lê o banco
 
 `generateStaticParams` das páginas de casa consulta o Supabase. Ele cai para lista vazia se o banco não responder, para indisponibilidade momentânea não derrubar o deploy — as páginas passam a ser geradas sob demanda.
+
+O que o build lê é o que a página mostra até alguém regenerar. Foto, nome ou horário que entrarem no banco **depois** do build só chegam à página pela invalidação do painel (`invalidarPaginasDeCasa`) ou pela segunda visita depois de uma hora — ver "A tela de edição da casa". Reiniciar o container sem rebuild volta ao retrato do build.
 
 ---
 
@@ -373,7 +375,7 @@ A limpeza dos testes já é escopada ao próprio `cpf_hash`, então nunca apagar
 
 Teste novo que escreva no banco **tem que** chamar a trava. Sem isso ele é uma bomba com data marcada.
 
-**A trava não cobre `observacoes`, e não tem como cobrir.** A tabela não guarda `cpf_hash` — é o ponto dela — então não existe chave para separar linha de teste de linha real. Teste que mande `comentario` no corpo do voto cria uma observação invisível para a trava, e precisa limpá-la pelo próprio `texto`, com um marcador exclusivo do arquivo. Nenhum teste faz isso hoje.
+**A trava não cobre `observacoes` nem `avaliacoes_garcom`, e não tem como cobrir.** As duas tabelas não guardam `cpf_hash` — é o ponto delas — então não existe chave para separar linha de teste de linha real. Teste que mande `comentario` ou `garcom` no corpo do voto cria uma linha invisível para a trava, e precisa limpá-la pelo próprio `texto`/`nome`, com um marcador exclusivo do arquivo. Nenhum teste faz isso hoje.
 
 **E precisa de CPF próprio, registrado em `CPFS_DE_TESTE` (`tests/guarda.ts`).** Dois arquivos com o mesmo CPF apagam a linha um do outro na limpeza; dois arquivos com CPFs diferentes que a trava não conheça se abortam em paralelo, cada um lendo a linha do outro como voto real. A lista existe para os dois casos — a trava ignora todos os CPFs de teste, não só o do arquivo que a chamou.
 
@@ -479,7 +481,7 @@ O que a decisão custou, escrito para quem for reavaliá-la: um dump do banco pa
 - **Fica nula nas avaliações anteriores à decisão** — o número não foi guardado, então não há como preencher depois. Auditoria e CSV mostram "não registrado"; célula vazia pareceria falha de carregamento.
 - Aparece **inteiro** na aba Auditoria e nos CSV de auditoria e de apuração. **Não** aparece na aba Observações, nem em nenhuma página pública.
 
-**`ACEITE_VERSAO` subiu para `2026-08-27` junto com o texto da tela de voto**, e as duas coisas andam sempre juntas. Quem votou sob `2026-09-01` aceitou um texto que dizia que o CPF não era guardado; quem vota agora aceita um que diz que fica registrado e é acessível à organização. A coluna existe para essa diferença continuar legível depois do festival — mexer no texto de aceite sem subir a versão apaga a distinção.
+**`ACEITE_VERSAO` anda sempre junto com o texto da tela de voto.** Subiu para `2026-08-27` quando o CPF passou a ser gravado, e para `2026-09-15` quando o texto passou a citar a avaliação do garçom. Quem votou sob `2026-09-01` aceitou um texto que dizia que o CPF não era guardado; quem vota agora aceita um que diz que fica registrado e é acessível à organização. A coluna existe para essa diferença continuar legível depois do festival — mexer no texto de aceite sem subir a versão apaga a distinção.
 
 **Trocar `CPF_PEPPER` invalida todos os hashes já gravados** e a deduplicação para de funcionar retroativamente. É segredo de guardar, não de rotacionar. Continua valendo mesmo com o CPF em claro no banco: a unicidade é do hash.
 
@@ -573,6 +575,44 @@ A navegação entre as camadas é por parâmetro de URL (`?casa=slug`), como o r
 
 A conta está em `calcularObservacoes` (`lib/painel.ts`), separada do banco e travada em `tests/comentario.test.ts` — inclusive o desvínculo em si: que a linha da auditoria não carrega texto, que o item de observação não tem CPF, IP nem hora, e que a lista não sai em ordem de chegada. Os três foram conferidos sabotando o código e vendo cada teste acusar.
 
+### Avaliação do garçom — tabela própria, fora da apuração
+
+Pedido da ACIA em 15/09/2026: na tela de voto, a pessoa pode escrever o nome
+de quem a atendeu e dar uma nota de 0 a 5. É opcional e **não é critério do
+regulamento**: o critério "atendimento" continua sendo o da casa, nas colunas
+de `avaliacoes`. Nada disto entra em média, desempate nem piso —
+`calcularApuracao` nem chega perto da tabela.
+
+**Ou vem inteira, ou não vem.** Nota sem nome não serve à casa (não sabe de
+quem é) e nome sem nota não diz nada. O formulário trava o envio com aviso e
+um botão "Limpar"; o servidor recusa de novo em `limparGarcom` (`lib/voto.ts`),
+porque um POST pode chegar sem passar pelo formulário. Nome de 2 a 60
+caracteres, espaços colapsados; limites no cliente, no servidor e no banco.
+
+**Mora em `avaliacoes_garcom`, pela mesma regra das observações:** sem
+`avaliacao_id`, sem `cpf_hash`, sem `ip`, e `criada_em` é `date`. Com o CPF
+em claro na auditoria, guardar isto na linha da avaliação ligaria "quem votou"
+a "o que disse do garçom" numa tela só — e o nome é **de terceiro**, que o
+dono da casa vai ler. A gravação acontece depois de o voto passar, e falha
+nela não derruba o voto (mesmo raciocínio da observação). SQL em
+`db/2026-09-15-avaliacao-do-garcom.sql`; sem policy, só `service_role` lê.
+
+**A aba Garçons do painel mostra agregados, não notas uma a uma.** Grade por
+casa, como Observações; ao clicar, a lista **por nome** com quantas notas e a
+média (0 a 5, uma decimal), ordenada por média e depois por volume. Grafias
+que diferem só em acento, caixa ou espaço são juntadas — "João", "joao" e
+"JOAO " são a mesma pessoa escrita por três clientes — e as demais aparecem
+como "também escrito"; "João" e "João Pedro" ficam separados, porque quem sabe
+se é a mesma pessoa é a casa. A sequência de notas não sai nem no CSV: em
+ordem de chegada ela reconstrói quem passou pela casa, mesmo sem hora.
+
+A conta está em `calcularGarcons` (`lib/painel.ts`), travada em
+`tests/garcom.test.ts` — incluindo que o item entregue ao painel não carrega
+CPF, IP, hora nem lista de notas. Conferido sabotando a média e a regra de
+"metade preenchida" e vendo os testes acusarem.
+
+**Nunca aparece em página pública.** Nem na página da casa, nem no pódio.
+
 ### A tela de edição da casa
 
 Botão **Editar** em cada linha da aba Casas, levando a `/painel/casas/[id]`.
@@ -604,10 +644,25 @@ coordenada conferida, e uma busca pelo nome e endereço. As doze casas têm
 coordenada e nenhuma tem `maps_url` — o campo existe para a casa cujo ponto no
 Google não bate com a coordenada, e vazio não muda nada.
 
-**Editar não aparece na hora no site público.** `/casas/[slug]` é ISR com
-`revalidate = 3600`: a alteração leva até uma hora para chegar à página. Não é
-defeito, mas é o que faz alguém salvar de novo achando que não gravou — o
-painel já mostra o valor novo, que é onde se confere.
+**Gravar no painel invalida as páginas de casa na hora.** `/casas/[slug]` é
+ISR com `revalidate = 3600`, e ISR é *stale-while-revalidate*: passado o prazo,
+a primeira visita ainda recebe a versão **velha** e só dispara a regeneração;
+quem vê a nova é a visita seguinte. Foi assim que as fotos dos pratos ficaram
+invisíveis por quase duas semanas em produção: o deploy de 2/9 foi construído
+quatro minutos antes da primeira foto subir, as doze páginas nasceram com
+placeholder, e com pouco tráfego cada pessoa que abria uma casa era a
+"primeira visita" — a home mostrava a foto (é dinâmica, lê `searchParams`) e a
+página da casa não. Conferido em produção pelo cabeçalho `X-Nextjs-Cache`:
+`STALE` com placeholder, depois `HIT` com a foto.
+
+Por isso `invalidarPaginasDeCasa` (`lib/revalidar.ts`) roda depois de toda
+gravação em `/api/painel/casa` e `/api/painel/desclassificar`. Ela invalida
+**todas** as casas, por **caminho literal**: todas porque a página de uma
+mostra as outras como sugestão, com foto e nome; literal porque a forma com
+padrão (`revalidatePath('/casas/[slug]', 'page')`) foi testada no build
+standalone e **não invalidou nada** — a página seguia `HIT` com o dado velho.
+Se for simplificar, refaça o teste antes de confiar: gravar um campo pelo
+painel e conferir que a primeira visita já sai `MISS` com o valor novo.
 
 ### O editor de horários é a peça com prazo
 

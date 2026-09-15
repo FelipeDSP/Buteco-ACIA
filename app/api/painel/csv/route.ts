@@ -1,7 +1,7 @@
 import { recusarSemSessao } from '@/lib/painel-auth'
 import { CRITERIOS_DA_APURACAO, apurar, auditar } from '@/lib/painel'
 import { formatarCpf } from '@/lib/cpf'
-import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL } from '@/data/edicao'
+import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,7 +60,7 @@ export async function GET() {
     `Regra;Art. 17 - nota final = soma das notas / numero de avaliacoes (0 a ${NOTA_MAXIMA_TOTAL})`,
     `Avaliacoes validas no festival;${votos}`,
     `Media de avaliacoes por estabelecimento;${numero(mediaDeAvaliacoes)}`,
-    `Piso minimo para concorrer (Art. 18, 10%);${numero(piso)}`,
+    `Piso minimo para concorrer (Art. 18, ${PISO_MINIMO_PERCENTUAL}%);${numero(piso)}`,
   ].map((l) => l.split(';').map(campo).join(';'))
 
   /**

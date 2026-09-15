@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { calcularApuracao } from '@/lib/painel'
+import { PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 
 /**
  * A matemática da apuração, travada contra o Regulamento Oficial.
@@ -11,7 +12,9 @@ import { calcularApuracao } from '@/lib/painel'
  * Artigos cobertos:
  *  - Art. 13º — 4 critérios de 0 a 5, total 20 pontos por avaliação
  *  - Art. 17º — nota final = soma das notas ÷ número de avaliações
- *  - Art. 18º — piso de elegibilidade = 10% da média por estabelecimento
+ *  - Art. 18º — piso de elegibilidade = PISO_MINIMO_PERCENTUAL da média por
+ *    estabelecimento (10% no regulamento publicado; 20% por decisão da ACIA
+ *    em 15/09/2026)
  *  - Art. 19º — desempate: sabor, criatividade, número de avaliações
  */
 
@@ -87,15 +90,25 @@ describe('Art. 13 e 17 — nota final de 0 a 20', () => {
 })
 
 describe('Art. 18 — piso mínimo de elegibilidade', () => {
-  it('reproduz o exemplo do regulamento: 4.000 avaliações, 20 casas, piso 20', () => {
+  it('o percentual é 20 — decisão da ACIA de 15/09/2026, acima dos 10% do PDF', () => {
+    /**
+     * O regulamento publicado diz 10%. A ACIA pediu 20% antes do festival.
+     * Este teste existe para que a próxima mudança seja feita sabendo disso:
+     * quem alterar a constante vai ver esta linha acusar, e o motivo junto.
+     */
+    expect(PISO_MINIMO_PERCENTUAL).toBe(20)
+  })
+
+  it('reproduz o exemplo do regulamento: 4.000 avaliações, 20 casas — piso 40 com os 20%', () => {
     // "se o festival receber 4.000 avaliações no total entre 20 estabelecimentos,
     //  a média é 200 por estabelecimento, e o piso mínimo será de 20 avaliações"
+    // — com os 10% do PDF. A conta é a mesma; com os 20% da ACIA o piso é 40.
     const casas = Array.from({ length: 20 }, (_, i) => casa(`c${i}`))
     const avaliacoes = casas.flatMap((c) => varias(c.id, [4, 4, 4, 4], 200))
 
     const { mediaDeAvaliacoes, piso } = calcularApuracao(casas, avaliacoes)
     expect(mediaDeAvaliacoes).toBe(200)
-    expect(piso).toBe(20)
+    expect(piso).toBe(40)
   })
 
   it('quem fica abaixo do piso sai do ranking e não ocupa posição', () => {
@@ -109,7 +122,7 @@ describe('Art. 18 — piso mínimo de elegibilidade', () => {
     const { linhas, piso } = calcularApuracao(casas, avaliacoes)
     const pouca = linhas.find((l) => l.slug === 'pouca')!
 
-    expect(piso).toBeCloseTo((3805 / 20) * 0.1, 5)
+    expect(piso).toBeCloseTo((3805 / 20) * (PISO_MINIMO_PERCENTUAL / 100), 5)
     // Nota 20, a melhor do festival — e mesmo assim fora do ranking.
     expect(pouca.mediaGeral).toBe(20)
     expect(pouca.elegivel).toBe(false)
@@ -214,10 +227,10 @@ describe('Art. 22 — desclassificação', () => {
     ]
 
     const { piso, votos, mediaDeAvaliacoes } = calcularApuracao(casas, avaliacoes)
-    // 900 votos legítimos em 9 casas = média 100, piso 10.
+    // 900 votos legítimos em 9 casas = média 100, piso 20 (20% da média).
     expect(votos).toBe(900)
     expect(mediaDeAvaliacoes).toBe(100)
-    expect(piso).toBe(10)
+    expect(piso).toBe(20)
   })
 })
 
@@ -238,7 +251,7 @@ describe('Art. 18 — o que vai para o resultado publicado', () => {
       }))
 
   it('quem não alcança o piso é gravado sem colocação', () => {
-    // 9 casas com 100 votos + 1 com 3: piso = 10% de (903/10) = 9,03.
+    // 9 casas com 100 votos + 1 com 3: piso = 20% de (903/10) = 18,06.
     const casas = [...Array.from({ length: 9 }, (_, i) => casa(`c${i}`)), casa('pouca', 'Casa Pouca')]
     const avaliacoes = [
       ...casas.slice(0, 9).flatMap((c) => varias(c.id, [4, 4, 4, 4], 100)),
@@ -249,7 +262,7 @@ describe('Art. 18 — o que vai para o resultado publicado', () => {
     const gravar = paraPublicar(linhas)
     const pouca = gravar.find((g) => g.casa === 'pouca')!
 
-    expect(piso).toBeCloseTo(9.03, 2)
+    expect(piso).toBeCloseTo(18.06, 2)
     expect(pouca.elegivel).toBe(false)
     // O ponto: sem colocação, e não em 10º lugar.
     expect(pouca.posicao).toBe(0)

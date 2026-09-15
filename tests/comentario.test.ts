@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { COMENTARIO_MAXIMO, limparComentario } from '@/lib/voto'
 import { calcularApuracao } from '@/lib/painel'
+import { PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 import { calcularAuditoria, calcularObservacoes, type Limiares } from '@/lib/painel'
 
 /**
@@ -62,7 +63,7 @@ describe('a observação não participa de cálculo', () => {
     // não tem como influenciar a conta, e isto trava essa garantia.
     const sem = calcularApuracao([casa('a')], [avaliacao('a', 4), avaliacao('a', 5)])
     expect(sem.linhas[0].mediaGeral).toBe(18)
-    expect(sem.piso).toBeCloseTo(0.2, 5)
+    expect(sem.piso).toBeCloseTo(2 * (PISO_MINIMO_PERCENTUAL / 100), 5) // média 2 por casa
   })
 })
 
