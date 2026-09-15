@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { recusarSemSessao } from '@/lib/painel-auth'
 import { slugDoNome } from '@/lib/painel'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { invalidarPaginasDeCasa } from '@/lib/revalidar'
 import { DIAS, type Faixa, type Horarios } from '@/lib/tipos'
 
 export const dynamic = 'force-dynamic'
@@ -171,12 +172,14 @@ export async function POST(pedido: NextRequest) {
       }
       return NextResponse.json({ erro: error.message }, { status: 500 })
     }
+    await invalidarPaginasDeCasa()
     return NextResponse.json({ ok: true, id: data.id, slug: data.slug })
   }
 
   linha.atualizada_em = new Date().toISOString()
   const { error } = await banco.from('casas').update(linha).eq('id', id as string)
   if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
+  await invalidarPaginasDeCasa()
   return NextResponse.json({ ok: true })
 }
 
@@ -199,5 +202,6 @@ export async function DELETE(pedido: NextRequest) {
     .eq('id', id)
 
   if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
+  await invalidarPaginasDeCasa()
   return NextResponse.json({ ok: true })
 }

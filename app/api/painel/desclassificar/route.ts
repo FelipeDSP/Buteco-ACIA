@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { recusarSemSessao } from '@/lib/painel-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { invalidarPaginasDeCasa } from '@/lib/revalidar'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,7 @@ export async function POST(pedido: NextRequest) {
       })
       .eq('id', id)
     if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
+    await invalidarPaginasDeCasa()
     return NextResponse.json({ ok: true })
   }
 
@@ -65,5 +67,6 @@ export async function POST(pedido: NextRequest) {
     .eq('id', id)
 
   if (error) return NextResponse.json({ erro: error.message }, { status: 500 })
+  await invalidarPaginasDeCasa()
   return NextResponse.json({ ok: true })
 }
