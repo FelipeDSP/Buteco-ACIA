@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cpfValido, formatarCpf, limparCpf } from '@/lib/cpf'
-import { COMENTARIO_MAXIMO } from '@/lib/voto'
+import { COMENTARIO_MAXIMO, GARCOM_NOME_MAXIMO } from '@/lib/voto'
 
 /**
  * Tela de voto. É a página mais vista do projeto e a que tem prazo real:
@@ -39,6 +39,8 @@ export default function FormularioVoto({
   const [notas, setNotas] = useState<Record<string, number>>({})
   const [cpf, setCpf] = useState('')
   const [comentario, setComentario] = useState('')
+  const [garcomNome, setGarcomNome] = useState('')
+  const [garcomNota, setGarcomNota] = useState<number | undefined>(undefined)
   const [aceite, setAceite] = useState(false)
   const [enviando, setEnviando] = useState(false)
   /**
@@ -54,7 +56,19 @@ export default function FormularioVoto({
   const cpfCompleto = digitos.length === 11
   const cpfOk = cpfCompleto && cpfValido(digitos)
   const faltamNotas = criterios.filter((c) => notas[c.chave] === undefined)
-  const podeEnviar = faltamNotas.length === 0 && cpfOk && aceite && !enviando
+  /**
+   * Quem atendeu: ou nome e nota, ou nada. Metade preenchida trava o envio
+   * com aviso, em vez de descartar em silêncio o que a pessoa escreveu.
+   */
+  const garcomNomeLimpo = garcomNome.trim()
+  const garcomMetade =
+    (garcomNomeLimpo !== '' && garcomNota === undefined) ||
+    (garcomNomeLimpo === '' && garcomNota !== undefined)
+  const garcom =
+    garcomNomeLimpo !== '' && garcomNota !== undefined
+      ? { nome: garcomNomeLimpo, nota: garcomNota }
+      : undefined
+  const podeEnviar = faltamNotas.length === 0 && !garcomMetade && cpfOk && aceite && !enviando
 
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault()
@@ -68,7 +82,15 @@ export default function FormularioVoto({
       const resposta = await fetch('/api/voto', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ slug, cpf: digitos, aceite, aceiteVersao, notas, comentario }),
+        body: JSON.stringify({
+          slug,
+          cpf: digitos,
+          aceite,
+          aceiteVersao,
+          notas,
+          comentario,
+          garcom,
+        }),
       })
       const corpo = await resposta.json().catch(() => ({}))
 
@@ -143,6 +165,85 @@ export default function FormularioVoto({
         )
       })}
 
+      <fieldset>
+        <legend className="font-display text-[17px] font-extrabold">
+          Quer avaliar quem te atendeu?{' '}
+          <span className="font-normal text-tinta-3">(opcional)</span>
+        </legend>
+        {/* Não é critério do regulamento e não entra na nota da casa: é
+            devolutiva para o estabelecimento. Vai para tabela própria, sem
+            CPF, sem IP e sem hora — ver `lib/painel.ts`. */}
+        <p className="mt-1 mb-3 text-[14px] text-tinta-3">
+          Não entra na nota da casa. O nome e a nota chegam ao estabelecimento à parte, sem o
+          seu CPF e sem horário.
+        </p>
+
+        <label htmlFor="garcom-nome" className="mb-1 block text-[14px] font-semibold">
+          Nome do garçom ou garçonete
+        </label>
+        <input
+          id="garcom-nome"
+          name="garcom_nome"
+          type="text"
+          autoComplete="off"
+          maxLength={GARCOM_NOME_MAXIMO}
+          value={garcomNome}
+          onChange={(e) => setGarcomNome(e.target.value.slice(0, GARCOM_NOME_MAXIMO))}
+          placeholder="Como está no crachá, ou como se apresentou"
+          aria-describedby="garcom-aviso"
+          /* 16px é piso: abaixo disso o Safari do iOS dá zoom ao focar. */
+          className="w-full rounded-xl bg-claro px-4 py-3 text-[16px] text-tinta"
+        />
+
+        <p className="mt-3 mb-2 text-[14px] font-semibold">Nota para o atendimento dessa pessoa</p>
+        <div className="grid grid-cols-6 gap-1.5" role="radiogroup" aria-label="Nota para quem te atendeu">
+          {NOTAS.map((nota) => {
+            const marcada = garcomNota === nota
+            return (
+              <label
+                key={nota}
+                className={`flex h-14 cursor-pointer items-center justify-center rounded-xl font-display text-[19px] font-extrabold transition-colors ${
+                  marcada ? 'bg-marinho text-branco' : 'bg-claro text-tinta-3 hover:bg-creme'
+                } ${tentou && garcomMetade && garcomNota === undefined ? 'ring-2 ring-ambar-e' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="garcom_nota"
+                  value={nota}
+                  checked={marcada}
+                  onChange={() => setGarcomNota(nota)}
+                  className="sr-only"
+                />
+                <span aria-hidden="true">{nota}</span>
+                <span className="sr-only">nota {nota} para quem te atendeu</span>
+              </label>
+            )
+          })}
+        </div>
+
+        <p id="garcom-aviso" className="mt-2 flex min-h-5 flex-wrap items-center gap-x-3 text-[13.5px]">
+          {garcomMetade ? (
+            <span className="font-semibold text-ambar-e">
+              {garcomNota === undefined
+                ? 'Dê a nota, ou apague o nome para pular esta parte.'
+                : 'Escreva o nome, ou limpe a nota para pular esta parte.'}
+            </span>
+          ) : null}
+          {garcomNota !== undefined || garcomNomeLimpo !== '' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setGarcomNome('')
+                setGarcomNota(undefined)
+              }}
+              className="inline-block py-1 font-semibold text-marinho underline underline-offset-2"
+            >
+              Limpar
+            </button>
+          ) : null}
+        </p>
+      </fieldset>
+
       <div>
         <label htmlFor="comentario" className="mb-1 block font-display text-[17px] font-extrabold">
           Quer deixar uma observação? <span className="font-normal text-tinta-3">(opcional)</span>
@@ -216,18 +317,19 @@ export default function FormularioVoto({
             className="mt-0.5 size-5 shrink-0 accent-[var(--color-marinho)]"
           />
           {/*
-            Texto de aceite vigente desde 27/08/2026, quando a ACIA decidiu
-            passar a armazenar o CPF. Ele precisa dizer as duas coisas que
-            mudaram — que o número fica registrado, e que a organização o
-            acessa — porque `ACEITE_VERSAO` só distingue as versões se elas de
-            fato disserem coisas diferentes. Mexer aqui exige subir a versão em
+            Texto de aceite vigente desde 15/09/2026, quando entrou a
+            avaliação do garçom; o anterior, de 27/08/2026, foi o que passou a
+            dizer que o CPF fica armazenado e acessível à organização.
+            `ACEITE_VERSAO` só distingue as versões se elas de fato disserem
+            coisas diferentes. Mexer aqui exige subir a versão em
             `lib/voto.ts`.
           */}
           <span>
             Concordo em informar meu CPF. Ele <b className="text-tinta">fica registrado</b> junto
             da minha avaliação e é acessível à organização do festival para conferência e
             auditoria. Serve para impedir que a mesma pessoa vote duas vezes na mesma casa. Minha
-            observação, se eu escrever uma, é guardada separada e não fica ligada ao meu CPF.
+            observação e a avaliação de quem me atendeu, se eu preencher, são guardadas separadas e
+            não ficam ligadas ao meu CPF.
           </span>
         </label>
       </div>
@@ -236,7 +338,9 @@ export default function FormularioVoto({
         <p aria-live="polite" className="text-[14.5px] font-semibold text-ambar-e">
           {faltamNotas.length > 0
             ? `Falta dar nota em: ${faltamNotas.map((c) => c.nome).join(', ')}.`
-            : !cpfOk
+            : garcomMetade
+              ? 'Complete a avaliação de quem te atendeu, ou limpe essa parte.'
+              : !cpfOk
               ? 'Preencha um CPF válido.'
               : 'Marque o aceite para enviar.'}
         </p>

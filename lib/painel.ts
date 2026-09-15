@@ -48,7 +48,7 @@ export type Apuracao = {
   votos: number
   /** Média de avaliações por casa — base do piso mínimo. */
   mediaDeAvaliacoes: number
-  /** Mínimo de avaliações para concorrer: 10% da média do festival. */
+  /** Mínimo de avaliações para concorrer: `PISO_MINIMO_PERCENTUAL` da média do festival. */
   piso: number
 }
 
@@ -151,8 +151,10 @@ export function calcularApuracao(
     casas.length
 
   /**
-   * Piso mínimo de elegibilidade do regulamento: a casa precisa alcançar 10%
-   * da média de avaliações do festival para concorrer.
+   * Piso mínimo de elegibilidade (Art. 18): a casa precisa alcançar
+   * `PISO_MINIMO_PERCENTUAL` da média de avaliações do festival para
+   * concorrer. O percentual mora em `data/edicao.ts` — foi 10% e a ACIA
+   * subiu para 20% em 15/09/2026.
    *
    * Existe para impedir que uma casa com três votos altos passe na frente de
    * quem recebeu duzentos. Sem ele, quanto MENOS avaliações a casa tiver, mais
@@ -583,6 +585,128 @@ export async function lerObservacoes(): Promise<ObservacoesDaCasa[]> {
      */
     (c) => c.ativa || c.total > 0,
   )
+}
+
+/**
+ * Avaliação de quem atendeu — a tabela `avaliacoes_garcom`.
+ *
+ * Mesma família das observações: tabela própria, sem `avaliacao_id`, sem
+ * `cpf_hash`, sem `ip`, data sem hora. E **fora da apuração**: não é critério
+ * do regulamento. O que a casa recebe é, por nome, quantas notas e qual a
+ * média — não a lista de notas, que em ordem de chegada reconstruiria a
+ * sequência de quem passou pela casa.
+ */
+
+type AvaliacaoDeGarcomBruta = {
+  id: string
+  casa_id: string
+  nome: string
+  nota: number
+  /** Data, sem hora: `AAAA-MM-DD`. */
+  criada_em: string
+}
+
+export type Garcom = {
+  /** A grafia mais usada entre as que o agrupamento juntou. */
+  nome: string
+  /** Outras grafias que caíram no mesmo nome, para a casa conferir. */
+  grafias: string[]
+  avaliacoes: number
+  /** Média das notas, de 0 a 5, com uma casa decimal. */
+  media: number
+}
+
+export type GarconsDaCasa = {
+  id: string
+  slug: string
+  nome: string
+  prato: string
+  foto: string | null
+  ativa: boolean
+  /** Quantas avaliações de atendimento a casa recebeu. */
+  total: number
+  garcons: Garcom[]
+}
+
+/**
+ * Agrupa por casa e, dentro dela, por nome — comparado sem acento, sem caixa
+ * e sem espaço sobrando, porque "João", "joao" e "JOAO " são a mesma pessoa
+ * escrita por três clientes. A grafia exibida é a mais frequente; as demais
+ * ficam listadas para a casa saber que foram juntadas.
+ *
+ * Dentro da casa a lista sai por média e depois por volume — é o que o dono
+ * quer ver. Não é ranking de festival: nada disto aparece em página pública.
+ */
+export function calcularGarcons(
+  casas: CasaDaObservacao[],
+  avaliacoes: AvaliacaoDeGarcomBruta[],
+): GarconsDaCasa[] {
+  return casas
+    .map((casa) => {
+      const daCasa = avaliacoes.filter((a) => a.casa_id === casa.id)
+
+      const grupos = new Map<string, { grafias: Map<string, number>; notas: number[] }>()
+      for (const a of daCasa) {
+        const chave = normalizar(a.nome)
+        const grupo = grupos.get(chave) ?? { grafias: new Map<string, number>(), notas: [] as number[] }
+        grupo.grafias.set(a.nome, (grupo.grafias.get(a.nome) ?? 0) + 1)
+        grupo.notas.push(a.nota)
+        grupos.set(chave, grupo)
+      }
+
+      const garcons: Garcom[] = [...grupos.values()].map(({ grafias, notas }) => {
+        const ordenadas = [...grafias.entries()].sort(
+          (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'),
+        )
+        const soma = notas.reduce((total, n) => total + n, 0)
+        return {
+          nome: ordenadas[0][0],
+          grafias: ordenadas.slice(1).map(([grafia]) => grafia),
+          avaliacoes: notas.length,
+          media: Math.round((soma / notas.length) * 10) / 10,
+        }
+      })
+
+      garcons.sort(
+        (a, b) =>
+          b.media - a.media ||
+          b.avaliacoes - a.avaliacoes ||
+          a.nome.localeCompare(b.nome, 'pt-BR'),
+      )
+
+      return {
+        id: casa.id,
+        slug: casa.slug,
+        nome: casa.nome,
+        prato: casa.prato_confirmado && casa.prato ? casa.prato : 'Prato a confirmar',
+        foto: casa.foto_url,
+        ativa: casa.ativa,
+        total: daCasa.length,
+        garcons,
+      }
+    })
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'))
+}
+
+export async function lerGarcons(): Promise<GarconsDaCasa[]> {
+  const banco = supabaseAdmin()
+  const [casas, avaliacoes] = await Promise.all([
+    banco
+      .from('casas')
+      .select('id, slug, nome, prato, prato_confirmado, foto_url, ativa')
+      .order('nome'),
+    banco.from('avaliacoes_garcom').select('id, casa_id, nome, nota, criada_em'),
+  ])
+
+  if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
+  if (avaliacoes.error) {
+    throw new Error(`Falha ao ler avaliações de garçom: ${avaliacoes.error.message}`)
+  }
+
+  return calcularGarcons(
+    (casas.data ?? []) as CasaDaObservacao[],
+    (avaliacoes.data ?? []) as AvaliacaoDeGarcomBruta[],
+  ).filter((c) => c.ativa || c.total > 0)
 }
 
 export type CasaDoPainel = {

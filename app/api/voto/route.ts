@@ -11,6 +11,7 @@ import {
   COMENTARIO_MAXIMO,
   colunasDasNotas,
   limparComentario,
+  limparGarcom,
   validarNotas,
 } from '@/lib/voto'
 
@@ -24,8 +25,9 @@ import {
  * passou para o número em claro. O texto de aceite da tela de voto diz isso, e
  * `ACEITE_VERSAO` subiu para separar quem votou sob o texto novo.
  *
- * A observação vai para `observacoes`, tabela própria, sem nada que a ligue a
- * esta avaliação — ver o comentário do passo 5.
+ * A observação vai para `observacoes` e a avaliação do garçom para
+ * `avaliacoes_garcom`, tabelas próprias, sem nada que as ligue a esta
+ * avaliação — ver o comentário do passo 5.
  */
 
 export const dynamic = 'force-dynamic'
@@ -40,12 +42,13 @@ export async function POST(pedido: NextRequest) {
     return recusa('Pedido malformado.')
   }
 
-  const { slug, cpf, aceite, notas, comentario } = (corpo ?? {}) as {
+  const { slug, cpf, aceite, notas, comentario, garcom } = (corpo ?? {}) as {
     slug?: string
     cpf?: string
     aceite?: boolean
     notas?: unknown
     comentario?: unknown
+    garcom?: unknown
   }
 
   /**
@@ -81,6 +84,10 @@ export async function POST(pedido: NextRequest) {
   if (!observacao.ok) {
     return recusa(`A observação passa de ${COMENTARIO_MAXIMO} caracteres.`)
   }
+
+  // Idem para quem atendeu: ou nome e nota, ou nada. Fora do regulamento.
+  const atendimento = limparGarcom(garcom)
+  if (!atendimento.ok) return recusa(atendimento.erro)
 
   // 3. O hash continua sendo calculado: é ele que barra o voto repetido.
   let cpfHash: string
@@ -168,6 +175,22 @@ export async function POST(pedido: NextRequest) {
 
     if (erroDaObservacao) {
       console.error('[voto] observação não gravada:', erroDaObservacao.message)
+    }
+  }
+
+  /**
+   *    A avaliação de quem atendeu segue a mesma regra, pelo mesmo motivo — e
+   *    com um agravante: o nome é de terceiro, e vai ser lido pelo dono da
+   *    casa. Na linha da avaliação, ao lado do CPF, seria "fulano disse isto
+   *    do garçom tal" numa tela só.
+   */
+  if (atendimento.garcom) {
+    const { error: erroDoGarcom } = await banco
+      .from('avaliacoes_garcom')
+      .insert({ casa_id: casa.id, ...atendimento.garcom })
+
+    if (erroDoGarcom) {
+      console.error('[voto] avaliação do garçom não gravada:', erroDoGarcom.message)
     }
   }
 

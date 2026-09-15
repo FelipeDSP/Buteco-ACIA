@@ -4,12 +4,13 @@ import { CRITERIOS } from '@/data/edicao'
  * Versão do texto de aceite. Fica gravada em cada avaliação para que, se o
  * texto mudar, ainda se saiba exatamente o que cada pessoa aceitou.
  *
- * Subiu para 27/08/2026 quando a ACIA decidiu gravar o CPF em claro. **Não
- * baixar nem reaproveitar a versão anterior:** quem votou sob `2026-09-01`
+ * Subiu para 27/08/2026 quando a ACIA decidiu gravar o CPF em claro, e para
+ * 15/09/2026 quando o texto passou a citar a avaliação do garçom. **Não
+ * baixar nem reaproveitar uma versão anterior:** quem votou sob `2026-09-01`
  * aceitou um texto que dizia que o CPF não era guardado, e essa diferença
  * precisa continuar legível na tabela depois do festival.
  */
-export const ACEITE_VERSAO = '2026-08-27'
+export const ACEITE_VERSAO = '2026-09-15'
 
 export const NOTA_MINIMA = 0
 export const NOTA_MAXIMA = 5
@@ -71,4 +72,43 @@ export function limparComentario(bruto: unknown): { ok: true; texto: string | nu
   if (texto === '') return { ok: true, texto: null }
   if (texto.length > COMENTARIO_MAXIMO) return { ok: false }
   return { ok: true, texto }
+}
+
+/** Limite do nome de quem atendeu. Vale no cliente, no servidor e no banco. */
+export const GARCOM_NOME_MAXIMO = 60
+
+export type Garcom = { nome: string; nota: number }
+
+/**
+ * Avaliação de quem atendeu — opcional, e **fora do regulamento**: não é
+ * critério, não entra em média, desempate nem piso. É devolutiva para a casa,
+ * como a observação, e vai para tabela própria sem ligação com o voto.
+ *
+ * Ou vem inteira (nome e nota) ou não vem. Nota sem nome não serve à casa —
+ * ela não sabe de quem é — e nome sem nota não diz nada. O cliente já
+ * bloqueia a metade solta; aqui é recusada de novo porque um POST pode chegar
+ * sem passar pelo formulário.
+ */
+export function limparGarcom(
+  bruto: unknown,
+): { ok: true; garcom: Garcom | null } | { ok: false; erro: string } {
+  if (bruto === undefined || bruto === null) return { ok: true, garcom: null }
+  if (typeof bruto !== 'object') return { ok: false, erro: 'Avaliação do atendimento malformada.' }
+
+  const { nome: nomeBruto, nota } = bruto as { nome?: unknown; nota?: unknown }
+  const nome = typeof nomeBruto === 'string' ? nomeBruto.replace(/\s+/g, ' ').trim() : ''
+  const temNota = nota !== undefined && nota !== null
+
+  if (nome === '' && !temNota) return { ok: true, garcom: null }
+  if (nome === '') return { ok: false, erro: 'Escreva o nome de quem te atendeu, ou tire a nota.' }
+  if (!temNota) return { ok: false, erro: 'Dê uma nota de 0 a 5 para quem te atendeu, ou apague o nome.' }
+
+  if (nome.length < 2 || nome.length > GARCOM_NOME_MAXIMO) {
+    return { ok: false, erro: `O nome de quem te atendeu precisa ter de 2 a ${GARCOM_NOME_MAXIMO} letras.` }
+  }
+  if (typeof nota !== 'number' || !Number.isInteger(nota) || nota < NOTA_MINIMA || nota > NOTA_MAXIMA) {
+    return { ok: false, erro: 'A nota para quem te atendeu vai de 0 a 5.' }
+  }
+
+  return { ok: true, garcom: { nome, nota } }
 }

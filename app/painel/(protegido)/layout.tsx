@@ -31,6 +31,7 @@ const ABAS = [
   { href: '/painel', rotulo: 'Apuração' },
   { href: '/painel/auditoria', rotulo: 'Auditoria' },
   { href: '/painel/observacoes', rotulo: 'Observações' },
+  { href: '/painel/garcons', rotulo: 'Garçons' },
   { href: '/painel/casas', rotulo: 'Casas' },
 ]
 
