@@ -104,13 +104,16 @@ export default async function Apuracao() {
           detalhe={anuladas > 0 ? `${anuladas} anulada(s) fora da conta` : undefined}
         />
         <Numero
-          valor={piso === 0 ? '—' : decimal(piso)}
+          valor={piso === 0 ? '—' : `${Math.ceil(piso)} avaliações`}
           rotulo="Piso para concorrer"
           tom={foraDoPiso.length > 0 ? 'alerta' : 'neutro'}
+          /* É contagem de votos, não nota: ao lado de notas de 0 a 20, um "3,8"
+             seco já foi lido como nota mínima. O inteiro é o que a casa
+             precisa de fato; a conta fica no detalhe. */
           detalhe={
             piso === 0
               ? 'sem votos ainda'
-              : `${PISO_MINIMO_PERCENTUAL}% de ${decimal(mediaDeAvaliacoes)} por casa`
+              : `${PISO_MINIMO_PERCENTUAL}% da média de ${decimal(mediaDeAvaliacoes)} avaliações por casa (${decimal(piso)})`
           }
         />
       </Numeros>
