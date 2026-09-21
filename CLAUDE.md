@@ -1,6 +1,6 @@
 # Boteco ACIA — site oficial
 
-Festival gastronômico competitivo em Ariquemes/RO, 1ª edição, 2026. Realização: ACIA — Associação Comercial e Industrial de Ariquemes. **Realização: ACIA e CDL Ariquemes**, as duas com marca no ar. Doze patrocinadores, mais Motopam, que apoia mas ainda não enviou a arte.
+Festival gastronômico competitivo em Ariquemes/RO, 1ª edição, 2026. Realização: ACIA — Associação Comercial e Industrial de Ariquemes. **Realização: ACIA e CDL Ariquemes**, as duas com marca no ar. Treze patrocinadores (o Sebrae entrou em 21/09/2026, com a arte pega do site institucional dele), mais Motopam, que apoia mas ainda não enviou a arte.
 
 As casas servem um prato em seus próprios espaços; o público avalia via QR Code. **Só voto popular — não há júri.** As inscrições estão encerradas.
 

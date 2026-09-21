@@ -75,6 +75,7 @@ const NOMES: Record<string, string> = {
   protseg: 'Protseg',
   'prover-engenharia': 'Prover Engenharia',
   rondotintas: 'Rondotintas',
+  sebrae: 'Sebrae',
 }
 
 function nomeDaMarca(base: string): string {
