@@ -31,12 +31,16 @@ export default async function Vencedores() {
   const mostrar = podioVisivel(publicado)
   const estado = contagem()
 
-  // Três faixas distintas, e a diferença entre as duas últimas importa:
-  // "4º colocado" e "não concorreu" não são a mesma coisa.
+  /**
+   * Só as classificadas. As que ficaram abaixo do piso do Art. 18 continuam
+   * no retrato (`elegivel = false`) e no painel, mas **não aparecem aqui** —
+   * decisão da ACIA em 19/09/2026: a página é dos vencedores, e listar quem
+   * não alcançou o mínimo, ainda que sem número, expõe a casa sem servir a
+   * quem lê. O retrato guarda a distinção; a página só não a publica.
+   */
   const classificadas = publicado.filter((l) => l.elegivel)
   const podio = classificadas.filter((l) => l.posicao <= 3)
   const demais = classificadas.filter((l) => l.posicao > 3)
-  const foraDoRanking = publicado.filter((l) => !l.elegivel)
 
   return (
     <>
@@ -116,38 +120,6 @@ export default async function Vencedores() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              ) : null}
-
-              {foraDoRanking.length > 0 ? (
-                <div className="mt-12">
-                  <h2 className="display text-[clamp(20px,2.4vw,26px)]">
-                    Casas participantes fora do ranking
-                  </h2>
-                  {/* Sem número de colocação, de propósito: elas não ficaram em
-                      último — não entraram na disputa por colocação. */}
-                  <p className="mt-2 max-w-[68ch] text-[14.5px] text-tinta-3">
-                    Estas casas serviram o prato durante todo o festival, mas não alcançaram o
-                    mínimo de avaliações que o regulamento exige para concorrer à colocação
-                    (Art. 18). Recebem, como todas as participantes, prato personalizado de
-                    parede e certificado.
-                  </p>
-
-                  <ul className="mt-5 grid gap-3 duas:grid-cols-2 larga:grid-cols-3">
-                    {foraDoRanking.map((lugar) => (
-                      <li key={lugar.casa.slug} className="rounded-2xl bg-creme p-5">
-                        <Link
-                          href={`/casas/${lugar.casa.slug}`}
-                          className="font-display text-[16px] font-extrabold hover:underline"
-                        >
-                          {lugar.casa.nome}
-                        </Link>
-                        {lugar.casa.pratoConfirmado && lugar.casa.prato ? (
-                          <p className="mt-1 text-[14px] text-tinta-3">{lugar.casa.prato}</p>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               ) : null}
             </>
