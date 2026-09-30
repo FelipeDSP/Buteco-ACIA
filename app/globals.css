@@ -196,7 +196,10 @@
   top: 0;
   display: block;
   animation-name: cai;
-  animation-timing-function: cubic-bezier(0.33, 0.1, 0.5, 1);
+  /* Linear, não `ease`. Aceleração no meio da queda lê como flutuar e só
+     depois cair — e papel não faz isso: passa da aceleração para velocidade
+     terminal em fração de segundo, e daí desce parelho. */
+  animation-timing-function: linear;
   animation-fill-mode: forwards;
   animation-iteration-count: 1;
 }
@@ -205,9 +208,11 @@
 }
 
 @keyframes cai {
+  /* A peça já entra em movimento: aparecer parada e só então descer era a
+     outra metade do "flutua e depois cai". */
   from { transform: translate3d(0, -12vh, 0) rotate(0deg); opacity: 0; }
-  10%  { opacity: 1; }
-  85%  { opacity: 1; }
+  4%   { opacity: 1; }
+  88%  { opacity: 1; }
   to   { transform: translate3d(var(--deriva), 104vh, 0) rotate(var(--giro)); opacity: 0; }
 }
 

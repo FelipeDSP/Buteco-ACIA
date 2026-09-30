@@ -309,6 +309,7 @@ Confete genérico não cabia, e o motivo é a paleta, não o gosto: ela é fecha
 - **Cai atrás dos cartões**, não por cima — a comemoração não pode atrapalhar a leitura de quem ganhou.
 - **Posições com semente fixa**, não `Math.random()`: é componente de servidor, e sorteio de verdade daria divergência de hidratação.
 - **Nada de `will-change`**: criaria 26 camadas vivas na memória depois de a chuva acabar, e `transform` já compõe sozinho.
+- **Queda linear, não `ease`.** Aceleração no meio do percurso lê como "flutua e depois cai" — papel passa da aceleração para velocidade terminal em fração de segundo e daí desce parelho. A peça também já entra em movimento, com a aparição em 4% em vez de 10%: surgir parada e só então descer era a outra metade do mesmo defeito.
 - **Peça abaixo de ~22px não se reconhece** — tampinha vira bolinha, limão vira disco. É a forma ser reconhecível que justifica esta chuva existir em vez de confete comum.
 
 **Guarda o ranking inteiro, não só as três primeiras** — mesmo a página publicando só o pódio. Se as posições 4+ fossem calculadas ao vivo, o retrato teria topo congelado e cauda móvel: anular um voto depois da premiação mexeria na 4ª e não na 3ª. E a ACIA precisa do ranking completo para o certificado de cada casa e para responder a quem perguntar a própria colocação. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
