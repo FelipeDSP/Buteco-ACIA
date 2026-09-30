@@ -49,18 +49,24 @@ export type LugarDoPodio = {
  * alinhados pela base (`items-end`), margem no topo não empurra nada para
  * baixo. Foto mais alta no 1º, mais baixa no 3º, e o degrau aparece sozinho.
  */
-const ARRANJO: Record<number, { ordem: string; foto: string; atraso: number }> = {
-  1: { ordem: 'media:order-2', foto: 'media:aspect-4/3', atraso: 320 },
-  2: { ordem: 'media:order-1', foto: 'media:aspect-3/2', atraso: 160 },
-  3: { ordem: 'media:order-3', foto: 'media:aspect-16/9', atraso: 0 },
+const ARRANJO: Record<number, { ordem: string; atraso: number }> = {
+  1: { ordem: 'media:order-2', atraso: 320 },
+  2: { ordem: 'media:order-1', atraso: 160 },
+  3: { ordem: 'media:order-3', atraso: 0 },
 }
 
 /**
  * Altura do degrau sob cada cartão, em pixels. Só entra na largura em que os
  * três ficam lado a lado — empilhado no celular, plataforma de alturas
  * diferentes não significaria nada.
+ *
+ * Com `items-end`, a base dos três é a mesma linha: degrau mais alto empurra o
+ * cartão para cima. Daí o campeão subir.
  */
-const ALTURA_DO_DEGRAU: Record<number, number> = { 1: 54, 2: 32, 3: 16 }
+const ALTURA_DO_DEGRAU: Record<number, number> = { 1: 72, 2: 44, 3: 20 }
+
+/** Espessura da face superior do bloco, em pixels. */
+const FACE = 6
 
 export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
   /**
@@ -111,7 +117,10 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
             >
             {/* No celular todas as fotos têm o mesmo formato; o degrau só faz
                 sentido quando os três estão lado a lado. */}
-            <div className={`relative aspect-4/3 bg-marinho-2 ${arranjo.foto}`}>
+            {/* Mesma proporção nos três. A variação de formato já foi o que
+                sugeria o pódio, e ficava desigual demais — o 1º alto demais, o
+                3º achatado. Agora quem faz o degrau é o degrau. */}
+            <div className="relative aspect-4/3 bg-marinho-2">
               {lugar.casa.fotoUrl ? (
                 <Image
                   src={lugar.casa.fotoUrl}
@@ -190,10 +199,15 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
             {/* O degrau. `mt-auto` prende na base porque os cartões têm alturas
                 diferentes; `hidden media:block` porque empilhado ele não
                 significaria nada. */}
+            {/* O bloco do pódio. A face superior clara é o que o faz ler
+                como plataforma: só escurecer virava sombra do cartão. */}
             <div
-              style={{ height: ALTURA_DO_DEGRAU[lugar.posicao] ?? 16 }}
-              className={`mt-auto hidden rounded-b-xl border-t-[3px] bg-marinho-2 media:block ${
-                primeiro ? 'border-ouro/70' : 'border-ouro/30'
+              style={{
+                height: ALTURA_DO_DEGRAU[lugar.posicao] ?? 20,
+                background: `linear-gradient(to bottom, var(--color-acia) 0 ${FACE}px, var(--color-marinho-2) ${FACE}px)`,
+              }}
+              className={`mt-auto hidden rounded-b-xl media:block ${
+                primeiro ? 'ring-1 ring-ouro/40' : ''
               }`}
               aria-hidden="true"
             />

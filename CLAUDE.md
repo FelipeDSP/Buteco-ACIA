@@ -200,7 +200,9 @@ Elementos derivados do brasão do evento, em SVG, vazando pelas bordas das seç�
 
 **Estrelas são proibidas** em qualquer forma ou número de pontas — decisão da ACIA por risco de leitura política.
 
-**A coroa de louros de `/vencedores` sai da espiga, não de um desenho novo.** `Louros` (`components/Ornamentos.tsx`) é o mesmo grão de cevada do brasão, curvado em dois ramos — um desenhado e o outro espelhado, para a simetria não depender de dois conjuntos de coordenadas combinarem na mão. É a metáfora da vitória sem recorrer à estrela, que está proibida.
+**A coroa de louros de `/vencedores` sai da espiga, não de um desenho novo.** `Louros` (`components/Ornamentos.tsx`) nasce do mesmo grão de cevada do brasão, em dois ramos — um desenhado e o outro espelhado, para a simetria não depender de dois conjuntos de coordenadas combinarem na mão. É a metáfora da vitória sem recorrer à estrela, que está proibida.
+
+A folha é um **losango de pontas curvas com nervura**, não uma elipse: com elipse cada folha lia como bolha e a coroa inteira parecia rascunho. São oito por ramo, girando com a tangente do caule e afunilando 42% da base para a ponta — é o afunilar que faz parecer crescida em vez de carimbada. O laço na base fecha a coroa; sem ele ficam dois galhos soltos.
 
 Diferente das outras três peças, `Louros` **não leva `.deco`**: ele emoldura o campeão e precisa aparecer no celular, que é onde a maioria vê o resultado. E o vão útil dentro da coroa é definido pelos **grãos**, não pelo caule — cerca de 58% da largura na altura do texto. Mexer no tamanho da fonte ou da coroa sem refazer essa conta faz a palavra bater nos ramos.
 
@@ -292,7 +294,9 @@ O motivo é o mesmo nas duas: a página existe para anunciar quem ganhou. Public
 
 **O pódio vive sobre bloco marinho, e isso é funcional.** A regra da paleta é "ouro só sobre marinho", e sobre o creme das outras seções o âmbar e o ouro não brilhavam. O palco escuro é o que permite a coroa de louros dourada, o filete de ouro no cartão do campeão e o degrau — e é o único ponto do site em que o ouro aparece como ornamento, não como filete. A `CapaInterna` entra `compacta`, que existe justamente para quando o bloco seguinte também é escuro.
 
-O degrau do pódio é **desenhado** (`ALTURA_DO_DEGRAU`), não sugerido pela proporção da foto: antes vinha só daí e quase não se lia. Some abaixo de 980px — empilhado, plataforma de alturas diferentes não significaria nada. Nada de confete nem brilho animado: solene, não lúdico.
+O degrau do pódio é **desenhado** (`ALTURA_DO_DEGRAU`), não sugerido pela proporção da foto. E o que o faz ler como plataforma é a **face superior clara** (`FACE`, em `--acia`): só escurecer o bloco virava sombra do cartão, não degrau. Com `items-end` a base dos três é a mesma linha, então degrau mais alto empurra o cartão para cima — é daí que o campeão sobe. Some abaixo de 980px, onde empilhado não significaria nada.
+
+**As três fotos têm a mesma proporção.** Variar o formato por colocação já foi a forma de sugerir o degrau, e saía desigual: o 1º alto demais, o 3º achatado. Quem faz o pódio agora é o pódio. Nada de confete nem brilho animado: solene, não lúdico.
 
 **Guarda o ranking inteiro, não só as três primeiras** — mesmo a página publicando só o pódio. Se as posições 4+ fossem calculadas ao vivo, o retrato teria topo congelado e cauda móvel: anular um voto depois da premiação mexeria na 4ª e não na 3ª. E a ACIA precisa do ranking completo para o certificado de cada casa e para responder a quem perguntar a própria colocação. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
 

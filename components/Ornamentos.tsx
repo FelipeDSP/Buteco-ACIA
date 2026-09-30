@@ -114,43 +114,74 @@ export function Limao({ style, className = '', miolo = 'var(--color-creme)' }: D
 }
 
 /**
- * Coroa de louros, feita com a espiga de cevada do brasão.
+ * Coroa de louros, feita com o grão de cevada do brasão.
  *
- * É a metáfora clássica da vitória, e aqui ela sai do próprio repertório da
- * marca em vez de virar enfeite novo — a cevada já está no brasão do evento.
- * **Não é estrela**, que a ACIA proibiu em qualquer forma.
+ * É a metáfora clássica da vitória, e sai do próprio repertório da marca em
+ * vez de virar enfeite novo — a cevada já está no brasão do evento. **Não é
+ * estrela**, que a ACIA proibiu em qualquer forma.
+ *
+ * A folha é um losango de pontas curvas com nervura, não uma elipse: elipse
+ * lia como bolha e a coroa inteira parecia rascunho. Oito por ramo, girando
+ * com a tangente do caule e afunilando 42% da base para a ponta — é o afunilar
+ * que faz parecer crescida em vez de carimbada.
  *
  * Um ramo só é desenhado; o outro é o mesmo espelhado, para a simetria não
- * depender de dois conjuntos de coordenadas ficarem combinando na mão.
+ * depender de dois conjuntos de coordenadas combinarem na mão. O laço na base
+ * fecha a coroa, que sem ele fica com cara de dois galhos soltos.
  *
  * Diferente das outras peças deste arquivo, não leva `.deco`: os louros
  * emolduram o campeão e precisam aparecer também no celular, que é onde a
  * maioria vai ver o resultado.
  */
+const FOLHA =
+  'M0 0 C7 -6.5, 20 -9, 33 0 C20 9, 7 6.5, 0 0 Z'
+
 export function Louros({ className = '' }: { className?: string }) {
   const ramo = (
     <>
       <path
-        d="M120 194 C74 188, 34 142, 32 40"
+        d="M120 200 C66 196, 26 146, 30 34"
         stroke="currentColor"
-        strokeWidth="6"
+        strokeWidth="5"
         strokeLinecap="round"
         fill="none"
+        opacity="0.75"
       />
       <g fill="currentColor">
-        <ellipse cx="93" cy="174" rx="21" ry="9" transform="rotate(-102 93 174)" />
-        <ellipse cx="76" cy="158" rx="21" ry="9" transform="rotate(-84 76 158)" />
-        <ellipse cx="61" cy="135" rx="21" ry="9" transform="rotate(-67 61 135)" />
-        <ellipse cx="50" cy="102" rx="21" ry="9" transform="rotate(-54 50 102)" />
-        <ellipse cx="44" cy="65" rx="21" ry="9" transform="rotate(-45 44 65)" />
+        <path d={FOLHA} transform="translate(104.3 197.4) rotate(-119.3)" />
+        <path d={FOLHA} transform="translate(86.7 190.5) rotate(-105.7) scale(0.94)" />
+        <path d={FOLHA} transform="translate(71 179.3) rotate(-91.8) scale(0.88)" />
+        <path d={FOLHA} transform="translate(57.3 163.7) rotate(-79) scale(0.82)" />
+        <path d={FOLHA} transform="translate(46 143.5) rotate(-67.8) scale(0.76)" />
+        <path d={FOLHA} transform="translate(37.5 118.5) rotate(-58.5) scale(0.7)" />
+        <path d={FOLHA} transform="translate(31.9 88.5) rotate(-50.9) scale(0.64)" />
+        <path d={FOLHA} transform="translate(29.9 59.7) rotate(-45.6) scale(0.58)" />
+      </g>
+      {/* Nervura: uma linha fina por folha, no tom do fundo, dá volume sem
+          precisar de segunda cor. */}
+      <g stroke="var(--color-marinho)" strokeWidth="1.6" strokeLinecap="round" opacity="0.55">
+        <path d="M0 0h26" transform="translate(104.3 197.4) rotate(-119.3)" />
+        <path d="M0 0h26" transform="translate(86.7 190.5) rotate(-105.7) scale(0.94)" />
+        <path d="M0 0h26" transform="translate(71 179.3) rotate(-91.8) scale(0.88)" />
+        <path d="M0 0h26" transform="translate(57.3 163.7) rotate(-79) scale(0.82)" />
+        <path d="M0 0h26" transform="translate(46 143.5) rotate(-67.8) scale(0.76)" />
+        <path d="M0 0h26" transform="translate(37.5 118.5) rotate(-58.5) scale(0.7)" />
+        <path d="M0 0h26" transform="translate(31.9 88.5) rotate(-50.9) scale(0.64)" />
+        <path d="M0 0h26" transform="translate(29.9 59.7) rotate(-45.6) scale(0.58)" />
       </g>
     </>
   )
 
   return (
-    <svg viewBox="0 0 240 210" fill="none" aria-hidden="true" className={className}>
+    <svg viewBox="0 0 240 216" fill="none" aria-hidden="true" className={className}>
       {ramo}
       <g transform="translate(240,0) scale(-1,1)">{ramo}</g>
+      {/* O laço que amarra os dois ramos. */}
+      <g fill="currentColor">
+        <ellipse cx="120" cy="201" rx="9" ry="7" />
+        <path d="M120 203 C112 208, 106 214, 105 214 C104 210, 110 205, 118 203 Z" />
+        <path d="M120 203 C128 208, 134 214, 135 214 C136 210, 130 205, 122 203 Z" />
+      </g>
     </svg>
   )
 }
