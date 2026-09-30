@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import CapaInterna from '@/components/CapaInterna'
 import Podio from '@/components/Podio'
+import ChuvaDoFestival from '@/components/ChuvaDoFestival'
 import { Espiga, TampinhaDeco } from '@/components/Ornamentos'
 import { CALENDARIO, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/lib/dados'
 import { contagem, mostrarVencedores } from '@/lib/fase'
@@ -84,6 +85,7 @@ export default async function Vencedores() {
             style={{ left: -58, bottom: -70, width: 160, opacity: 0.16 }}
             className="text-ouro"
           />
+          <ChuvaDoFestival />
           <div className="wrap relative">
             <Podio lugares={podio} />
           </div>

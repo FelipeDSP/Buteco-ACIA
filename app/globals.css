@@ -176,6 +176,41 @@
   }
 }
 
+/* A chuva do pódio: tampinhas, limões e folhas de louro caindo uma vez só.
+   Some abaixo de 980px pela mesma razão das outras decorações — e porque na
+   vertical do celular a seção é muito mais alta que a tela, e as peças
+   parariam no meio do caminho. Só transform e opacity, que a GPU resolve
+   sozinha: nada de `top`, que forçaria recálculo de layout a cada quadro.
+   Sem `will-change`: ele criaria 26 camadas que ficariam vivas na memória
+   depois de a chuva acabar, e transform já compõe sozinho. */
+.chuva {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  display: none;
+}
+.chuva-peca {
+  position: absolute;
+  top: 0;
+  display: block;
+  animation-name: cai;
+  animation-timing-function: cubic-bezier(0.33, 0.1, 0.5, 1);
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+@media (min-width: 980px) and (prefers-reduced-motion: no-preference) {
+  .chuva { display: block; }
+}
+
+@keyframes cai {
+  from { transform: translate3d(0, -12vh, 0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  85%  { opacity: 1; }
+  to   { transform: translate3d(var(--deriva), 104vh, 0) rotate(var(--giro)); opacity: 0; }
+}
+
 /* Revelação ao rolar — CSS puro, sem observer.
    A animação NÃO mexe em opacity. Já apareceu duas vezes seção inteira em
    branco por conta disso, sem reprodução aqui: quando a linha do tempo de

@@ -49,7 +49,7 @@ type TampinhaProps = DecoProps & {
   tom?: 'marinho' | 'ambar' | 'escuro'
 }
 
-const TONS = {
+export const TAMPINHA_DECO_TONS = {
   // Fundo claro: anel marinho, miolo âmbar.
   marinho: {
     fora: 'var(--color-marinho)',
@@ -71,7 +71,7 @@ const TONS = {
 } as const
 
 export function TampinhaDeco({ style, className = '', tom = 'marinho' }: TampinhaProps) {
-  const { fora, serra, miolo } = TONS[tom]
+  const { fora, serra, miolo } = TAMPINHA_DECO_TONS[tom]
   return (
     <svg
       className={`deco ${className}`}

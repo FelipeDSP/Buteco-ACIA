@@ -296,7 +296,20 @@ O motivo é o mesmo nas duas: a página existe para anunciar quem ganhou. Public
 
 O degrau do pódio é **desenhado** (`ALTURA_DO_DEGRAU`), não sugerido pela proporção da foto. E o que o faz ler como plataforma é a **face superior clara** (`FACE`, em `--acia`): só escurecer o bloco virava sombra do cartão, não degrau. Com `items-end` a base dos três é a mesma linha, então degrau mais alto empurra o cartão para cima — é daí que o campeão sobe. Some abaixo de 980px, onde empilhado não significaria nada.
 
-**As três fotos têm a mesma proporção.** Variar o formato por colocação já foi a forma de sugerir o degrau, e saía desigual: o 1º alto demais, o 3º achatado. Quem faz o pódio agora é o pódio. Nada de confete nem brilho animado: solene, não lúdico.
+**As três fotos têm a mesma proporção.** Variar o formato por colocação já foi a forma de sugerir o degrau, e saía desigual: o 1º alto demais, o 3º achatado. Quem faz o pódio agora é o pódio.
+
+### A chuva do pódio — confete feito de brasão
+
+`ChuvaDoFestival` é a resposta ao pedido de confete, e **não é papel picado**: caem tampinha, rodela de limão e folha de louro, as formas que o site já usa.
+
+Confete genérico não cabia, e o motivo é a paleta, não o gosto: ela é fechada e as cores clássicas de confete estão proibidas (vermelho, e verde com amarelo). Sobrariam âmbar e ouro — e três tons caindo lêem como retângulos, não como festa.
+
+- **Some abaixo de 980px**, como toda decoração. Não é só coerência: no celular a seção do pódio fica muito mais alta que a tela e as peças parariam no meio do nada, e é o aparelho mais fraco que carrega o site.
+- **Toca uma vez** (`forwards`, sem repetição). Em laço vira enfeite de vitrine; o resultado sai uma vez por ano.
+- **Cai atrás dos cartões**, não por cima — a comemoração não pode atrapalhar a leitura de quem ganhou.
+- **Posições com semente fixa**, não `Math.random()`: é componente de servidor, e sorteio de verdade daria divergência de hidratação.
+- **Nada de `will-change`**: criaria 26 camadas vivas na memória depois de a chuva acabar, e `transform` já compõe sozinho.
+- **Peça abaixo de ~22px não se reconhece** — tampinha vira bolinha, limão vira disco. É a forma ser reconhecível que justifica esta chuva existir em vez de confete comum.
 
 **Guarda o ranking inteiro, não só as três primeiras** — mesmo a página publicando só o pódio. Se as posições 4+ fossem calculadas ao vivo, o retrato teria topo congelado e cauda móvel: anular um voto depois da premiação mexeria na 4ª e não na 3ª. E a ACIA precisa do ranking completo para o certificado de cada casa e para responder a quem perguntar a própria colocação. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
 
