@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Louros } from '@/components/Ornamentos'
+import { EDICAO } from '@/data/edicao'
 
 /**
  * Pódio clássico: 1º ao centro e mais alto, 2º à esquerda, 3º à direita.
@@ -13,8 +15,14 @@ import { useEffect, useState } from 'react'
  * na largura em que os três cabem lado a lado.
  *
  * A entrada sobe do 3º para o 1º, com um respiro entre eles — o olho segue a
- * sequência e chega no campeão por último. Sem confete e sem brilho: o
- * resultado é de um concurso municipal, não de um jogo.
+ * sequência e chega no campeão por último.
+ *
+ * **Comemorativo sem virar festa infantil.** O componente vive sobre bloco
+ * marinho, que é o único fundo em que o ouro existe no site: por isso a coroa
+ * de louros e o filete do campeão brilham aqui e em lugar nenhum mais. O
+ * degrau é desenhado (`ALTURA_DO_DEGRAU`), não sugerido pela proporção da
+ * foto — antes vinha só daí e quase não se lia. Nada de confete, estrela
+ * (proibida) ou brilho animado: solene, não lúdico.
  *
  * **Sem nota e sem contagem de votos, por decisão da ACIA em 30/09/2026.** A
  * página anuncia quem ganhou, não por quanto. Publicar o número abre duas
@@ -46,6 +54,13 @@ const ARRANJO: Record<number, { ordem: string; foto: string; atraso: number }> =
   2: { ordem: 'media:order-1', foto: 'media:aspect-3/2', atraso: 160 },
   3: { ordem: 'media:order-3', foto: 'media:aspect-16/9', atraso: 0 },
 }
+
+/**
+ * Altura do degrau sob cada cartão, em pixels. Só entra na largura em que os
+ * três ficam lado a lado — empilhado no celular, plataforma de alturas
+ * diferentes não significaria nada.
+ */
+const ALTURA_DO_DEGRAU: Record<number, number> = { 1: 54, 2: 32, 3: 16 }
 
 export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
   /**
@@ -79,9 +94,7 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
                 ? { transitionDelay: `${arranjo.atraso}ms`, transitionDuration: '420ms' }
                 : undefined
             }
-            className={`flex-1 overflow-hidden rounded-2xl ${arranjo.ordem} ${
-              primeiro ? 'bg-marinho text-branco' : 'bg-claro'
-            } ${
+            className={`flex flex-1 flex-col ${arranjo.ordem} ${
               animar
                 ? `transition-[opacity,transform] ease-out ${
                     entrou ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
@@ -89,6 +102,13 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
                 : ''
             }`}
           >
+            <div
+              className={`overflow-hidden rounded-2xl ${
+                primeiro
+                  ? 'bg-marinho text-branco ring-2 ring-ouro/70'
+                  : 'bg-claro text-tinta'
+              }`}
+            >
             {/* No celular todas as fotos têm o mesmo formato; o degrau só faz
                 sentido quando os três estão lado a lado. */}
             <div className={`relative aspect-4/3 bg-marinho-2 ${arranjo.foto}`}>
@@ -107,6 +127,10 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
                 </span>
               )}
 
+              {/* Sobre a foto o selo é igual para os três: ouro aqui não
+                  funcionaria — a regra é "ouro só sobre marinho", e foto de
+                  prato é fundo claro e colorido. Os louros do campeão ficam no
+                  corpo do cartão, que é marinho. */}
               <span
                 className={`absolute top-3 left-3 grid place-content-center rounded-full font-display font-extrabold ${
                   primeiro
@@ -118,8 +142,28 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
               </span>
             </div>
 
-            <div className={primeiro ? 'p-6' : 'p-5'}>
-              <h3 className={`display ${primeiro ? 'text-[21px]' : 'text-[18px]'}`}>
+            <div className={primeiro ? 'p-6 text-center' : 'p-5'}>
+              {/* O emblema do campeão. Aqui o fundo é marinho, então o ouro
+                  pode existir — é o único ponto do site em que ele aparece
+                  como ornamento, e não como filete. */}
+              {primeiro ? (
+                <span className="relative mx-auto mb-3 block h-[137px] w-[156px]">
+                  <Louros className="absolute inset-0 h-full w-full text-ouro" />
+                  {/* A coroa abre para cima e os grãos avançam para dentro, e
+                      é o grão — não o caule — que define o vão útil: cerca de
+                      58% da largura na altura deste texto. Mexer no tamanho da
+                      fonte ou da coroa sem refazer essa conta faz a palavra
+                      bater nos ramos. */}
+                  <span className="absolute inset-x-0 top-[50px] block text-center font-display text-[11px] leading-[1.25] font-extrabold tracking-[0.05em] text-ambar uppercase">
+                    Campeão
+                    <br />
+                    <span className="text-[17px] tracking-normal text-branco">
+                      {EDICAO.ano}
+                    </span>
+                  </span>
+                </span>
+              ) : null}
+              <h3 className={`display ${primeiro ? 'text-[24px]' : 'text-[18px]'}`}>
                 {lugar.casa.pratoConfirmado && lugar.casa.prato
                   ? lugar.casa.prato
                   : 'Prato da casa'}
@@ -140,7 +184,19 @@ export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
                   Ver a casa
                 </Link>
               </p>
+              </div>
             </div>
+
+            {/* O degrau. `mt-auto` prende na base porque os cartões têm alturas
+                diferentes; `hidden media:block` porque empilhado ele não
+                significaria nada. */}
+            <div
+              style={{ height: ALTURA_DO_DEGRAU[lugar.posicao] ?? 16 }}
+              className={`mt-auto hidden rounded-b-xl border-t-[3px] bg-marinho-2 media:block ${
+                primeiro ? 'border-ouro/70' : 'border-ouro/30'
+              }`}
+              aria-hidden="true"
+            />
           </li>
         )
       })}

@@ -112,3 +112,45 @@ export function Limao({ style, className = '', miolo = 'var(--color-creme)' }: D
     </svg>
   )
 }
+
+/**
+ * Coroa de louros, feita com a espiga de cevada do brasão.
+ *
+ * É a metáfora clássica da vitória, e aqui ela sai do próprio repertório da
+ * marca em vez de virar enfeite novo — a cevada já está no brasão do evento.
+ * **Não é estrela**, que a ACIA proibiu em qualquer forma.
+ *
+ * Um ramo só é desenhado; o outro é o mesmo espelhado, para a simetria não
+ * depender de dois conjuntos de coordenadas ficarem combinando na mão.
+ *
+ * Diferente das outras peças deste arquivo, não leva `.deco`: os louros
+ * emolduram o campeão e precisam aparecer também no celular, que é onde a
+ * maioria vai ver o resultado.
+ */
+export function Louros({ className = '' }: { className?: string }) {
+  const ramo = (
+    <>
+      <path
+        d="M120 194 C74 188, 34 142, 32 40"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <g fill="currentColor">
+        <ellipse cx="93" cy="174" rx="21" ry="9" transform="rotate(-102 93 174)" />
+        <ellipse cx="76" cy="158" rx="21" ry="9" transform="rotate(-84 76 158)" />
+        <ellipse cx="61" cy="135" rx="21" ry="9" transform="rotate(-67 61 135)" />
+        <ellipse cx="50" cy="102" rx="21" ry="9" transform="rotate(-54 50 102)" />
+        <ellipse cx="44" cy="65" rx="21" ry="9" transform="rotate(-45 44 65)" />
+      </g>
+    </>
+  )
+
+  return (
+    <svg viewBox="0 0 240 210" fill="none" aria-hidden="true" className={className}>
+      {ramo}
+      <g transform="translate(240,0) scale(-1,1)">{ramo}</g>
+    </svg>
+  )
+}

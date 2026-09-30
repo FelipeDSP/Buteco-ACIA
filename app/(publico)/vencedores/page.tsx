@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import CapaInterna from '@/components/CapaInterna'
 import Podio from '@/components/Podio'
+import { Espiga, TampinhaDeco } from '@/components/Ornamentos'
 import { CALENDARIO, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/lib/dados'
 import { contagem, mostrarVencedores } from '@/lib/fase'
 import { dataLonga, reais } from '@/lib/formato'
@@ -48,6 +49,7 @@ export default async function Vencedores() {
   return (
     <>
       <CapaInterna
+        compacta={mostrar}
         atual="Vencedores"
         selo={mostrar ? 'Resultado oficial' : 'Ainda não'}
         titulo={mostrar ? 'Os vencedores' : 'O resultado ainda não saiu'}
@@ -62,13 +64,29 @@ export default async function Vencedores() {
         }
       />
 
+      {/* O PALCO. O pódio vive sobre marinho, emendado na capa, e é o único
+          lugar do site em que o ouro aparece como ornamento — a regra é "ouro
+          só sobre marinho", e é o cartão do campeão que o carrega. Sobre o
+          creme das outras seções, âmbar e ouro não brilhavam. */}
+      {mostrar ? (
+        <section className="relative overflow-hidden bg-marinho pt-4 pb-16 text-branco">
+          <Espiga
+            style={{ left: -58, bottom: -70, width: 160, opacity: 0.16 }}
+            className="text-ouro"
+          />
+          <TampinhaDeco
+            style={{ right: -66, top: -58, width: 172, opacity: 0.55 }}
+            tom="escuro"
+          />
+          <div className="wrap relative">
+            <Podio lugares={podio} />
+          </div>
+        </section>
+      ) : null}
+
       <section className="py-14">
         <div className="wrap">
-          {mostrar ? (
-            <>
-              <Podio lugares={podio} />
-            </>
-          ) : (
+          {mostrar ? null : (
             <div className="rounded-2xl border-2 border-dashed border-risco bg-claro p-9 text-center">
               <p className="font-display text-[20px] font-bold">Pódio a divulgar</p>
               <p className="mx-auto mt-2 max-w-[46ch] text-[15.5px] text-tinta-3">

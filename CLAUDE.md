@@ -200,6 +200,10 @@ Elementos derivados do brasão do evento, em SVG, vazando pelas bordas das seç�
 
 **Estrelas são proibidas** em qualquer forma ou número de pontas — decisão da ACIA por risco de leitura política.
 
+**A coroa de louros de `/vencedores` sai da espiga, não de um desenho novo.** `Louros` (`components/Ornamentos.tsx`) é o mesmo grão de cevada do brasão, curvado em dois ramos — um desenhado e o outro espelhado, para a simetria não depender de dois conjuntos de coordenadas combinarem na mão. É a metáfora da vitória sem recorrer à estrela, que está proibida.
+
+Diferente das outras três peças, `Louros` **não leva `.deco`**: ele emoldura o campeão e precisa aparecer no celular, que é onde a maioria vê o resultado. E o vão útil dentro da coroa é definido pelos **grãos**, não pelo caule — cerca de 58% da largura na altura do texto. Mexer no tamanho da fonte ou da coroa sem refazer essa conta faz a palavra bater nos ramos.
+
 **A tampinha é elemento de marca, não rótulo de casa.** Ela vive nas decorações que vazam pelas bordas das seções (`TampinhaDeco`), nunca sobre a foto de um cartão carregando número. Ver "Cartão de casa".
 
 Decorações somem abaixo de 980px.
@@ -285,6 +289,10 @@ Desclassificada (Art. 22) fica **fora do retrato**: foi excluída da competiçã
 O motivo é o mesmo nas duas: a página existe para anunciar quem ganhou. Publicar o ranking inteiro com nota expõe, na cidade e para a própria clientela, a casa que ficou em último — que serviu o festival inteiro e recebe placa e certificado como todas. E a nota separava mal: com 968 avaliações, 2º e 3º diferiam na **terceira** casa decimal e a página mostrava duas, então saíam dois "19,84" em posições diferentes, o que se lê como erro.
 
 **Isso é escolha de publicação, não de apuração.** O retrato em `resultado` continua guardando as doze posições, a nota de cada uma e quem ficou abaixo do piso; o painel e o certificado seguem com o número. `Podio` não recebe mais `notaFinal` nem `totalAvaliacoes` — o dado não chega ao componente, em vez de chegar e ser escondido.
+
+**O pódio vive sobre bloco marinho, e isso é funcional.** A regra da paleta é "ouro só sobre marinho", e sobre o creme das outras seções o âmbar e o ouro não brilhavam. O palco escuro é o que permite a coroa de louros dourada, o filete de ouro no cartão do campeão e o degrau — e é o único ponto do site em que o ouro aparece como ornamento, não como filete. A `CapaInterna` entra `compacta`, que existe justamente para quando o bloco seguinte também é escuro.
+
+O degrau do pódio é **desenhado** (`ALTURA_DO_DEGRAU`), não sugerido pela proporção da foto: antes vinha só daí e quase não se lia. Some abaixo de 980px — empilhado, plataforma de alturas diferentes não significaria nada. Nada de confete nem brilho animado: solene, não lúdico.
 
 **Guarda o ranking inteiro, não só as três primeiras** — mesmo a página publicando só o pódio. Se as posições 4+ fossem calculadas ao vivo, o retrato teria topo congelado e cauda móvel: anular um voto depois da premiação mexeria na 4ª e não na 3ª. E a ACIA precisa do ranking completo para o certificado de cada casa e para responder a quem perguntar a própria colocação. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
 
