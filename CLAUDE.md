@@ -280,9 +280,13 @@ Colunas: `edicao` (texto, "2026"), `posicao`, `casa_id`, `nota_final` (0 a 20), 
 
 Desclassificada (Art. 22) fica **fora do retrato**: foi excluída da competição, não é participante mal colocada.
 
-**Na página pública as inelegíveis não aparecem** — decisão da ACIA em 19/09/2026. Já apareceram numa lista à parte, sem número, com a frase do Art. 18; saiu porque a página é dos vencedores, e listar quem não alcançou o mínimo expõe a casa sem servir a quem lê. O retrato continua guardando `elegivel = false` para cada uma, e o painel continua dizendo quantas ficam de fora e qual foi o piso antes de publicar — a distinção existe; só não é publicada.
+**A página pública mostra só as três primeiras, e sem número nenhum.** Duas decisões da ACIA, na mesma direção: em 19/09/2026 saiu a lista das inelegíveis, e em 30/09/2026 saíram a tabela das demais colocadas, a nota e a contagem de votos.
 
-**Guarda o ranking inteiro, não só as três primeiras.** A página mostra o pódio em destaque e as demais colocadas numa lista abaixo; se as posições 4+ fossem calculadas ao vivo, a página teria topo congelado e cauda móvel — anular um voto depois da premiação mexeria na 4ª e não na 3ª, e uma casa poderia aparecer em 4º com nota maior que a do 3º lugar. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
+O motivo é o mesmo nas duas: a página existe para anunciar quem ganhou. Publicar o ranking inteiro com nota expõe, na cidade e para a própria clientela, a casa que ficou em último — que serviu o festival inteiro e recebe placa e certificado como todas. E a nota separava mal: com 968 avaliações, 2º e 3º diferiam na **terceira** casa decimal e a página mostrava duas, então saíam dois "19,84" em posições diferentes, o que se lê como erro.
+
+**Isso é escolha de publicação, não de apuração.** O retrato em `resultado` continua guardando as doze posições, a nota de cada uma e quem ficou abaixo do piso; o painel e o certificado seguem com o número. `Podio` não recebe mais `notaFinal` nem `totalAvaliacoes` — o dado não chega ao componente, em vez de chegar e ser escondido.
+
+**Guarda o ranking inteiro, não só as três primeiras** — mesmo a página publicando só o pódio. Se as posições 4+ fossem calculadas ao vivo, o retrato teria topo congelado e cauda móvel: anular um voto depois da premiação mexeria na 4ª e não na 3ª. E a ACIA precisa do ranking completo para o certificado de cada casa e para responder a quem perguntar a própria colocação. Unique em `(edicao, posicao)` e em `(edicao, casa_id)` — a mesma casa não pode ocupar duas posições. RLS: leitura pública liberada, escrita só `service_role`.
 
 **A área pública nunca deriva ranking de `avaliacoes`.** Uma consulta ao vivo em `/vencedores` entregaria a parcial antes da premiação para quem soubesse abrir a URL. A página lê de `resultado` e só.
 

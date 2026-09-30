@@ -15,12 +15,16 @@ import { useEffect, useState } from 'react'
  * A entrada sobe do 3º para o 1º, com um respiro entre eles — o olho segue a
  * sequência e chega no campeão por último. Sem confete e sem brilho: o
  * resultado é de um concurso municipal, não de um jogo.
+ *
+ * **Sem nota e sem contagem de votos, por decisão da ACIA em 30/09/2026.** A
+ * página anuncia quem ganhou, não por quanto. Publicar o número abre duas
+ * portas ruins: a comparação entre 2º e 3º, que na prática diferem na terceira
+ * casa decimal, e a pergunta de quanto fez quem não aparece. O número existe
+ * no retrato de `resultado`, no painel e no certificado da casa.
  */
 
 export type LugarDoPodio = {
   posicao: number
-  notaFinal: number
-  totalAvaliacoes: number
   casa: {
     slug: string
     nome: string
@@ -43,15 +47,7 @@ const ARRANJO: Record<number, { ordem: string; foto: string; atraso: number }> =
   3: { ordem: 'media:order-3', foto: 'media:aspect-16/9', atraso: 0 },
 }
 
-const nota = (v: number) => v.toFixed(2).replace('.', ',')
-
-export default function Podio({
-  lugares,
-  notaMaxima,
-}: {
-  lugares: LugarDoPodio[]
-  notaMaxima: number
-}) {
+export default function Podio({ lugares }: { lugares: LugarDoPodio[] }) {
   /**
    * Começa como "já entrou" e só vira "vai animar" depois da montagem, se a
    * pessoa não pediu menos movimento. Assim o HTML do servidor é o estado
@@ -134,20 +130,6 @@ export default function Podio({
                 }`}
               >
                 {lugar.casa.nome}
-              </p>
-
-              <p className="mt-4 flex items-baseline gap-2">
-                <b
-                  className={`font-display leading-none font-extrabold ${
-                    primeiro ? 'text-[30px]' : 'text-[24px]'
-                  }`}
-                >
-                  {nota(lugar.notaFinal)}
-                </b>
-                <span className={`text-[13px] ${primeiro ? 'text-selo' : 'text-tinta-3'}`}>
-                  de {notaMaxima}, em {lugar.totalAvaliacoes}{' '}
-                  {lugar.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações'}
-                </span>
               </p>
 
               <p className="mt-5">

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import CapaInterna from '@/components/CapaInterna'
 import Podio from '@/components/Podio'
-import { CALENDARIO, NOTA_MAXIMA_TOTAL, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/lib/dados'
+import { CALENDARIO, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/lib/dados'
 import { contagem, mostrarVencedores } from '@/lib/fase'
 import { dataLonga, reais } from '@/lib/formato'
 import { lerPodio, podioVisivel } from '@/lib/resultado'
@@ -23,8 +23,6 @@ export const metadata: Metadata = {
     'Resultado da primeira edição do Boteco ACIA, apurado a partir das avaliações do público.',
 }
 
-const nota = (v: number) => v.toFixed(2).replace('.', ',')
-
 export default async function Vencedores() {
   const publicado = await lerPodio()
   // Aparece só se a Comissão liberou. A data não manda mais aqui.
@@ -32,15 +30,20 @@ export default async function Vencedores() {
   const estado = contagem()
 
   /**
-   * Só as classificadas. As que ficaram abaixo do piso do Art. 18 continuam
-   * no retrato (`elegivel = false`) e no painel, mas **não aparecem aqui** —
-   * decisão da ACIA em 19/09/2026: a página é dos vencedores, e listar quem
-   * não alcançou o mínimo, ainda que sem número, expõe a casa sem servir a
-   * quem lê. O retrato guarda a distinção; a página só não a publica.
+   * **Só as três primeiras, e sem número nenhum** — decisão da ACIA em
+   * 30/09/2026, que substituiu a lista completa das classificadas.
+   *
+   * A página existe para anunciar quem ganhou. Publicar o ranking inteiro com
+   * nota e contagem de votos expõe, na cidade e para a própria clientela, a
+   * casa que ficou em último — que serviu o festival inteiro e vai receber
+   * placa e certificado como todas as outras. Não há leitor servido por essa
+   * informação que justifique o custo para ela.
+   *
+   * Isso é escolha de publicação, não de apuração: o retrato em `resultado`
+   * continua guardando as doze posições, a nota de cada uma e quem ficou
+   * abaixo do piso do Art. 18. O painel e o certificado seguem com o número.
    */
-  const classificadas = publicado.filter((l) => l.elegivel)
-  const podio = classificadas.filter((l) => l.posicao <= 3)
-  const demais = classificadas.filter((l) => l.posicao > 3)
+  const podio = publicado.filter((l) => l.elegivel && l.posicao <= 3)
 
   return (
     <>
@@ -63,72 +66,14 @@ export default async function Vencedores() {
         <div className="wrap">
           {mostrar ? (
             <>
-              <Podio lugares={podio} notaMaxima={NOTA_MAXIMA_TOTAL} />
-
-              {demais.length > 0 ? (
-                <div className="mt-12">
-                  <h2 className="display text-[clamp(20px,2.4vw,26px)]">
-                    As demais colocadas
-                  </h2>
-                  <p className="mt-2 max-w-[62ch] text-[14.5px] text-tinta-3">
-                    Casas que alcançaram o mínimo de avaliações e concorreram ao prêmio.
-                  </p>
-
-                  <div className="mt-5 overflow-x-auto">
-                    <table className="w-full min-w-[520px] border-collapse text-[15px]">
-                      <thead>
-                        <tr className="border-b-2 border-risco text-left">
-                          <th className="py-2.5 pr-3 font-semibold">#</th>
-                          <th className="py-2.5 pr-3 font-semibold">Casa</th>
-                          <th className="py-2.5 pr-3 font-semibold">Prato</th>
-                          <th
-                            className="py-2.5 pr-3 text-right font-semibold"
-                            title={`Nota final, de 0 a ${NOTA_MAXIMA_TOTAL}`}
-                          >
-                            Nota
-                          </th>
-                          <th className="py-2.5 text-right font-semibold">Avaliações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {demais.map((lugar) => (
-                          <tr key={lugar.posicao} className="border-b border-risco">
-                            <td className="py-3 pr-3 font-display font-extrabold text-tinta-3">
-                              {lugar.posicao}º
-                            </td>
-                            <td className="py-3 pr-3">
-                              <Link
-                                href={`/casas/${lugar.casa.slug}`}
-                                className="font-semibold hover:underline"
-                              >
-                                {lugar.casa.nome}
-                              </Link>
-                            </td>
-                            <td className="py-3 pr-3 text-tinta-3">
-                              {lugar.casa.pratoConfirmado && lugar.casa.prato
-                                ? lugar.casa.prato
-                                : '—'}
-                            </td>
-                            <td className="py-3 pr-3 text-right font-display font-extrabold">
-                              {nota(lugar.notaFinal)}
-                            </td>
-                            <td className="py-3 text-right text-tinta-3">
-                              {lugar.totalAvaliacoes}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : null}
+              <Podio lugares={podio} />
             </>
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-risco bg-claro p-9 text-center">
               <p className="font-display text-[20px] font-bold">Pódio a divulgar</p>
               <p className="mx-auto mt-2 max-w-[46ch] text-[15.5px] text-tinta-3">
-                As três primeiras colocadas aparecem aqui com nome da casa, prato e nota final,
-                a partir de {dataLonga(CALENDARIO.divulgacao)}.
+                As três primeiras colocadas aparecem aqui com nome da casa e prato, a
+                partir de {dataLonga(CALENDARIO.divulgacao)}.
               </p>
               <p className="mt-6">
                 <Link href="/#casas" className="btn">
