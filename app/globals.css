@@ -200,7 +200,12 @@
      depois cair — e papel não faz isso: passa da aceleração para velocidade
      terminal em fração de segundo, e daí desce parelho. */
   animation-timing-function: linear;
-  animation-fill-mode: forwards;
+  /* `both`, nunca `forwards`. Com `forwards` o estado inicial NÃO vale durante
+     `animation-delay`: a peça fica parada e visível no topo da seção esperando
+     a vez, e só então despenca — que é exatamente a sensação de "flutua e
+     depois cai". `both` faz o primeiro quadro (opacidade 0, acima do bloco)
+     valer já na espera. */
+  animation-fill-mode: both;
   animation-iteration-count: 1;
 }
 @media (min-width: 980px) and (prefers-reduced-motion: no-preference) {

@@ -58,8 +58,15 @@ const PECAS: Peca[] = (() => {
     // justifica esta chuva é as formas serem reconhecíveis.
     tamanho: Math.round(24 + r() * 26),
     // Escalonado: todas partindo juntas seria uma cortina, não uma chuva.
-    atraso: Math.round(r() * 2600),
-    duracao: Math.round(6000 + r() * 3800),
+    // Curto, porém: espalhar demais faz a chuva virar gotejamento.
+    atraso: Math.round(r() * 2400),
+    /**
+     * ~320 a 420 px/s na tela. O número importa: a 140 px/s — que era o valor
+     * anterior — a peça leva quase sete segundos para atravessar a tela, e
+     * movimento lento para baixo o olho lê como **flutuar**, não como cair.
+     * Trocar o easing não resolvia isso; velocidade resolve.
+     */
+    duracao: Math.round(2600 + r() * 1300),
     giro: Math.round((r() * 2 - 1) * 520),
     deriva: Math.round((r() * 2 - 1) * 90),
     opacidade: Number((0.5 + r() * 0.4).toFixed(2)),
