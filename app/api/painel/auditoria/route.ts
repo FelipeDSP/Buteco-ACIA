@@ -1,14 +1,9 @@
 import { recusarSemSessao } from '@/lib/painel-auth'
 import { auditar } from '@/lib/painel'
 import { formatarCpf } from '@/lib/cpf'
+import { campoCsv as campo } from '@/lib/csv'
 
 export const dynamic = 'force-dynamic'
-
-/** Vírgula e aspas quebram CSV; o Excel brasileiro espera ponto e vírgula. */
-const campo = (v: unknown) => {
-  const t = v === null || v === undefined ? '' : String(v)
-  return /[";\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-}
 
 /**
  * CSV da auditoria — uma linha por avaliação, **com o CPF em claro**.

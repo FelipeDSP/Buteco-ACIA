@@ -1,14 +1,9 @@
 import { type NextRequest } from 'next/server'
 import { recusarSemSessao } from '@/lib/painel-auth'
 import { lerObservacoes } from '@/lib/painel'
+import { campoCsv as campo } from '@/lib/csv'
 
 export const dynamic = 'force-dynamic'
-
-/** Vírgula e aspas quebram CSV; o Excel brasileiro espera ponto e vírgula. */
-const campo = (v: unknown) => {
-  const t = v === null || v === undefined ? '' : String(v)
-  return /[";\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-}
 
 const semAcento = (t: string) =>
   t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()

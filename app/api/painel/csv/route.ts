@@ -2,14 +2,9 @@ import { recusarSemSessao } from '@/lib/painel-auth'
 import { CRITERIOS_DA_APURACAO, apurar, auditar } from '@/lib/painel'
 import { formatarCpf } from '@/lib/cpf'
 import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
+import { campoCsv as campo } from '@/lib/csv'
 
 export const dynamic = 'force-dynamic'
-
-/** Vírgula e aspas quebram CSV; o Excel brasileiro ainda espera ponto e vírgula. */
-const campo = (v: unknown) => {
-  const t = v === null || v === undefined ? '' : String(v)
-  return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-}
 
 const numero = (v: number | null) => (v === null ? '' : v.toFixed(3).replace('.', ','))
 
