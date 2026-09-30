@@ -18,6 +18,13 @@ type Props = {
   atual: string
   /** Menos respiro, para quando o bloco seguinte também é escuro. */
   compacta?: boolean
+  /**
+   * Some com a tampinha da capa. Serve para quando o bloco seguinte também é
+   * marinho: a decoração é cortada pelo `overflow-hidden` da capa, e sobre um
+   * fundo que continua igual o corte fica sem motivo aparente — um círculo que
+   * acaba no nada. A página assume a decoração por conta própria.
+   */
+  semDeco?: boolean
 }
 
 export default function CapaInterna({
@@ -27,6 +34,7 @@ export default function CapaInterna({
   nota,
   atual,
   compacta = false,
+  semDeco = false,
 }: Props) {
   return (
     <header
@@ -34,10 +42,12 @@ export default function CapaInterna({
         compacta ? 'py-9' : 'py-13'
       }`}
     >
-      <TampinhaDeco
-        style={{ right: -74, bottom: -78, width: 190, opacity: 0.8 }}
-        tom="escuro"
-      />
+      {semDeco ? null : (
+        <TampinhaDeco
+          style={{ right: -74, bottom: -78, width: 190, opacity: 0.8 }}
+          tom="escuro"
+        />
+      )}
 
       <div className="wrap">
         <div className="mb-5">

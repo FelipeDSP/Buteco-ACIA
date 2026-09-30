@@ -50,6 +50,7 @@ export default async function Vencedores() {
     <>
       <CapaInterna
         compacta={mostrar}
+        semDeco={mostrar}
         atual="Vencedores"
         selo={mostrar ? 'Resultado oficial' : 'Ainda não'}
         titulo={mostrar ? 'Os vencedores' : 'O resultado ainda não saiu'}
@@ -70,13 +71,18 @@ export default async function Vencedores() {
           creme das outras seções, âmbar e ouro não brilhavam. */}
       {mostrar ? (
         <section className="relative overflow-hidden bg-marinho pt-4 pb-16 text-branco">
+          {/* As duas decorações do palco, e a capa vem sem a dela
+              (`semDeco`). Antes havia a tampinha da capa, cortada na emenda,
+              mais outra aqui: dois círculos cortados um dentro do outro. Agora
+              é uma só, posicionada para vazar pela borda direita — que é um
+              corte com motivo — em vez de morrer numa emenda invisível. */}
+          <TampinhaDeco
+            style={{ right: -72, top: 34, width: 184, opacity: 0.75 }}
+            tom="escuro"
+          />
           <Espiga
             style={{ left: -58, bottom: -70, width: 160, opacity: 0.16 }}
             className="text-ouro"
-          />
-          <TampinhaDeco
-            style={{ right: -66, top: -58, width: 172, opacity: 0.55 }}
-            tom="escuro"
           />
           <div className="wrap relative">
             <Podio lugares={podio} />
