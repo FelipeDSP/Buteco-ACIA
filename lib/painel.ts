@@ -80,6 +80,47 @@ type CasaBruta = {
 const media = (valores: number[]): number | null =>
   valores.length === 0 ? null : valores.reduce((s, v) => s + v, 0) / valores.length
 
+/**
+ * Lê uma tabela inteira, em páginas.
+ *
+ * **O PostgREST corta em 1.000 linhas e não avisa.** Não vem erro, não vem
+ * aviso: vem um array com 1.000 itens e o código segue como se fosse tudo.
+ * Numa apuração isso é o pior tipo de defeito — não quebra nada, só entrega o
+ * campeão errado, e só se descobre na premiação.
+ *
+ * Foi encontrado em 01/10/2026 com `avaliacoes` em 1.050 linhas: o painel
+ * estava apurando com 1.000 e descartando as 50 mais antigas em silêncio,
+ * porque a consulta ordena por `criada_em` decrescente.
+ *
+ * Pedir `limit` alto **não resolve** — o teto é do servidor, não do cliente.
+ * Só `range()`, página a página, até a última vir incompleta.
+ *
+ * Toda leitura de lista que possa passar de mil linhas tem de vir por aqui.
+ */
+const PAGINA = 1000
+
+async function lerTudoDe<T>(
+  tabela: string,
+  colunas: string,
+  ordenar?: { coluna: string; crescente: boolean },
+): Promise<T[]> {
+  const banco = supabaseAdmin()
+  const todas: T[] = []
+
+  for (let inicio = 0; ; inicio += PAGINA) {
+    let consulta = banco.from(tabela).select(colunas).range(inicio, inicio + PAGINA - 1)
+    if (ordenar) consulta = consulta.order(ordenar.coluna, { ascending: ordenar.crescente })
+
+    const { data, error } = await consulta
+    if (error) throw new Error(`Falha ao ler ${tabela}: ${error.message}`)
+
+    const pagina = (data ?? []) as T[]
+    todas.push(...pagina)
+    // Página incompleta significa fim — e evita uma ida a mais ao banco.
+    if (pagina.length < PAGINA) return todas
+  }
+}
+
 async function lerTudo() {
   const banco = supabaseAdmin()
   const [casas, avaliacoes] = await Promise.all([
@@ -87,20 +128,18 @@ async function lerTudo() {
       .from('casas')
       .select('id, slug, nome, ativa, horarios, desclassificada_em, desclassificada_motivo')
       .order('nome'),
-    banco
-      .from('avaliacoes')
-      .select(
-        'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo, cpf',
-      )
-      .order('criada_em', { ascending: false }),
+    lerTudoDe<AvaliacaoBruta>(
+      'avaliacoes',
+      'id, casa_id, criada_em, ip, user_agent, nota_apresentacao, nota_sabor, nota_criatividade, nota_atendimento, anulada_em, anulada_motivo, cpf',
+      { coluna: 'criada_em', crescente: false },
+    ),
   ])
 
   if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
-  if (avaliacoes.error) throw new Error(`Falha ao ler avaliações: ${avaliacoes.error.message}`)
 
   return {
     casas: (casas.data ?? []) as CasaBruta[],
-    avaliacoes: (avaliacoes.data ?? []) as AvaliacaoBruta[],
+    avaliacoes,
   }
 }
 
@@ -566,17 +605,14 @@ export async function lerObservacoes(): Promise<ObservacoesDaCasa[]> {
       .select('id, slug, nome, prato, prato_confirmado, foto_url, ativa')
       .order('nome'),
     // Sem `order`: a ordem de chegada não precisa nem sair do banco.
-    banco.from('observacoes').select('id, casa_id, texto, criada_em'),
+    lerTudoDe<ObservacaoBruta>('observacoes', 'id, casa_id, texto, criada_em'),
   ])
 
   if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
-  if (observacoes.error) {
-    throw new Error(`Falha ao ler observações: ${observacoes.error.message}`)
-  }
 
   return calcularObservacoes(
     (casas.data ?? []) as CasaDaObservacao[],
-    (observacoes.data ?? []) as ObservacaoBruta[],
+    observacoes,
   ).filter(
     /**
      * A grade é das casas ativas. A casa inativa entra só se tiver texto —
@@ -695,18 +731,17 @@ export async function lerGarcons(): Promise<GarconsDaCasa[]> {
       .from('casas')
       .select('id, slug, nome, prato, prato_confirmado, foto_url, ativa')
       .order('nome'),
-    banco.from('avaliacoes_garcom').select('id, casa_id, nome, nota, criada_em'),
+    lerTudoDe<AvaliacaoDeGarcomBruta>(
+      'avaliacoes_garcom',
+      'id, casa_id, nome, nota, criada_em',
+    ),
   ])
 
   if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
-  if (avaliacoes.error) {
-    throw new Error(`Falha ao ler avaliações de garçom: ${avaliacoes.error.message}`)
-  }
 
-  return calcularGarcons(
-    (casas.data ?? []) as CasaDaObservacao[],
-    (avaliacoes.data ?? []) as AvaliacaoDeGarcomBruta[],
-  ).filter((c) => c.ativa || c.total > 0)
+  return calcularGarcons((casas.data ?? []) as CasaDaObservacao[], avaliacoes).filter(
+    (c) => c.ativa || c.total > 0,
+  )
 }
 
 export type CasaDoPainel = {

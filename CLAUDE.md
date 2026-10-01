@@ -350,6 +350,16 @@ Está em `calcularApuracao` (`lib/painel.ts`), separada do banco de propósito, 
 
 **Errar aqui não gera erro em lugar nenhum: gera o campeão errado, e só se descobre na premiação.** Por isso a conta é testada com números escolhidos, sem tocar no Supabase, e os testes rodam sempre.
 
+### O PostgREST corta em 1.000 linhas e não avisa
+
+Aconteceu em 01/10/2026, com `avaliacoes` em 1.050 linhas: o painel estava apurando com **1.000** e descartando as 50 mais antigas em silêncio — a consulta ordena por `criada_em` decrescente, então sumiam justamente as primeiras do festival. Não veio erro, não veio aviso: veio um array com 1.000 itens.
+
+É o defeito exato que esta seção descreve. Já tinha mudado a 8ª e a 9ª colocações quando foi encontrado; o pódio sobreviveu por sorte, e não sobreviveria por muito tempo — quanto mais votos, maior a fatia descartada.
+
+**Pedir `limit` alto não resolve: o teto é do servidor, não do cliente.** Só `range()`, página a página, até a última vir incompleta. É o que `lerTudoDe` (`lib/painel.ts`) faz, e por onde passam `avaliacoes`, `observacoes` e `avaliacoes_garcom`.
+
+**Toda leitura de lista que possa passar de mil linhas tem de vir por `lerTudoDe`.** `casas` (doze) e `resultado` (um pódio) podem continuar diretas; `sessoes` cresce mais rápido que tudo e já passou de 1.300, mas é lida sempre por `id`, nunca em lista.
+
 Se mexer na apuração, rode `npm test` e confira que os testes de `Art. 13`, `Art. 17`, `Art. 18` e `Art. 19` continuam passando. Se algum falhar, é a conta que está errada — não o teste.
 
 ---
