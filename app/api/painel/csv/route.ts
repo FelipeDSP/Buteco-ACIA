@@ -12,7 +12,7 @@ export async function GET() {
   const semSessao = await recusarSemSessao()
   if (semSessao) return semSessao
 
-  const [{ linhas, votos, mediaDeAvaliacoes, piso }, avaliacoes] = await Promise.all([
+  const [{ linhas, votos, mediaDeAvaliacoes, piso }, { linhas: avaliacoes }] = await Promise.all([
     apurar(),
     auditar(),
   ])

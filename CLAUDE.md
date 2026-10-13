@@ -595,6 +595,34 @@ O risco aqui **não é deixar fraude passar: é marcar cliente honesto.** Alerta
 - **Rajada** — 8+ na mesma casa em 5 minutos. Casa o Art. 21 ("volume atípico de notas máximas em curto período").
 - **Fora de horário** — só dispara em casa com horário cadastrado. Com `{}` todo voto seria marcado e o painel viraria ruído.
 
+**O marcador que dispara demais se desliga sozinho.** Acima de
+`PAINEL_TETO_DE_SINAL_PCT` (25%) das avaliações, o sinal sai das linhas e vai
+para um aviso no topo da tela, com o número que o desligou. É a regra acima
+levada à consequência: alerta que acende em quase tudo treina a Comissão a
+ignorar alerta.
+
+Não é precaução teórica — aconteceu na 1ª edição. **"IP em várias casas"
+acendeu em 97% das 2.747 avaliações e "IP repetido" em 65%**, porque o endereço
+gravado não é o do cliente: os votos chegaram por **71 IPs, todos de faixas da
+Cloudflare**, e com 71 endereços para doze casas cada um aparece em todas,
+legitimamente. Os dois mediam o intermediário, não a pessoa. "Com sinal" caiu
+de 2.683 para 531 linhas.
+
+**A rajada é por tempo e não depende de IP** — ficou em 19% e segue valendo. Foi
+ela que acendeu na Cia Petiscaria (222 de 341 avaliações, contra 45 de 298 no
+Bar do Fubá). Foi o único sinal confiável do festival.
+
+Desligar sozinho, e não apagar o código, é o ponto: **se o IP for consertado,
+os marcadores voltam por conta própria.** A conta está em `suprimirSinaisDemais`
+(`lib/painel.ts`), travada em `tests/sinal-demais.test.ts` — inclusive que
+suprimir um marcador não derruba o outro da mesma linha, que era o jeito mais
+fácil de apagar junto o único sinal que ainda valia.
+
+**Por que o IP chega da Cloudflare continua em aberto**, e é o que precisa ser
+resolvido antes da próxima edição: enquanto não for, três dos quatro marcadores
+ficam cegos e o log de auditoria não identifica ninguém. Ver "Confiabilidade do
+IP fora da Vercel".
+
 **"Observação repetida" saiu daqui.** O sinal não sumiu: mudou de aba junto com o texto, e agora vive em `calcularObservacoes`, comparando observações dentro da mesma casa. Continua usando `PAINEL_LIMIAR_COMENTARIO_IGUAL`. Não recolocar na auditoria — ver a seção seguinte.
 
 A conta está em `calcularAuditoria`, separada do banco e travada em `tests/auditoria.test.ts` com cenários reais: wi-fi de bar cheio, cliente fazendo rolê, mesa pedindo a conta junto.

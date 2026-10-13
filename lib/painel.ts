@@ -420,7 +420,12 @@ export type Limiares = {
   rajadaMinima: number
   janelaDeRajadaMin: number
   comentariosIguais: number
+  /** Acima disto, em % das avaliações, o marcador se desliga sozinho. */
+  tetoDeSinalPct: number
 }
+
+/** Marcador desligado por disparar demais, com o número que o desligou. */
+export type SinalSuprimido = { sinal: Anomalia; disparos: number; pct: number }
 
 /**
  * Limiares de anomalia, ajustáveis por variável de ambiente.
@@ -455,6 +460,22 @@ export function limiares(): Limiares {
      */
     ipEmCasas: numeroDoAmbiente('PAINEL_LIMIAR_IP_EM_CASAS', 5),
     rajadaMinima: numeroDoAmbiente('PAINEL_LIMIAR_RAJADA', 8),
+    /**
+     * Teto de disparo, em porcentagem das avaliações.
+     *
+     * Marcador que acende em quase tudo não é sensível, é inútil — e pior:
+     * convida a anular voto legítimo, que tira da casa uma nota que ela
+     * ganhou. Acima deste teto, o marcador se desliga sozinho e a tela diz
+     * por quê.
+     *
+     * Não é precaução teórica. Na 1ª edição, "IP em várias casas" acendeu em
+     * **97%** das 2.747 avaliações e "IP repetido" em 65%, porque o endereço
+     * gravado não é o do cliente: os votos todos chegaram por 71 IPs da
+     * Cloudflare, e com 71 endereços para doze casas qualquer um deles
+     * aparece em todas, legitimamente. Os dois estavam medindo o
+     * intermediário, não a pessoa.
+     */
+    tetoDeSinalPct: numeroDoAmbiente('PAINEL_TETO_DE_SINAL_PCT', 25),
     janelaDeRajadaMin: numeroDoAmbiente('PAINEL_JANELA_RAJADA_MIN', 5),
     /**
      * Textos idênticos na mesma casa.
@@ -563,9 +584,60 @@ export function calcularAuditoria(
   })
 }
 
-export async function auditar(): Promise<LinhaDaAuditoria[]> {
+/**
+ * Desliga o marcador que dispara demais.
+ *
+ * **A regra que isto codifica já estava escrita: alerta que acende em quase
+ * tudo não é sensível, é inútil** — e pior que inútil, porque convida a anular
+ * voto legítimo, e anular tira da casa uma nota que ela ganhou.
+ *
+ * Existe porque o caso aconteceu. Na 1ª edição, "IP em várias casas" acendeu
+ * em **97%** das 2.747 avaliações e "IP repetido" em 65%: o endereço gravado
+ * não é o do cliente — os votos chegaram por 71 IPs da Cloudflare, e com 71
+ * endereços para doze casas cada um aparece em todas, legitimamente. Os dois
+ * mediam o intermediário, não a pessoa. A rajada, que é por tempo e não
+ * depende de IP, ficou em 19% e segue valendo.
+ *
+ * Desligar sozinho, e não na mão, é o ponto: **se o IP for consertado, os
+ * marcadores voltam por conta própria.** Apagar o código agora obrigaria
+ * alguém a lembrar de reescrevê-lo na edição que vem.
+ *
+ * O que é suprimido **não some em silêncio** — volta na lista para a tela
+ * dizer qual marcador saiu e com que número, senão a Comissão acha que a
+ * ausência de alerta é ausência de problema.
+ */
+export function suprimirSinaisDemais(
+  linhas: LinhaDaAuditoria[],
+  limites: Limiares = limiares(),
+): { linhas: LinhaDaAuditoria[]; suprimidos: SinalSuprimido[] } {
+  if (linhas.length === 0) return { linhas, suprimidos: [] }
+
+  const disparos = new Map<Anomalia, number>()
+  for (const linha of linhas) {
+    for (const sinal of linha.anomalias) disparos.set(sinal, (disparos.get(sinal) ?? 0) + 1)
+  }
+
+  const suprimidos: SinalSuprimido[] = []
+  for (const [sinal, quantos] of disparos) {
+    const pct = (quantos / linhas.length) * 100
+    if (pct > limites.tetoDeSinalPct) suprimidos.push({ sinal, disparos: quantos, pct })
+  }
+  if (suprimidos.length === 0) return { linhas, suprimidos }
+
+  const fora = new Set(suprimidos.map((s) => s.sinal))
+  return {
+    linhas: linhas.map((l) => ({ ...l, anomalias: l.anomalias.filter((a) => !fora.has(a)) })),
+    // O que mexe em mais avaliações primeiro.
+    suprimidos: suprimidos.sort((a, b) => b.disparos - a.disparos),
+  }
+}
+
+export async function auditar(): Promise<{
+  linhas: LinhaDaAuditoria[]
+  suprimidos: SinalSuprimido[]
+}> {
   const { casas, avaliacoes } = await lerTudo()
-  return calcularAuditoria(casas, avaliacoes)
+  return suprimirSinaisDemais(calcularAuditoria(casas, avaliacoes))
 }
 
 /* ------------------------------------------------------------------------ */

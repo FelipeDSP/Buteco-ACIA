@@ -33,7 +33,7 @@ export default async function Auditoria({
   searchParams: Promise<{ ver?: string; casa?: string }>
 }) {
   const { ver, casa } = await searchParams
-  const linhas = await auditar()
+  const { linhas, suprimidos } = await auditar()
   const limites = limiares()
 
   const combina = (linha: (typeof linhas)[number], filtro: Filtro) => {
@@ -99,6 +99,39 @@ export default async function Auditoria({
         <Numero valor={ipsDistintos} rotulo="IPs distintos" />
         <Numero valor={anuladas} rotulo="Anuladas" />
       </Numeros>
+
+      {/* O marcador que se desligou não some em silêncio: sem este aviso, a
+          Comissão leria ausência de alerta como ausência de problema. */}
+      {suprimidos.length > 0 ? (
+        <section className="mt-6 rounded-2xl bg-creme p-5">
+          <h2 className="font-display text-[15.5px] font-extrabold">
+            {suprimidos.length === 1 ? 'Um marcador foi desligado' : `${suprimidos.length} marcadores foram desligados`}
+          </h2>
+          <p className="mt-1.5 max-w-[72ch] text-[13px] text-tinta-3">
+            Acendiam em mais de {limites.tetoDeSinalPct}% das avaliações, e alerta que dispara em
+            quase tudo não é sensível — é inútil, e convida a anular voto legítimo. Voltam sozinhos
+            quando pararem de disparar tanto.
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5 text-[13.5px]">
+            {suprimidos.map((s) => (
+              <li key={s.sinal} className="border-t border-risco pt-1.5">
+                <b className="font-display font-extrabold">{ROTULO[s.sinal as Filtro]}</b> —
+                acenderia em <b className="tabular-nums">{s.disparos}</b> avaliações,{' '}
+                <b className="tabular-nums">{Math.round(s.pct)}%</b> do total
+              </li>
+            ))}
+          </ul>
+          {suprimidos.some((s) => s.sinal.startsWith('ip')) ? (
+            <p className="mt-3 max-w-[72ch] text-[12.5px] text-tinta-3">
+              <b className="text-tinta">Os sinais de IP dependem de um endereço que identifique
+              quem votou</b>, e nesta edição ele não identifica: as {linhas.length} avaliações
+              chegaram por apenas {ipsDistintos} endereços, todos de intermediário. Com tão poucos,
+              cada um aparece em todas as casas legitimamente. Resolver isso é o que traz estes
+              marcadores de volta.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <LegendaDeSinais limites={limites} />
 

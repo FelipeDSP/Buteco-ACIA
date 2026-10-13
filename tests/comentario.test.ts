@@ -74,6 +74,9 @@ const LIMITES: Limiares = {
   rajadaMinima: 8,
   janelaDeRajadaMin: 5,
   comentariosIguais: 3,
+  // 100 = não suprime nada. Estes testes seguram a MARCAÇÃO; a supressão
+  // por excesso tem os seus próprios, em `tests/sinal-demais.test.ts`.
+  tetoDeSinalPct: 100,
 }
 
 const daCasa = (id: string) => ({

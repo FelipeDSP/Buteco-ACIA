@@ -20,7 +20,7 @@ export async function GET() {
   const semSessao = await recusarSemSessao()
   if (semSessao) return semSessao
 
-  const linhas = await auditar()
+  const { linhas } = await auditar()
 
   const quando = (iso: string) =>
     new Date(iso).toLocaleString('pt-BR', {
