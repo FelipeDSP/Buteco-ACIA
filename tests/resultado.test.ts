@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   divulgacaoAtrasada,
+  faseDaVitrine,
   podioVisivel,
   publicacaoEhParcial,
   republicarEhDelicado,
@@ -117,4 +118,36 @@ describe('as bordas exatas da divulgação', () => {
       expect(podioVisivel(publicado(false))).toBe(false)
     },
   )
+})
+
+/**
+ * O hero da home segue o interruptor, não o relógio.
+ *
+ * Os dois erros abaixo já existiram no site. O segundo é o que o calendário
+ * produz sozinho: em 14/10 `faseAtual` vira `divulgado` sem ninguém publicar
+ * nada, e a home anunciava "conheça os vencedores" com um botão levando a uma
+ * página que dizia que o resultado ainda não tinha saído.
+ */
+describe('a fase que a vitrine conta', () => {
+  it('pódio no ar manda, mesmo antes da data de divulgação', () => {
+    expect(faseDaVitrine('festival', true)).toBe('divulgado')
+    expect(faseDaVitrine('apuracao', true)).toBe('divulgado')
+    expect(faseDaVitrine('pre-festival', true)).toBe('divulgado')
+  })
+
+  it('data de divulgação sem pódio no ar NÃO anuncia vencedor', () => {
+    expect(faseDaVitrine('divulgado', false)).toBe('apuracao')
+  })
+
+  it('fora disso a fase do calendário passa intacta', () => {
+    expect(faseDaVitrine('pre-festival', false)).toBe('pre-festival')
+    expect(faseDaVitrine('festival', false)).toBe('festival')
+    expect(faseDaVitrine('apuracao', false)).toBe('apuracao')
+  })
+
+  it('nunca devolve "divulgado" com o pódio fora do ar', () => {
+    for (const fase of ['pre-festival', 'festival', 'apuracao', 'divulgado'] as const) {
+      expect(faseDaVitrine(fase, false)).not.toBe('divulgado')
+    }
+  })
 })

@@ -2,7 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { EDICAO, CALENDARIO } from '@/data/edicao'
-import { hoje, mostrarVencedores } from '@/lib/fase'
+import { hoje, mostrarVencedores, type Fase } from '@/lib/fase'
 
 /**
  * O pódio publicado — retrato congelado, nunca cálculo ao vivo.
@@ -54,6 +54,28 @@ export const EDICAO_ATUAL = String(EDICAO.ano)
  */
 export function podioVisivel(publicado: { visivel?: boolean }[]): boolean {
   return publicado.some((l) => l.visivel === true)
+}
+
+/**
+ * A fase que a vitrine da home deve contar.
+ *
+ * Quem sabe que o resultado saiu é o **interruptor**, nunca o calendário — a
+ * mesma regra de `podioVisivel`. A fase derivada da data erra nos dois
+ * sentidos, e os dois já aconteceram:
+ *
+ * - **Publicado antes de 14/10:** a home continuaria chamando para votar com o
+ *   pódio no ar, e o único caminho até ele seria digitar a URL.
+ * - **14/10 chegou e nada publicado:** `faseAtual` vira `divulgado` sozinha, e
+ *   a home anunciava "o público decidiu, conheça os vencedores" com um botão
+ *   "Ver o resultado" que levava a uma página dizendo que o resultado ainda não
+ *   saiu. É a home mentindo por conta do relógio.
+ *
+ * Sem pódio no ar depois da data, o que vale é `apuracao`: a votação acabou
+ * mesmo, e a contagem é o que de fato está acontecendo.
+ */
+export function faseDaVitrine(fase: Fase, noAr: boolean): Fase {
+  if (noAr) return 'divulgado'
+  return fase === 'divulgado' ? 'apuracao' : fase
 }
 
 /**

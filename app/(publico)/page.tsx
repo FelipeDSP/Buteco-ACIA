@@ -16,7 +16,7 @@ import {
   listarCasas,
 } from '@/lib/dados'
 import { contagem, type Fase } from '@/lib/fase'
-import { resultadoNoAr } from '@/lib/resultado'
+import { faseDaVitrine, resultadoNoAr } from '@/lib/resultado'
 
 /* A home lê busca e filtro da URL, então é renderizada a cada visita — o que
    também mantém a contagem do calendário sempre certa, sem esperar deploy. */
@@ -117,13 +117,12 @@ export default async function Home({ searchParams }: Props) {
 
   const estado = contagem()
   /**
-   * Se o resultado já está no ar, o hero fala dele — mesmo que a data de
-   * divulgação ainda não tenha chegado, porque a Comissão pode ter liberado
-   * antes. Sem isto a home continuaria chamando para votar com o pódio
-   * publicado, e o único caminho até ele seria digitar a URL.
+   * O hero fala do resultado quando ele **está no ar**, e não quando o
+   * calendário diz que deveria estar. A regra mora em `faseDaVitrine`, junto
+   * da do pódio, e está travada em `tests/resultado.test.ts`.
    */
   const vencedoresNoAr = await resultadoNoAr()
-  const texto = chamadaDaFase(vencedoresNoAr ? 'divulgado' : estado.fase)
+  const texto = chamadaDaFase(faseDaVitrine(estado.fase, vencedoresNoAr))
 
   const bairros = await listarBairros()
   // Bairro inventado na URL não filtra nada: cai para "todos".
