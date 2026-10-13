@@ -555,6 +555,8 @@ type ObservacaoBruta = {
   texto: string
   /** Data, sem hora: `AAAA-MM-DD`. */
   criada_em: string
+  /** Suprimida pela Comissão. A linha fica no banco; ver `db/2026-10-13`. */
+  oculta_em: string | null
 }
 
 type CasaDaObservacao = {
@@ -621,7 +623,12 @@ function embaralhar<T>(itens: T[], sortear: () => number): T[] {
  */
 export function calcularObservacoes(
   casas: CasaDaObservacao[],
-  observacoes: ObservacaoBruta[],
+  /**
+   * Sem `oculta_em` de propósito: quem filtra a oculta é o leitor, não a
+   * conta. A função pura recebe o que já está visível, e assim continua
+   * testável sem conhecer a regra de moderação.
+   */
+  observacoes: Pick<ObservacaoBruta, 'id' | 'casa_id' | 'texto' | 'criada_em'>[],
   limites: Limiares = limiares(),
   sortear: () => number = Math.random,
 ): ObservacoesDaCasa[] {
@@ -674,14 +681,20 @@ export async function lerObservacoes(): Promise<ObservacoesDaCasa[]> {
       .select('id, slug, nome, prato, prato_confirmado, foto_url, ativa')
       .order('nome'),
     // Sem `order`: a ordem de chegada não precisa nem sair do banco.
-    lerTudoDe<ObservacaoBruta>('observacoes', 'id, casa_id, texto, criada_em'),
+    lerTudoDe<ObservacaoBruta>('observacoes', 'id, casa_id, texto, criada_em, oculta_em'),
   ])
 
   if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
 
+  /**
+   * Oculta sai de tudo que a ACIA vê e entrega: da lista, da contagem e do
+   * CSV. A linha continua no banco como lastro da decisão — é a mesma regra
+   * de anular avaliação, e vale aqui porque suprimir o que um cliente
+   * escreveu é decisão que pode ser questionada.
+   */
   return calcularObservacoes(
     (casas.data ?? []) as CasaDaObservacao[],
-    observacoes,
+    observacoes.filter((o) => o.oculta_em === null),
   ).filter(
     /**
      * A grade é das casas ativas. A casa inativa entra só se tiver texto —
@@ -709,6 +722,10 @@ type AvaliacaoDeGarcomBruta = {
   nota: number
   /** Data, sem hora: `AAAA-MM-DD`. */
   criada_em: string
+  /** Suprimida pela Comissão. A linha fica no banco. */
+  oculta_em: string | null
+  /** Grafia que a casa corrigiu. Substitui `nome` em todas as contas. */
+  nome_corrigido: string | null
 }
 
 export type Garcom = {
@@ -716,6 +733,8 @@ export type Garcom = {
   nome: string
   /** Outras grafias que caíram no mesmo nome, para a casa conferir. */
   grafias: string[]
+  /** Os valores crus no banco — é por eles que o painel corrige ou oculta. */
+  brutos: string[]
   avaliacoes: number
   /** Média das notas, de 0 a 5, com uma casa decimal. */
   media: number
@@ -754,7 +773,8 @@ export type GarconsDaCasa = {
  */
 export function calcularGarcons(
   casas: CasaDaObservacao[],
-  avaliacoes: AvaliacaoDeGarcomBruta[],
+  /** Idem: a oculta já saiu e o nome corrigido já entrou no lugar. */
+  avaliacoes: Pick<AvaliacaoDeGarcomBruta, 'casa_id' | 'nome' | 'nota'>[],
 ): GarconsDaCasa[] {
   return casas
     .map((casa) => {
@@ -764,11 +784,12 @@ export function calcularGarcons(
         daCasa.map((a) => ({ nome: a.nome, nota: a.nota })),
       )
 
-      const garcons: Garcom[] = grupos.map(({ nome, grafias, notas }) => {
+      const garcons: Garcom[] = grupos.map(({ nome, grafias, brutos, notas }) => {
         const soma = notas.reduce((total, n) => total + n, 0)
         return {
           nome,
           grafias,
+          brutos,
           avaliacoes: notas.length,
           media: Math.round((soma / notas.length) * 10) / 10,
         }
@@ -807,13 +828,25 @@ export async function lerGarcons(): Promise<GarconsDaCasa[]> {
       .order('nome'),
     lerTudoDe<AvaliacaoDeGarcomBruta>(
       'avaliacoes_garcom',
-      'id, casa_id, nome, nota, criada_em',
+      'id, casa_id, nome, nota, criada_em, oculta_em, nome_corrigido',
     ),
   ])
 
   if (casas.error) throw new Error(`Falha ao ler casas: ${casas.error.message}`)
 
-  return calcularGarcons((casas.data ?? []) as CasaDaObservacao[], avaliacoes).filter(
+  /**
+   * Ocultar e corrigir resolvem casos diferentes, e confundi-los custa nota.
+   *
+   * "Junior rosca doce" era o Junior com apelido de zoação, e as duas notas 5
+   * eram dele: ocultar as linhas tiraria do Junior duas avaliações que ele
+   * recebeu. Corrigir troca só o rótulo e a nota segue contando. Ocultar fica
+   * para o que não deve existir no relatório de jeito nenhum.
+   */
+  const visiveis = avaliacoes
+    .filter((a) => a.oculta_em === null)
+    .map((a) => (a.nome_corrigido ? { ...a, nome: a.nome_corrigido } : a))
+
+  return calcularGarcons((casas.data ?? []) as CasaDaObservacao[], visiveis).filter(
     (c) => c.ativa || c.total > 0,
   )
 }

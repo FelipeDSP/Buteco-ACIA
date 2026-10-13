@@ -1,3 +1,4 @@
+import Moderar from '@/components/painel/Moderar'
 import Link from 'next/link'
 import FotoPrato from '@/components/FotoPrato'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela, Vazio } from '@/components/painel/Peças'
@@ -198,6 +199,12 @@ function UmaCasa({ casa, limiar }: { casa: ObservacoesDaCasa; limiar: number }) 
                   ) : null}
                 </div>
                 <p className="text-[15px] whitespace-pre-wrap">{item.texto}</p>
+                {/* Recolhido de propósito: esta aba existe para a ACIA LER a
+                    devolutiva, não para limpá-la. Suprimir o que um cliente
+                    escreveu tem de custar um clique a mais que lê-lo. */}
+                <p className="mt-1.5">
+                  <Moderar alvo="observacao" id={item.id} />
+                </p>
               </li>
             ))}
           </ul>

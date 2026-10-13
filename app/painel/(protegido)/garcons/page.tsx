@@ -1,3 +1,4 @@
+import Moderar from '@/components/painel/Moderar'
 import Link from 'next/link'
 import FotoPrato from '@/components/FotoPrato'
 import { Bloco, Numero, Numeros, Selo, TopoDaTela, Vazio } from '@/components/painel/Peças'
@@ -185,6 +186,13 @@ function UmaCasa({ casa }: { casa: GarconsDaCasa }) {
                           também escrito: {g.grafias.join(', ')}
                         </span>
                       ) : null}
+                      {/* Corrigir vale para todas as linhas desta casa com
+                          estas grafias — o cliente seguinte escreveu o mesmo
+                          apelido, e consertar de uma em uma deixaria metade
+                          do problema no relatório. */}
+                      <span className="mt-1 block">
+                        <Moderar alvo="garcom" casaId={casa.id} grafias={g.brutos} />
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-right tabular-nums">{g.avaliacoes}</td>
                     <td className="px-5 py-3.5 text-right font-display text-[17px] font-extrabold text-marinho tabular-nums">

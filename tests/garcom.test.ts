@@ -136,7 +136,14 @@ describe('a conta do painel', () => {
   it('o que chega ao painel não carrega CPF, IP, hora nem a lista de notas', () => {
     const [c] = calcularGarcons([casa('a')], [av('a', 'Ana', 4), av('a', 'Ana', 2, 1)])
     const chaves = Object.keys(c.garcons[0]).sort()
-    expect(chaves).toEqual(['avaliacoes', 'grafias', 'media', 'nome'])
+    /**
+     * Lista branca, não lista negra: campo novo no item do painel tem de
+     * passar por aqui. `brutos` são as grafias exatamente como estão no banco
+     * — a mesma classe de dado que `grafias`, que o cliente digitou. Entram
+     * porque é por elas que o painel corrige ou oculta a linha certa; a
+     * exibida vem aparada e não casaria.
+     */
+    expect(chaves).toEqual(['avaliacoes', 'brutos', 'grafias', 'media', 'nome'])
     // Sem a sequência de notas: em ordem de chegada ela reconstrói quem
     // passou pela casa, mesmo sem hora.
     expect(JSON.stringify(c)).not.toMatch(/cpf|ip|criada_em|notas/)

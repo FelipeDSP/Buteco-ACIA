@@ -232,6 +232,16 @@ export type GrupoDeNome = {
   nome: string
   /** Outras grafias juntadas, da mais usada para a menos. */
   grafias: string[]
+  /**
+   * Os valores **exatamente como estão no banco**, sem aparar nada.
+   *
+   * `nome` e `grafias` passaram por `paraExibir`, que tira pontuação e emoji
+   * da borda: `Jackson,` vira `Jackson`. Quem for corrigir ou ocultar no
+   * banco precisa casar pelo valor original, senão deixa metade das linhas
+   * para trás — e a lista do painel mostraria o nome consertado ao lado do
+   * mesmo nome torto.
+   */
+  brutos: string[]
   notas: number[]
 }
 
@@ -254,6 +264,8 @@ type Nucleo = {
   chave: string
   /** Grafias que o cliente digitou sozinhas, sem frase em volta. */
   grafias: Map<string, number>
+  /** Valores crus, do jeito que estão no banco. */
+  brutos: Set<string>
   notas: number[]
 }
 
@@ -315,11 +327,17 @@ export function agruparNomes(entradas: { nome: string; nota: number }[]): {
   let semNome = 0
 
   const guardar = (chave: string, original: string, nota: number, limpo: boolean) => {
-    const nucleo = nucleos.get(chave) ?? { chave, grafias: new Map<string, number>(), notas: [] }
+    const nucleo = nucleos.get(chave) ?? {
+      chave,
+      grafias: new Map<string, number>(),
+      brutos: new Set<string>(),
+      notas: [],
+    }
     if (limpo) {
       const comoVeio = paraExibir(original)
       if (comoVeio) nucleo.grafias.set(comoVeio, (nucleo.grafias.get(comoVeio) ?? 0) + 1)
     }
+    nucleo.brutos.add(original)
     nucleo.notas.push(nota)
     nucleos.set(chave, nucleo)
   }
@@ -402,12 +420,18 @@ export function agruparNomes(entradas: { nome: string; nota: number }[]): {
     const raiz = destino.get(nucleo.chave) ?? nucleo.chave
     const alvo = finais.get(raiz)
     if (!alvo) {
-      finais.set(raiz, { chave: raiz, grafias: new Map(nucleo.grafias), notas: [...nucleo.notas] })
+      finais.set(raiz, {
+        chave: raiz,
+        grafias: new Map(nucleo.grafias),
+        brutos: new Set(nucleo.brutos),
+        notas: [...nucleo.notas],
+      })
       continue
     }
     for (const [grafia, n] of nucleo.grafias) {
       alvo.grafias.set(grafia, (alvo.grafias.get(grafia) ?? 0) + n)
     }
+    for (const bruto of nucleo.brutos) alvo.brutos.add(bruto)
     alvo.notas.push(...nucleo.notas)
   }
 
@@ -418,6 +442,7 @@ export function agruparNomes(entradas: { nome: string; nota: number }[]): {
     return {
       nome: ordenadas.length > 0 ? ordenadas[0][0] : capitalizar(n.chave),
       grafias: ordenadas.slice(1).map(([g]) => g),
+      brutos: [...n.brutos],
       notas: n.notas,
     }
   })
