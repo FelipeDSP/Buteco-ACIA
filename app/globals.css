@@ -250,3 +250,54 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Relatório da casa (/painel/relatorio/[slug])
+   
+   Uma folha para a ACIA entregar ao estabelecimento. O que é navegação some
+   na impressão; o cartão vira a página.
+   --------------------------------------------------------------------------- */
+
+.rotulo-rel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-tinta-3);
+  margin-bottom: 0.15rem;
+}
+
+.titulo-rel {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.25rem;
+}
+
+@media print {
+  /* Fundo creme e cartão elevado não existem no papel: gastam tinta e o
+     contraste do texto já é o da tela. */
+  .naoimprime { display: none !important; }
+
+  html, body { background: #fff !important; }
+
+  .wrap { max-width: none !important; padding: 0 !important; }
+
+  .folha {
+    background: #fff !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* As observações podem ser trezentas — começam em folha nova e nenhuma
+     delas é partida no meio pela quebra. */
+  .quebrapagina { break-before: page; }
+  .quebrapagina li { break-inside: avoid; }
+
+  /* A barra do critério é informação, não enfeite: sem isto o navegador
+     descarta o preenchimento e sobra uma trilha vazia. */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  @page { margin: 14mm; }
+}

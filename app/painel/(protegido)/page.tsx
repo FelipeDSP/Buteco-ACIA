@@ -17,6 +17,21 @@ import { NOTA_MAXIMA_POR_CRITERIO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL } f
 export const dynamic = 'force-dynamic'
 
 const nota = (v: number | null) => (v === null ? '—' : v.toFixed(2).replace('.', ','))
+
+/**
+ * A nota final sai com **três** decimais, e o motivo tem nome.
+ *
+ * Com duas, Caravellas (19,9209) e Buteco F.N.M (19,9154) aparecem os dois
+ * como "19,92" — dois primeiros colocados com o mesmo número na tela e na
+ * premiação, e nada explicando a ordem. A ACIA chegou a perguntar se era
+ * empate: não é, e o Art. 19 nem é acionado, mas quem lê a tela não tem como
+ * saber. O critério de desempate (sabor) apontaria para o OUTRO, então a
+ * dúvida é cara.
+ *
+ * O critério individual continua com duas casas: ele vai de 0 a 5 e uma
+ * terceira decimal ali não separa nada.
+ */
+const notaFinal = (v: number | null) => (v === null ? '—' : v.toFixed(3).replace('.', ','))
 const decimal = (v: number) => v.toFixed(1).replace('.', ',')
 
 /** Proporção sobre o máximo do regulamento (20 pontos), para comparar de relance. */
@@ -81,7 +96,7 @@ export default async function Apuracao() {
               candidatas={podio.map((l) => ({
                 posicao: l.posicao,
                 nome: l.nome,
-                notaFinal: nota(l.mediaGeral),
+                notaFinal: notaFinal(l.mediaGeral),
                 avaliacoes: l.avaliacoes,
               }))}
             />
@@ -172,7 +187,7 @@ export default async function Apuracao() {
                       linha.posicao === 1 ? 'text-branco' : 'text-tinta'
                     }`}
                   >
-                    {nota(linha.mediaGeral)}
+                    {notaFinal(linha.mediaGeral)}
                   </b>
                   <span className="text-[13px]">
                     de {NOTA_MAXIMA_TOTAL}, em {linha.avaliacoes}{' '}
@@ -220,6 +235,7 @@ export default async function Apuracao() {
                   </th>
                 ))}
                 <th className="px-5 py-2.5 text-right font-semibold">Avaliações</th>
+                <th className="px-5 py-2.5 text-right font-semibold">Relatório</th>
               </tr>
             </thead>
             <tbody>
@@ -269,8 +285,8 @@ export default async function Apuracao() {
                   </td>
                   <td className="py-3 pr-3">
                     <span className="flex items-center gap-2.5">
-                      <b className="w-[48px] font-display text-[16px] font-extrabold">
-                        {nota(linha.mediaGeral)}
+                      <b className="w-[62px] font-display text-[16px] font-extrabold">
+                        {notaFinal(linha.mediaGeral)}
                       </b>
                       {/* Barra para comparar de relance, sem ler número por número. */}
                       <span
@@ -298,6 +314,21 @@ export default async function Apuracao() {
                         </Selo>
                       </span>
                     ) : null}
+                  </td>
+                  {/* A devolutiva que a ACIA entrega ao estabelecimento: nota,
+                      critérios, equipe mais avaliada e o que os clientes
+                      escreveram, numa folha para imprimir. */}
+                  <td className="px-5 py-3 text-right">
+                    {linha.avaliacoes > 0 ? (
+                      <Link
+                        href={`/painel/relatorio/${linha.slug}`}
+                        className="inline-block py-1 text-[13.5px] font-bold text-marinho underline underline-offset-2"
+                      >
+                        abrir
+                      </Link>
+                    ) : (
+                      <span className="text-[13px] text-tinta-3">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
