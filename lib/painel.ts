@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { situacaoDaCasa } from '@/lib/horarios'
 import { PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 import type { Horarios } from '@/lib/tipos'
+import { agruparNomes, type SugestaoDeUniao } from '@/lib/nomes'
 
 /**
  * Leitura de dados do painel. Tudo com `service_role`, porque `avaliacoes` e
@@ -662,6 +663,16 @@ export type GarconsDaCasa = {
   /** Quantas avaliações de atendimento a casa recebeu. */
   total: number
   garcons: Garcom[]
+  /**
+   * Avaliações cujo campo não nomeava ninguém — "Não sei", "Gerente",
+   * "Ótimo", um CPF. Ficam contadas e fora da lista: ranquear "Dono" como
+   * funcionário seria pior que deixar a soma sem dono.
+   */
+  semNome: number
+  /** Avaliações que citaram mais de uma pessoa, com o texto como veio. */
+  varios: { nome: string; nota: number }[]
+  /** Grafias que **podem** ser a mesma pessoa. Quem decide é a casa. */
+  sugestoes: SugestaoDeUniao[]
 }
 
 /**
@@ -681,23 +692,15 @@ export function calcularGarcons(
     .map((casa) => {
       const daCasa = avaliacoes.filter((a) => a.casa_id === casa.id)
 
-      const grupos = new Map<string, { grafias: Map<string, number>; notas: number[] }>()
-      for (const a of daCasa) {
-        const chave = normalizar(a.nome)
-        const grupo = grupos.get(chave) ?? { grafias: new Map<string, number>(), notas: [] as number[] }
-        grupo.grafias.set(a.nome, (grupo.grafias.get(a.nome) ?? 0) + 1)
-        grupo.notas.push(a.nota)
-        grupos.set(chave, grupo)
-      }
+      const { grupos, semNome, varios, sugestoes } = agruparNomes(
+        daCasa.map((a) => ({ nome: a.nome, nota: a.nota })),
+      )
 
-      const garcons: Garcom[] = [...grupos.values()].map(({ grafias, notas }) => {
-        const ordenadas = [...grafias.entries()].sort(
-          (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'),
-        )
+      const garcons: Garcom[] = grupos.map(({ nome, grafias, notas }) => {
         const soma = notas.reduce((total, n) => total + n, 0)
         return {
-          nome: ordenadas[0][0],
-          grafias: ordenadas.slice(1).map(([grafia]) => grafia),
+          nome,
+          grafias,
           avaliacoes: notas.length,
           media: Math.round((soma / notas.length) * 10) / 10,
         }
@@ -719,6 +722,9 @@ export function calcularGarcons(
         ativa: casa.ativa,
         total: daCasa.length,
         garcons,
+        semNome,
+        varios,
+        sugestoes,
       }
     })
     .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'))

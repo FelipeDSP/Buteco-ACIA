@@ -193,11 +193,79 @@ function UmaCasa({ casa }: { casa: GarconsDaCasa }) {
         )}
       </Bloco>
 
+      {/* As uniões que o painel NÃO fez. Ficam aqui porque a decisão é da
+          casa: se forem dois funcionários, juntar entrega uma média que não é
+          de nenhum dos dois — e nenhuma tela acusaria, porque o número
+          continuaria parecendo um número. */}
+      {casa.sugestoes.length > 0 ? (
+        <section className="mt-6 rounded-2xl bg-claro p-5">
+          <h2 className="font-display text-[16px] font-extrabold">Podem ser a mesma pessoa</h2>
+          <p className="mt-1.5 max-w-[62ch] text-[13px] text-tinta-3">
+            O painel não juntou estas por conta própria — a diferença não é só de grafia, e quem
+            sabe se é a mesma pessoa é a casa. Se for, some as duas linhas da tabela acima.
+          </p>
+          <ul className="mt-4 flex flex-col gap-2">
+            {casa.sugestoes.map((su) => (
+              <li
+                key={`${su.nomes[0]}|${su.nomes[1]}`}
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-risco pt-2 text-[14px]"
+              >
+                <b className="font-display font-extrabold">{su.nomes[0]}</b>
+                <span className="text-tinta-3">({su.avaliacoes[0]})</span>
+                <span className="text-tinta-3">+</span>
+                <b className="font-display font-extrabold">{su.nomes[1]}</b>
+                <span className="text-tinta-3">({su.avaliacoes[1]})</span>
+                <span className="text-[12px] text-tinta-3">
+                  {su.via
+                    ? `— aparecem juntos em "${su.via}"`
+                    : su.motivo === 'sobrenome'
+                      ? '— um parece sobrenome do outro'
+                      : '— uma letra de diferença'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {casa.semNome > 0 || casa.varios.length > 0 ? (
+        <section className="mt-4 rounded-2xl bg-creme p-5">
+          <h2 className="font-display text-[15px] font-extrabold">Fora da lista por nome</h2>
+          <p className="mt-1 text-[13px] text-tinta-3">
+            Contam no total de {casa.total}, mas não dá para atribuir a ninguém.
+          </p>
+          <ul className="mt-3 flex flex-col gap-1.5 text-[13.5px]">
+            {casa.semNome > 0 ? (
+              <li>
+                <b className="tabular-nums">{casa.semNome}</b> sem nome identificável — &ldquo;não
+                sei&rdquo;, cargo (&ldquo;gerente&rdquo;), elogio solto ou um número
+              </li>
+            ) : null}
+            {casa.varios.length > 0 ? (
+              <li>
+                <b className="tabular-nums">{casa.varios.length}</b> citando mais de uma pessoa:{' '}
+                <span className="text-tinta-3">
+                  {casa.varios
+                    .slice(0, 6)
+                    .map((v) => `“${v.nome.trim()}”`)
+                    .join(', ')}
+                  {casa.varios.length > 6 ? ` e mais ${casa.varios.length - 6}` : ''}
+                </span>
+                . A nota não foi dividida entre elas — isso inventaria avaliações que ninguém deu
+              </li>
+            ) : null}
+          </ul>
+        </section>
+      ) : null}
+
       <p className="mt-6 max-w-[78ch] text-[12.5px] text-tinta-3">
-        <b className="text-tinta">O nome é o que o cliente escreveu.</b> Grafias que diferem só em
-        acento, maiúscula ou espaço são juntadas e listadas como &ldquo;também escrito&rdquo;;
-        &ldquo;João&rdquo; e &ldquo;João Pedro&rdquo; ficam separados — quem sabe se são a mesma
-        pessoa é a casa. Uma nota só não é média de nada: olhe o volume junto.
+        <b className="text-tinta">O nome é o que o cliente escreveu</b>, e ele digitou no celular
+        depois de comer — a mesma pessoa chega escrita de vários jeitos. O painel junta sozinho
+        quando é a <b className="text-tinta">mesma palavra com outra ortografia</b> (&ldquo;Luiz&rdquo;
+        e &ldquo;Luis&rdquo;, &ldquo;Thalisson&rdquo; e &ldquo;Talison&rdquo;) e lista o resultado em
+        &ldquo;também escrito&rdquo;. Quando os nomes são só{' '}
+        <b className="text-tinta">parecidos</b>, não junta: vira sugestão, porque no mesmo bar pode
+        haver duas pessoas de nome próximo. Uma nota só não é média de nada: olhe o volume junto.
       </p>
     </div>
   )

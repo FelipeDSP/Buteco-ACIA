@@ -87,7 +87,11 @@ describe('a conta do painel', () => {
     )
     expect(c.garcons).toHaveLength(1)
     expect(c.garcons[0].nome).toBe('João') // a grafia mais frequente
-    expect(c.garcons[0].grafias).toEqual([' JOÃO ', 'joao'])
+    // A grafia listada vai aparada: o espaço que o cliente deixou em volta não
+    // é jeito de escrever o nome, e guardá-lo fazia a mesma pessoa aparecer
+    // duas vezes na linha "também escrito".
+    // Mesma frequência: o desempate é alfabético, e 'joao' vem antes de 'JOÃO'.
+    expect(c.garcons[0].grafias).toEqual(['joao', 'JOÃO'])
     expect(c.garcons[0].avaliacoes).toBe(4)
     expect(c.garcons[0].media).toBe(4.3) // (5+4+3+5)/4 = 4.25 → uma casa decimal
   })

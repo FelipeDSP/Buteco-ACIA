@@ -651,12 +651,58 @@ nela não derruba o voto (mesmo raciocínio da observação). SQL em
 
 **A aba Garçons do painel mostra agregados, não notas uma a uma.** Grade por
 casa, como Observações; ao clicar, a lista **por nome** com quantas notas e a
-média (0 a 5, uma decimal), ordenada por média e depois por volume. Grafias
-que diferem só em acento, caixa ou espaço são juntadas — "João", "joao" e
-"JOAO " são a mesma pessoa escrita por três clientes — e as demais aparecem
-como "também escrito"; "João" e "João Pedro" ficam separados, porque quem sabe
-se é a mesma pessoa é a casa. A sequência de notas não sai nem no CSV: em
-ordem de chegada ela reconstrói quem passou pela casa, mesmo sem hora.
+média (0 a 5, uma decimal), ordenada por média e depois por volume. A sequência
+de notas não sai nem no CSV: em ordem de chegada ela reconstrói quem passou
+pela casa, mesmo sem hora.
+
+#### O nome vem do cliente, e a mesma pessoa chega escrita de oito formas
+
+O campo é digitado no celular depois de comer, não vem de cadastro. No Bar do
+Fubá eram **87 nomes para ~15 funcionários**: `Thalisson` tinha 23 avaliações,
+e `Thalison`, `Talisson`, `Talison`, `Thalis`, `Talis`, `Talisom`, `Talyson`,
+`Thayson` e `Taison` tinham outras 20 espalhadas. A lógica mora em
+`lib/nomes.ts`, separada e pura, travada em `tests/nomes.test.ts`.
+
+**O risco de juntar é maior que o de separar**, e é isso que desenha a regra:
+no mesmo bar trabalham um `Tailan` **e** um `Thalisson`. Juntar por semelhança
+solta entrega ao dono uma média que não é de nenhum dos dois — e nada acusa,
+porque o número continua parecendo um número. Daí os dois níveis:
+
+- **Junta sozinho** quando é a mesma palavra com outra ortografia, pela chave
+  fonética do português: `Luiz`/`Luis`, `Nathalia`/`Natalia`,
+  `Jhonatan`/`Jonathan`, `Carina`/`Karina`, `Shelton`/`Chelton`,
+  `Thalisson`/`Talison`. O resultado sai em "também escrito".
+- **Sugere, sem aplicar**, quando os nomes só são *parecidos* — uma letra de
+  diferença: `Hector`(88)/`Heitor`(27), `Kauan`/`Kauã`, `Edivanio`/`Edvanio`.
+  **Quem sabe é a casa.** A exceção é a grafia com até `PARECIDO_JUNTA_ATE`
+  (3) avaliações, que entra junto: errar ali não move a média de quem tem
+  dezenas, e deixar de fora é que daria duas linhas para a mesma pessoa.
+
+**A junção é em estrela, nunca em cadeia.** `Tailan`→`Dailan` é uma letra e
+`Dailan`→`Darlan` é uma letra, mas `Tailan`→`Darlan` são duas — com união
+transitiva o Darlan caía dentro do Tailan. Grafia rara encosta em núcleo
+grande; núcleo grande não encosta em ninguém.
+
+**Nome composto liga nomes soltos, e esse é o caso que mais vale.** Na Cia
+Petiscaria, `Jhonatan Vieira de Souza` apareceu **uma** vez — e é só por ela
+que se sabe que `Vieira` (67) e `Jhonatan` (60) são a mesma pessoa: **127
+avaliações partidas em duas linhas.** A sugestão aponta os dois nomes grandes
+citando a grafia que revelou, porque mostrar "1 + 67" esconderia o que
+importa.
+
+**Duas passadas, e a segunda é obrigatória.** "Atendimento excelente.
+Funcionário Marcos" é frase, e só se sabe que nomeia o Marcos *depois* de
+saber que existe um Marcos naquela casa. Sem ela, ou a frase é descartada e a
+avaliação se perde, ou qualquer palavra dela vira garçom — foi assim que
+"Super bem atendido, excepcionais." apareceu como funcionário do Buck Burger.
+Frase conta a avaliação e **nunca** a grafia: a lista "também escrito" vai
+para o dono do bar e não pode vir cheia de "Daniel é nota 10!".
+
+**O que não é nome fica contado e fora da lista.** "Não sei", cargo
+("Gerente", "Dono"), elogio solto ("Ótimo", "Top"), um CPF — eram ~20% do
+campo. Ranquear "Dono" como funcionário é pior que deixar a soma sem dono.
+Campo com mais de uma pessoa ("Daniel e Tailan") também sai da lista, e a nota
+**não** é dividida entre elas: isso inventaria avaliações que ninguém deu.
 
 A conta está em `calcularGarcons` (`lib/painel.ts`), travada em
 `tests/garcom.test.ts` — incluindo que o item entregue ao painel não carrega
