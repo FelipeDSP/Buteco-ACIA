@@ -40,7 +40,10 @@ export default async function LayoutDoPainel({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen bg-branco">
-      <header className="bg-marinho-2 text-branco">
+      {/* Fora do papel. O relatório da casa e o da apuração saem daqui pelo
+          botão de imprimir, e a barra do painel — marca, abas e "Sair" — ia
+          junto no PDF que a ACIA manda para o dono do bar. */}
+      <header className="bg-marinho-2 text-branco naoimprime">
         <div className="wrap flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <b className="font-display text-[17px] font-extrabold">Painel · Boteco ACIA</b>

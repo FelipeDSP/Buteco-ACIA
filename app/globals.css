@@ -284,6 +284,12 @@
 
   .wrap { max-width: none !important; padding: 0 !important; }
 
+  /* O `py-9` do <main> do painel vira margem morta no topo da folha, e o
+     `min-h-screen` do container força uma página inteira mesmo com meia
+     folha de conteúdo — sai uma segunda página em branco. */
+  main { padding: 0 !important; }
+  .min-h-screen { min-height: 0 !important; }
+
   .folha {
     background: #fff !important;
     padding: 0 !important;
