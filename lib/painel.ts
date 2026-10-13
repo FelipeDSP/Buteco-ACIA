@@ -43,6 +43,68 @@ export type LinhaDaApuracao = {
   desclassificadaMotivo: string | null
 }
 
+/**
+ * Quantas pessoas avaliaram mais de uma casa.
+ *
+ * A ACIA pediu este número para saber se o festival gerou **rolê** — gente
+ * circulando entre bares — ou se cada pessoa votou só onde já ia comer. É a
+ * pergunta que decide se o mapa e o "Monte seu rolê" da home serviram para
+ * alguma coisa, e a resposta muda o desenho da próxima edição.
+ *
+ * Conta por **CPF distinto**, não por avaliação: quem foi duas vezes à mesma
+ * casa não existe (o índice único impede), mas quem foi a duas casas aparece
+ * uma vez só aqui, com `casas = 2`.
+ *
+ * Avaliação anulada fica de fora, e **avaliação sem CPF também** — as
+ * anteriores à decisão de 27/08/2026 não guardaram o número, então não há como
+ * saber de quem foram. Elas entram em `semCpf` para o total continuar fechando
+ * com a apuração em vez de sumir sem explicação.
+ */
+export type Recorrencia = {
+  /** Pessoas distintas, por CPF. */
+  pessoas: number
+  /** Avaliações consideradas (com CPF e não anuladas). */
+  avaliacoes: number
+  /** Avaliações sem CPF registrado, fora desta conta. */
+  semCpf: number
+  /** Quantas pessoas visitaram exatamente N casas, da menor para a maior. */
+  distribuicao: { casas: number; pessoas: number }[]
+}
+
+export function calcularRecorrencia(
+  avaliacoes: Pick<AvaliacaoBruta, 'casa_id' | 'cpf' | 'anulada_em'>[],
+): Recorrencia {
+  const porPessoa = new Map<string, Set<string>>()
+  let validas = 0
+  let semCpf = 0
+
+  for (const a of avaliacoes) {
+    if (a.anulada_em !== null) continue
+    if (!a.cpf) {
+      semCpf++
+      continue
+    }
+    validas++
+    const casas = porPessoa.get(a.cpf) ?? new Set<string>()
+    casas.add(a.casa_id)
+    porPessoa.set(a.cpf, casas)
+  }
+
+  const contagem = new Map<number, number>()
+  for (const casas of porPessoa.values()) {
+    contagem.set(casas.size, (contagem.get(casas.size) ?? 0) + 1)
+  }
+
+  return {
+    pessoas: porPessoa.size,
+    avaliacoes: validas,
+    semCpf,
+    distribuicao: [...contagem.entries()]
+      .map(([casas, pessoas]) => ({ casas, pessoas }))
+      .sort((a, b) => a.casas - b.casas),
+  }
+}
+
 export type Apuracao = {
   linhas: LinhaDaApuracao[]
   /** Total de avaliações válidas do festival. */
@@ -147,6 +209,12 @@ async function lerTudo() {
 export async function apurar(): Promise<Apuracao> {
   const { casas, avaliacoes } = await lerTudo()
   return calcularApuracao(casas, avaliacoes)
+}
+
+/** Lê o banco e devolve a recorrência. A conta vive em `calcularRecorrencia`. */
+export async function lerRecorrencia(): Promise<Recorrencia> {
+  const { avaliacoes } = await lerTudo()
+  return calcularRecorrencia(avaliacoes)
 }
 
 /**

@@ -168,6 +168,12 @@ function UmaCasa({ casa, limiar }: { casa: ObservacoesDaCasa; limiar: number }) 
         >
           CSV desta casa
         </a>
+        <Link
+          href={`/painel/relatorio/${casa.slug}`}
+          className="btn btn-pequeno btn-linha self-start"
+        >
+          Relatório da casa
+        </Link>
         <span className="max-w-[52ch] text-[12px] text-tinta-3">
           só o texto, embaralhado — sem data, sem hora e sem ordem de chegada
         </span>

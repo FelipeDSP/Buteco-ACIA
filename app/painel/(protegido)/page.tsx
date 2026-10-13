@@ -63,7 +63,10 @@ export default async function Apuracao() {
         sub={`Média simples das avaliações válidas, de 0 a ${NOTA_MAXIMA_TOTAL} pontos. Empate: sabor, criatividade, número de avaliações.`}
         acao={
           <span className="flex flex-wrap items-center gap-2">
-            <a href="/api/painel/csv" className="btn btn-pequeno btn-linha">
+            <Link href="/painel/relatorio" className="btn btn-pequeno">
+            Relatório da apuração
+          </Link>
+          <a href="/api/painel/csv" className="btn btn-pequeno btn-linha">
               Exportar CSV
             </a>
             <BotaoVisibilidade

@@ -711,6 +711,44 @@ CPF, IP, hora nem lista de notas. Conferido sabotando a média e a regra de
 
 **Nunca aparece em página pública.** Nem na página da casa, nem no pódio.
 
+### Relatórios: página, não CSV
+
+`/painel/relatorio` (o festival inteiro) e `/painel/relatorio/[casa]` (uma
+folha por estabelecimento), com botão de imprimir — é por aí que sai o PDF.
+
+**Existem porque CSV serve para recalcular, não para mostrar a alguém.** Quem
+recebia o arquivo tinha de formatar a planilha antes de usar, e o relatório da
+casa vai para o dono do bar, não para quem vai refazer a conta. Os quatro CSV
+continuam no lugar: o da auditoria é ferramenta de cruzamento (e leva CPF), e o
+da apuração é para conferir número.
+
+Na impressão somem a navegação, o fundo creme e o cartão elevado (`.naoimprime`
+e `.folha`, em `app/globals.css`); as observações começam em folha nova
+(`.quebrapagina`) porque o Bar do Fubá tem 302 e nenhuma pode ser partida ao
+meio. `print-color-adjust: exact` é obrigatório: sem ele o navegador descarta o
+preenchimento das barras de critério e sobra uma trilha vazia.
+
+**A nota final sai com três decimais, aqui e na apuração.** Com duas, Caravellas
+(19,9209) e Buteco F.N.M (19,9154) apareciam os dois como "19,92" — e a ACIA
+perguntou se era empate. Não é, o Art. 19 nem é acionado, mas quem lê a tela não
+tem como saber, e o desempate por sabor apontaria para o **outro**. O critério
+individual fica com duas casas: vai de 0 a 5 e a terceira não separa nada.
+
+**A equipe do relatório sai por volume, e o texto diz isso.** Quase todo mundo
+tem média 5,0, então ordenar por nota é empate geral desempatado por acaso — e a
+casa usa essa lista para **pagar prêmio** a quem atendeu melhor. Pelo mesmo
+motivo o número é rotulado como avaliações recebidas, nunca "mesas atendidas":
+não é isso que o banco guarda. Quando a casa tem união de nome pendente, a tela
+avisa antes de imprimir: na Cia Petiscaria, juntar `Vieira` (67) com `Jhonatan`
+(60) troca quem recebe a gorjeta.
+
+**A recorrência responde se houve rolê.** `calcularRecorrencia` (`lib/painel.ts`,
+travada em `tests/recorrencia.test.ts`) conta por CPF distinto quantas casas cada
+pessoa visitou. Na 1ª edição, **96,5% avaliaram uma casa só** — o mapa e o "Monte
+seu rolê" da home não moveram ninguém. Avaliação sem CPF (anterior a 27/08/2026)
+fica fora da conta mas é contada à parte, senão o total não fecha com o da
+apuração e a diferença parece erro.
+
 ### A tela de edição da casa
 
 Botão **Editar** em cada linha da aba Casas, levando a `/painel/casas/[id]`.
