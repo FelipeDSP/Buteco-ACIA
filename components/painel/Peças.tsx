@@ -128,16 +128,40 @@ export function Selo({
   )
 }
 
-/** Filtro por parâmetro de URL — mesma escolha do site: funciona sem JS. */
+/**
+ * Filtro por parâmetro de URL — mesma escolha do site: funciona sem JS, é
+ * compartilhável, e valor inventado cai para "todas".
+ *
+ * `preservar` carrega os outros filtros ativos para dentro de cada link. Sem
+ * isso, clicar num sinal apagaria a casa escolhida e vice-versa: cada clique
+ * desfaria o filtro anterior, que é o jeito mais rápido de a pessoa achar que
+ * a tela está quebrada.
+ */
 export function Filtros({
   base,
   atual,
   opcoes,
+  parametro = 'ver',
+  preservar = {},
 }: {
   base: string
   atual: string
   opcoes: { valor: string; rotulo: string; quantos: number }[]
+  parametro?: string
+  preservar?: Record<string, string | undefined>
 }) {
+  const montar = (valor: string) => {
+    const busca = new URLSearchParams()
+    for (const [chave, v] of Object.entries(preservar)) {
+      if (v && v !== 'todas') busca.set(chave, v)
+    }
+    // "todas" é a ausência do parâmetro, não um valor — assim a URL limpa
+    // continua sendo a lista inteira.
+    if (valor !== 'todas') busca.set(parametro, valor)
+    const texto = busca.toString()
+    return texto ? `${base}?${texto}` : base
+  }
+
   return (
     <ul className="flex flex-wrap gap-1.5">
       {opcoes.map((opcao) => {
@@ -145,7 +169,7 @@ export function Filtros({
         return (
           <li key={opcao.valor}>
             <Link
-              href={opcao.valor === 'todas' ? base : `${base}?ver=${opcao.valor}`}
+              href={montar(opcao.valor)}
               aria-current={ligado ? 'true' : undefined}
               className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13.5px] font-bold transition-colors ${
                 ligado ? 'bg-marinho text-branco' : 'bg-claro text-tinta-3 hover:bg-creme'
