@@ -286,9 +286,30 @@
 
   /* O `py-9` do <main> do painel vira margem morta no topo da folha, e o
      `min-h-screen` do container força uma página inteira mesmo com meia
-     folha de conteúdo — sai uma segunda página em branco. */
+     folha de conteúdo — sai uma segunda página em branco. O fundo creme da
+     página (`bg-branco`) vive nesse mesmo container: no papel ele é tinta
+     gasta numa folha inteira. */
   main { padding: 0 !important; }
-  .min-h-screen { min-height: 0 !important; }
+  .min-h-screen { min-height: 0 !important; background: #fff !important; }
+
+  /**
+   * Contêiner rolável vira CORTE no papel.
+   *
+   * `overflow-x-auto` resolve tabela larga na tela com uma barra de rolagem —
+   * que numa folha não existe. O que passa da largura simplesmente some: na
+   * classificação do relatório geral, a coluna "Aval." saía cortada pela
+   * metade. Solto, o navegador quebra o texto das células e a tabela cabe.
+   */
+  .overflow-x-auto { overflow: visible !important; }
+  table { min-width: 0 !important; }
+
+  /* Cabeçalho repetido em cada folha: a classificação tem doze linhas e pode
+     virar a página no meio. */
+  thead { display: table-header-group; }
+
+  /* Nada de linha partida ao meio nem título órfão no pé da folha. */
+  tr, li { break-inside: avoid; }
+  h1, h2 { break-after: avoid; }
 
   .folha {
     background: #fff !important;
