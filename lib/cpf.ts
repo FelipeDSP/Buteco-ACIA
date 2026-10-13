@@ -43,3 +43,36 @@ export function cpfValido(bruto: string): boolean {
   return digito(cpf.slice(0, 9), 10) === Number(cpf[9]) &&
     digito(cpf.slice(0, 10), 11) === Number(cpf[10])
 }
+
+/** Quando o número não foi guardado — avaliações anteriores a 27/08/2026. */
+export const CPF_NAO_REGISTRADO = 'não registrado'
+
+/**
+ * CPF mascarado para o relatório que vai ao estabelecimento: `787.***.***-63`.
+ *
+ * Formato pedido pela ACIA (Romildo, 13/10/2026): mostrar os três primeiros e
+ * os dois últimos dígitos, para a casa ver que **cada voto tem um CPF
+ * distinto por trás** sem receber o número inteiro.
+ *
+ * **O que a máscara protege, e o que ela não protege.** Contra quem não tem
+ * nada em mãos, ela segura: sobram seis dígitos escondidos e os dois últimos
+ * são verificadores calculados dos outros nove, então restam ~10 mil CPFs
+ * possíveis para cada linha.
+ *
+ * Contra **quem já tem uma lista de CPF de cliente**, ela não segura nada. A
+ * chance de um CPF errado da lista casar com os três primeiros e os dois
+ * últimos é de 1 em 100 mil: com algumas centenas de clientes cadastrados, o
+ * dono filtra a própria lista e chega a uma pessoa só. E quem tem lista de CPF
+ * de cliente — fidelidade, nota fiscal, delivery — é justamente o dono da
+ * casa, que é quem recebe este arquivo.
+ *
+ * Está implementado porque é decisão da ACIA sobre dado que a ACIA já
+ * resolveu guardar. O registro aqui é para que, se alguém reabrir o assunto,
+ * saiba que o risco foi dito e não esquecido.
+ */
+export function mascararCpf(bruto: string | null | undefined): string {
+  if (!bruto) return CPF_NAO_REGISTRADO
+  const d = limparCpf(bruto)
+  if (d.length !== 11) return CPF_NAO_REGISTRADO
+  return `${d.slice(0, 3)}.***.***-${d.slice(9)}`
+}

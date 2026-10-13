@@ -4,6 +4,7 @@ import { situacaoDaCasa } from '@/lib/horarios'
 import { PISO_MINIMO_PERCENTUAL } from '@/data/edicao'
 import type { Horarios } from '@/lib/tipos'
 import { agruparNomes, type SugestaoDeUniao } from '@/lib/nomes'
+import { mascararCpf } from '@/lib/cpf'
 
 /**
  * Leitura de dados do painel. Tudo com `service_role`, porque `avaliacoes` e
@@ -209,6 +210,45 @@ async function lerTudo() {
 export async function apurar(): Promise<Apuracao> {
   const { casas, avaliacoes } = await lerTudo()
   return calcularApuracao(casas, avaliacoes)
+}
+
+export type VotoDaCasa = {
+  /** `787.***.***-63`, ou "não registrado" para os votos anteriores a 27/08. */
+  cpf: string
+  notas: Record<string, number>
+  total: number
+}
+
+/**
+ * Os votos de uma casa, com o CPF mascarado, para o relatório que ela recebe.
+ *
+ * Pedido da ACIA em 13/10/2026: mostrar ao estabelecimento que **cada voto tem
+ * um CPF distinto por trás**, sem entregar o número. Ver `mascararCpf`, que
+ * registra o que a máscara protege e o que ela não protege.
+ *
+ * **Sem data e sem hora, e fora da ordem de chegada.** É a mesma regra das
+ * observações, e aqui ela pesa mais: data e hora, nas mãos de quem estava no
+ * salão, dizem quem era a pessoa daquela mesa. A ordenação é pela própria
+ * máscara, que é estável e não reconstrói nada.
+ *
+ * Anulada não entra: não contou na nota, não conta aqui.
+ */
+export async function lerVotosDaCasa(casaId: string): Promise<VotoDaCasa[]> {
+  const { avaliacoes } = await lerTudo()
+  return avaliacoes
+    .filter((a) => a.casa_id === casaId && a.anulada_em === null)
+    .map((a) => {
+      const notas: Record<string, number> = {}
+      for (const criterio of CRITERIOS_DA_APURACAO) {
+        notas[criterio.chave] = a[criterio.coluna as keyof typeof a] as number
+      }
+      return {
+        cpf: mascararCpf(a.cpf),
+        notas,
+        total: Object.values(notas).reduce((soma, n) => soma + n, 0),
+      }
+    })
+    .sort((x, y) => x.cpf.localeCompare(y.cpf, 'pt-BR'))
 }
 
 /** Lê o banco e devolve a recorrência. A conta vive em `calcularRecorrencia`. */

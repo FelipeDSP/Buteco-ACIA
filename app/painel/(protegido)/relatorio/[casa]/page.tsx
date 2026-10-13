@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import BotaoImprimir from '@/components/painel/BotaoImprimir'
-import { CRITERIOS_DA_APURACAO, apurar, lerGarcons, lerObservacoes } from '@/lib/painel'
+import { CRITERIOS_DA_APURACAO, apurar, lerGarcons, lerObservacoes, lerVotosDaCasa } from '@/lib/painel'
 import { EDICAO, NOTA_MAXIMA_TOTAL, PISO_MINIMO_PERCENTUAL, PREMIACAO, PREMIO_DE_PARTICIPACAO } from '@/data/edicao'
 
 export const dynamic = 'force-dynamic'
@@ -35,6 +35,8 @@ export default async function Relatorio({ params }: Props) {
 
   const linha = apuracao.linhas.find((l) => l.slug === slug)
   if (!linha || linha.mediaGeral === null) notFound()
+
+  const votos = await lerVotosDaCasa(linha.id)
 
   const atendimento = garcons.find((c) => c.slug === slug)
   const comentarios = observacoes.find((c) => c.slug === slug)
@@ -244,6 +246,55 @@ export default async function Relatorio({ params }: Props) {
                 </li>
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {/* A base de votos da casa, com o CPF mascarado — pedido da ACIA para o
+            estabelecimento ver que cada voto tem um CPF distinto por trás.
+            Começa em folha nova: são centenas de linhas. */}
+        {votos.length > 0 ? (
+          <section className="mt-7 quebrapagina">
+            <h2 className="titulo-rel">
+              Base dos votos
+              <span className="ml-2 text-[13px] font-normal text-tinta-3">
+                {votos.length} {votos.length === 1 ? 'avaliação' : 'avaliações'}
+              </span>
+            </h2>
+            <p className="mb-3 max-w-[70ch] text-[13px] text-tinta-3">
+              Uma linha por avaliação, com o <b className="text-tinta">CPF mascarado</b>: aparecem
+              os três primeiros e os dois últimos dígitos. Serve para conferir que cada voto tem um
+              CPF distinto por trás — o sistema aceita{' '}
+              <b className="text-tinta">uma avaliação por pessoa em cada casa</b>. Sem data e sem
+              hora, e fora da ordem de chegada: a sequência diria quem passou pelo salão e quando.
+            </p>
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-risco text-left text-[11px] font-bold tracking-[0.04em] text-tinta-3 uppercase">
+                  <th className="py-1.5 pr-3">CPF</th>
+                  {CRITERIOS_DA_APURACAO.map((c) => (
+                    <th key={c.chave} className="py-1.5 pr-3 text-right">
+                      {c.nome.slice(0, 7)}
+                    </th>
+                  ))}
+                  <th className="py-1.5 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-risco">
+                {votos.map((v, i) => (
+                  <tr key={`${v.cpf}-${i}`}>
+                    <td className="py-1.5 pr-3 font-mono text-[12.5px]">{v.cpf}</td>
+                    {CRITERIOS_DA_APURACAO.map((c) => (
+                      <td key={c.chave} className="py-1.5 pr-3 text-right tabular-nums">
+                        {v.notas[c.chave]}
+                      </td>
+                    ))}
+                    <td className="py-1.5 text-right font-display font-extrabold tabular-nums">
+                      {v.total}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         ) : null}
 
